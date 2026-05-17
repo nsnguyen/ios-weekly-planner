@@ -37,20 +37,18 @@ struct DayPageView: View {
         let todayIdx = WeekMath.todayIndex(in: currentWeekDays, for: now)
         let isCurrentWeek = controller.current.week == 0
 
-        return ZStack(alignment: .trailing) {
+        return HStack(alignment: .top, spacing: 4) {
+            SideTabs(weekDays: weekDays,
+                     selectedIdx: controller.current.day,
+                     todayIdx: isCurrentWeek ? todayIdx : nil,
+                     onSelect: { idx in controller.flipToDay(idx: idx) })
+
             PageFlipContainer(controller: controller) { coord in
                 DayPageContent(weekOffset: coord.week, dayIdx: coord.day)
             }
             .horizontalSwipe { direction in
                 controller.flipDay(direction: direction)
             }
-
-            SideTabs(weekDays: weekDays,
-                     selectedIdx: controller.current.day,
-                     todayIdx: isCurrentWeek ? todayIdx : nil,
-                     onSelect: { idx in controller.flipToDay(idx: idx) })
-                .padding(.trailing, -4)
-                .padding(.top, 30)
         }
     }
 }
