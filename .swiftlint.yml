@@ -1,0 +1,59 @@
+included:
+  - WeeklyPlanner
+  - WeeklyPlannerTests
+  - WeeklyPlannerUITests
+
+excluded:
+  - .build
+  - WeeklyPlanner.xcodeproj
+  - WeeklyPlanner/Resources/Fonts
+
+disabled_rules:
+  - todo
+  - line_length            # handled by swiftformat
+  - trailing_whitespace    # handled by swiftformat
+  - trailing_comma         # swiftformat enforces opposite (commas always)
+  - opening_brace          # swiftformat owns brace placement on wrapped signatures
+  - large_tuple            # named tuples >2 elements are fine for internal helpers
+  - identifier_name        # too noisy for short SwiftUI identifiers (x, y, dx)
+
+opt_in_rules:
+  - force_unwrapping
+  - empty_count
+  - empty_string
+  - explicit_init
+  - first_where
+  - last_where
+  - missing_docs
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - redundant_nil_coalescing
+  - toggle_bool
+  # sorted_imports: handled by swiftformat (testable-bottom grouping)
+
+analyzer_rules:
+  - unused_import
+
+# `final` on classes is enforced via convention + the `final_test_case` rule below.
+force_unwrapping:
+  severity: error
+force_cast:
+  severity: error
+force_try:
+  severity: error
+
+# Production code must not contain `print(`. Tests are exempt.
+custom_rules:
+  no_print_in_prod:
+    name: "Use logger, not print, in production code"
+    regex: '\bprint\s*\('
+    severity: error
+    excluded:
+      - "WeeklyPlannerTests"
+      - "WeeklyPlannerUITests"
+
+  final_class:
+    name: "Classes must be marked final"
+    regex: '^(?!.*(final|protocol|extension|@objc))\s*(public\s+|internal\s+|private\s+|fileprivate\s+)?class\s+[A-Z]'
+    severity: warning
