@@ -25,6 +25,7 @@ struct DayPageView: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.taskStore) private var taskStore
+    @Environment(\.modelContext) private var modelContext
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -50,6 +51,9 @@ struct DayPageView: View {
                         .padding(.trailing, 18)
                         .padding(.bottom, 18)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .overlay(alignment: .topTrailing) {
+                            stickyNoteOverlay
+                        }
 
                     PageNumber(date: weekDay.date)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -69,6 +73,24 @@ struct DayPageView: View {
     }
 
     // MARK: - Subviews
+
+    /// Top-right AI sticky note, gated on the presence of a non-dismissed
+    /// `AIInsight` row for this `(weekOffset, dayIdx)` cell. Padded 16pt off
+    /// the page's top/trailing edges so the masking-tape overhang stays
+    /// inside the paper. If no insight exists the overlay collapses to an
+    /// `EmptyView` and the corner is left blank — the design treats absent
+    /// stickies as "no note today", not "blank placeholder".
+    @ViewBuilder
+    private var stickyNoteOverlay: some View {
+        if let insight = StickyNoteGenerator.insight(forWeekOffset: weekOffset,
+                                                     dayIdx: dayIdx,
+                                                     in: modelContext)
+        {
+            AIStickyNote(insight: insight)
+                .padding(.top, 16)
+                .padding(.trailing, 16)
+        }
+    }
 
     /// Content column: header, optional events list, optional inbox block,
     /// optional to-do patch, or the empty-state hint when all three are

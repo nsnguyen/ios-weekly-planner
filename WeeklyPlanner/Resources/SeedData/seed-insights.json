@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "dayKey": "0:5",
+    "text": "Don’t forget Sara’s gift!",
+    "colorHex": "#FFE680",
+    "tiltDegrees": 4.0
+  },
+  {
+    "dayKey": "0:4",
+    "text": "Pitch deck — one more pass.",
+    "colorHex": "#C9F0E0",
+    "tiltDegrees": -3.0
+  },
+  {
+    "dayKey": "0:1",
+    "text": "Leave by 9:35 for dentist.",
+    "colorHex": "#FFCCC9",
+    "tiltDegrees": 5.0
+  },
+  {
+    "dayKey": "0:3",
+    "text": "Long meeting day — drink water.",
+    "colorHex": "#FFE680",
+    "tiltDegrees": -4.0
+  },
+  {
+    "dayKey": "0:6",
+    "text": "Book Tokyo flights this week!",
+    "colorHex": "#C9F0E0",
+    "tiltDegrees": 4.0
+  },
+  {
+    "dayKey": "1:4",
+    "text": "Print boarding pass · gate 24.",
+    "colorHex": "#FFCCC9",
+    "tiltDegrees": -3.0
+  },
+  {
+    "dayKey": "1:5",
+    "text": "Hamilton — 7pm. Be there by 6:30.",
+    "colorHex": "#FFE680",
+    "tiltDegrees": 5.0
+  },
+  {
+    "dayKey": "-1:5",
+    "text": "Concert was great. Sleep in tomorrow.",
+    "colorHex": "#C9F0E0",
+    "tiltDegrees": -4.0
+  }
+]
