@@ -1,20 +1,75 @@
 import SwiftUI
 
+/// The flip-aware Day page entry point. Hosts a `PageFlipController`, draws
+/// the side-tab column on the trailing edge, attaches the horizontal-swipe
+/// gesture, and delegates the actual paper rendering to `DayPageContent` via
+/// `PageFlipContainer`.
+///
+/// `DayPageView` is what `RootView` mounts. It owns the controller as
+/// `@State` so the same instance survives view reloads while the user
+/// navigates between days. Side-tab taps and swipe gestures both flow through
+/// the controller, which means the rest of the app gets a single source of
+/// truth for "which day is the user on right now".
+///
+/// Layout:
+/// - `PageFlipContainer` fills the available space; inside it, each rendered
+///   `DayPageContent` brings its own book chrome.
+/// - `SideTabs` is overlaid on the trailing edge with a slight negative
+///   trailing padding so the rounded tabs poke past the edge of the page.
+struct DayPageView: View {
+    @Environment(\.paperTheme) private var theme
+
+    /// Source-of-truth for "which day is on screen". Re-initialized only when
+    /// the parent supplies a new `initialCoordinate`; subsequent flips mutate
+    /// the controller in-place.
+    @State private var controller: PageFlipController
+
+    /// Construct a `DayPageView` anchored on the given starting coordinate.
+    /// Typically `(week: 0, day: todayIdx)` so the user lands on today.
+    init(initialCoordinate: PageCoordinate) {
+        _controller = State(initialValue: PageFlipController(current: initialCoordinate))
+    }
+
+    var body: some View {
+        let now = Date()
+        let weekDays = WeekMath.weekDays(forOffset: controller.current.week, today: now)
+        let currentWeekDays = WeekMath.weekDays(forOffset: 0, today: now)
+        let todayIdx = WeekMath.todayIndex(in: currentWeekDays, for: now)
+        let isCurrentWeek = controller.current.week == 0
+
+        return ZStack(alignment: .trailing) {
+            PageFlipContainer(controller: controller) { coord in
+                DayPageContent(weekOffset: coord.week, dayIdx: coord.day)
+            }
+            .horizontalSwipe { direction in
+                controller.flipDay(direction: direction)
+            }
+
+            SideTabs(weekDays: weekDays,
+                     selectedIdx: controller.current.day,
+                     todayIdx: isCurrentWeek ? todayIdx : nil,
+                     onSelect: { idx in controller.flipToDay(idx: idx) })
+                .padding(.trailing, -4)
+                .padding(.top, 30)
+        }
+    }
+}
+
 /// The composite Day Page view: paper book chrome + ruled lines + red margin
 /// + hole punches + header + events list + inbox block + to-do patch +
-/// page-number footer.
+/// page-number footer for a single `(weekOffset, dayIdx)` cell.
 ///
-/// Assembles every Phase 05 paper primitive and every Phase 06/07 Day-page
-/// sub-component into the full hobonichi-style page the user sees when the
-/// app opens. Owns a `DayPageViewModel` instance for `(weekOffset, dayIdx)`
-/// and refreshes it once on `.task`; real-time observation is deferred to a
-/// later phase when SwiftData `@Model` values are Sendable across actors.
+/// Renders ONE static day page — `DayPageView` wraps several of these in
+/// `PageFlipContainer` to animate between days. Owns a `DayPageViewModel`
+/// instance for `(weekOffset, dayIdx)` and refreshes it once on `.task`;
+/// real-time observation is deferred to a later phase when SwiftData `@Model`
+/// values are Sendable across actors.
 ///
 /// Tokens flow in from `@Environment(\.paperTheme)`, `\.paperFont`, and
 /// `\.paperSize`; the three stores are pulled from `@Environment` as well so
 /// previews can inject `StubEventStore` / `StubInboxStore` / `StubTaskStore`
 /// without standing up a real SwiftData container.
-struct DayPageView: View {
+struct DayPageContent: View {
     /// Week relative to today's week (0 = current). Forwarded to the view model.
     let weekOffset: Int
 
@@ -142,7 +197,20 @@ struct DayPageView: View {
 #Preview("DayPageView · Today (stub stores)") {
     ZStack {
         BookCover()
-        DayPageView(weekOffset: 0, dayIdx: 5)
+        DayPageView(initialCoordinate: PageCoordinate(week: 0, day: 5))
+            .padding(.top, Spacing.bookTopBarTopPadding)
+            .padding(.bottom, Spacing.tabBarHeight + Spacing.tabBarBottomSafeArea)
+    }
+    .environment(\.eventStore, StubEventStore())
+    .environment(\.inboxStore, StubInboxStore())
+    .environment(\.taskStore, StubTaskStore())
+    .paperTheme(.cream)
+}
+
+#Preview("DayPageContent · Today (stub stores)") {
+    ZStack {
+        BookCover()
+        DayPageContent(weekOffset: 0, dayIdx: 5)
             .padding(.top, Spacing.bookTopBarTopPadding)
             .padding(.bottom, Spacing.tabBarHeight + Spacing.tabBarBottomSafeArea)
     }
