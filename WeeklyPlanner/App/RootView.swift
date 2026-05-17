@@ -1,53 +1,36 @@
 import SwiftUI
 
-/// The root scene the user lands on when the app launches. Composes the full
-/// paper book chrome — `BookCover` underneath, `BookPage` inset to clear the
-/// status bar / Dynamic Island on top and reserve room for the eventual tab
-/// bar on the bottom, with `PaperSurface` + grain + ruled lines + red margin +
-/// hole punches + page-number footer layered inside.
+/// The root scene the user lands on when the app launches. Layers `BookCover`
+/// behind a `DayPageView` for the current day. The Day page handles the
+/// inner paper chrome (surface, grain, ruled lines, red margin, hole punches,
+/// page-number footer) and the real content (header + events + inbox block
+/// or empty-state hint).
 ///
-/// Phase 06 will replace the centered "Phase 05 ready" placeholder with the
-/// real Day Page content. Until then the placeholder text doubles as the
-/// `SmokeUITests.testAppLaunches` smoke marker.
+/// Top / bottom padding clears the eventual top bar (Phase 09) and tab bar
+/// (Phase 10) — both spaces are still empty today, but the Day page is
+/// already sized to fit between them so swapping in the real chrome won't
+/// reflow content.
 ///
-/// The view picks up its colors from `@Environment(\.paperTheme)`, whose
-/// default is `.cream` — no explicit theme override here; settings rewiring
-/// arrives in Phase 19.
+/// Side tabs, week picker, page-flip gestures, and tab bar arrive in
+/// Phases 08–10; do not add them here.
 struct RootView: View {
-    @Environment(\.paperTheme) private var theme
-    @Environment(\.paperFont) private var paperFont
-
     var body: some View {
+        let today = Date()
+        let days = WeekMath.weekDays(forOffset: 0, today: today)
+        let todayIdx = WeekMath.todayIndex(in: days, for: today) ?? 0
+
         ZStack {
             BookCover()
 
-            BookPage {
-                PaperSurface {
-                    ZStack {
-                        PaperGrain()
-                        RuledLines()
-                        RedMarginLine()
-                        HolePunches()
-
-                        Text("Phase 05 — Paper book chrome ready")
-                            .font(Typography.eventTitle.font(in: paperFont))
-                            .foregroundStyle(theme.ink)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-
-                        PageNumber(date: Date())
-                            .frame(maxWidth: .infinity,
-                                   maxHeight: .infinity,
-                                   alignment: .bottomTrailing)
-                    }
-                }
-            }
-            .padding(.top, Spacing.bookTopBarTopPadding)
-            .padding(.bottom, Spacing.tabBarHeight + Spacing.tabBarBottomSafeArea)
+            DayPageView(weekOffset: 0, dayIdx: todayIdx)
+                .padding(.top, Spacing.bookTopBarTopPadding)
+                .padding(.bottom, Spacing.tabBarHeight + Spacing.tabBarBottomSafeArea)
         }
     }
 }
 
 #Preview {
     RootView()
+        .environment(\.eventStore, StubEventStore())
+        .environment(\.inboxStore, StubInboxStore())
 }
