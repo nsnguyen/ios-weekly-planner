@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleDisplayName</key>
+    <string>Weekly Planner</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>LaunchBackground</string>
+    </dict>
+
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+    </array>
+
+    <!-- Usage descriptions for system permission prompts. Wording is user-facing; review before App Store submission. -->
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Weekly Planner reads and writes your iOS Calendar so events stay in sync with the system Calendar app.</string>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>Weekly Planner stores your tasks as iOS Reminders so they sync with Reminders.app.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>Weekly Planner uses Contacts to show invitee names on events.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Weekly Planner uses your location to deliver “when I arrive” reminders for events with a place.</string>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>Weekly Planner sends reminders for upcoming events and tasks.</string>
+
+    <!-- Custom handwriting fonts. Xcode flattens Copy Bundle Resources, so paths are bare filenames. -->
+    <key>UIAppFonts</key>
+    <array>
+        <string>Caveat-Regular.ttf</string>
+        <string>Caveat-Medium.ttf</string>
+        <string>Caveat-SemiBold.ttf</string>
+        <string>Caveat-Bold.ttf</string>
+        <string>ArchitectsDaughter-Regular.ttf</string>
+        <string>Kalam-Light.ttf</string>
+        <string>Kalam-Regular.ttf</string>
+        <string>Kalam-Bold.ttf</string>
+        <string>IndieFlower-Regular.ttf</string>
+    </array>
+
+    <!-- Google OAuth callback URL scheme. Reversed client ID is filled in during Phase 17. -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.weeklyplanner.WeeklyPlanner.googleoauth</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.PLACEHOLDER</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

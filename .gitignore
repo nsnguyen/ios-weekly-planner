@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# Xcode — generated project (XcodeGen is the source of truth)
+WeeklyPlanner.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Build artifacts
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+*.swiftmodule
+*.swiftdoc
+*.o
+
+# Test artifacts
+*.xcresult/
+TestResults*
+
+# Misc
+*.log
+.netrc
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Local override files (developer-specific signing, etc.)
+*.local.xcconfig
+.env.local

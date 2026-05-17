@@ -1,0 +1,21 @@
+# SwiftFormat config for WeeklyPlanner. Run `swiftformat .` from repo root.
+--swiftversion 6.0
+
+--indent 4
+--maxwidth 120
+--linebreaks lf
+--commas always
+--trailingclosures
+--self remove
+--semicolons never
+
+--importgrouping testable-bottom
+--wraparguments after-first
+--wrapparameters after-first
+--wrapcollections before-first
+--funcattributes prev-line
+--typeattributes prev-line
+
+--stripunusedargs closure-only
+
+--exclude .build,WeeklyPlanner.xcodeproj,WeeklyPlanner/Resources/Fonts
