@@ -14,6 +14,7 @@ disabled_rules:
   - trailing_whitespace    # handled by swiftformat
   - trailing_comma         # swiftformat enforces opposite (commas always)
   - opening_brace          # swiftformat owns brace placement on wrapped signatures
+  - large_tuple            # named tuples >2 elements are fine for internal helpers
   - identifier_name        # too noisy for short SwiftUI identifiers (x, y, dx)
 
 opt_in_rules:
