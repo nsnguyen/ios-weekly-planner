@@ -3,11 +3,11 @@ import Observation
 
 /// Drives the Paper Day page for a single `(weekOffset, dayIdx)` cell.
 ///
-/// Owns the per-day slice of events and pending inbox suggestions, plus the
-/// derived `isToday` flag used by the header chip. The view triggers
-/// `refresh()` from `.task` on appear and after every mutation; real-time
-/// AsyncStream observation is deferred until SwiftData `@Model` types are
-/// `Sendable` across actor hops (see `EventStore` notes).
+/// Owns the per-day slice of events, pending inbox suggestions, and to-dos,
+/// plus the derived `isToday` flag used by the header chip. The view
+/// triggers `refresh()` from `.task` on appear and after every mutation;
+/// real-time AsyncStream observation is deferred until SwiftData `@Model`
+/// types are `Sendable` across actor hops (see `EventStore` notes).
 ///
 /// All store calls are `@MainActor`-isolated, so this class is too.
 @MainActor
@@ -25,12 +25,17 @@ final class DayPageViewModel {
     /// Pending inbox suggestions whose `proposedStart` lands on this day.
     var inbox: [InboxSuggestion] = []
 
+    /// To-dos whose `due` date lands on this day, sorted high-priority-first
+    /// then alphabetical by title for stability.
+    var tasks: [TaskItem] = []
+
     /// Localized description of the most recent fetch failure, if any.
     /// Cleared when a refresh succeeds.
     var loadError: String?
 
     private let eventStore: any EventStoring
     private let inboxStore: any InboxStoring
+    private let taskStore: any TaskStoring
     private let clock: () -> Date
 
     /// Designated initializer.
@@ -40,18 +45,21 @@ final class DayPageViewModel {
     ///   - dayIdx: Monday-based index within the week.
     ///   - eventStore: Store for `Event` reads.
     ///   - inboxStore: Store for `InboxSuggestion` reads/mutations.
+    ///   - taskStore: Store for `TaskItem` reads/mutations.
     ///   - clock: Injected "now" so tests can pin the date. Defaults to
     ///     `Date()` in production.
     init(weekOffset: Int,
          dayIdx: Int,
          eventStore: any EventStoring,
          inboxStore: any InboxStoring,
+         taskStore: any TaskStoring,
          clock: @escaping () -> Date = { .init() })
     {
         self.weekOffset = weekOffset
         self.dayIdx = dayIdx
         self.eventStore = eventStore
         self.inboxStore = inboxStore
+        self.taskStore = taskStore
         self.clock = clock
     }
 
@@ -65,9 +73,9 @@ final class DayPageViewModel {
         return todayIdx == dayIdx
     }
 
-    /// Re-fetch events + inbox suggestions from the stores and filter them to
-    /// this day. Errors from either store are surfaced via `loadError` while
-    /// the previously-loaded data is left in place.
+    /// Re-fetch events, inbox suggestions, and to-dos from the stores and
+    /// filter them to this day. Errors from any store are surfaced via
+    /// `loadError` while previously-loaded data is left in place.
     func refresh() async {
         let calendar = WeekMath.mondayCalendar()
         let now = clock()
@@ -90,6 +98,20 @@ final class DayPageViewModel {
         } catch {
             loadError = error.localizedDescription
         }
+
+        do {
+            let allTasks = try await taskStore.tasks(forWeekOffset: weekOffset, today: now)
+            tasks = allTasks
+                .filter { $0.due.mondayBasedWeekdayIndex(in: calendar) == dayIdx }
+                .sorted { lhs, rhs in
+                    if lhs.priority != rhs.priority {
+                        return lhs.priority.sortWeight > rhs.priority.sortWeight
+                    }
+                    return lhs.title < rhs.title
+                }
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 
     /// Mark a suggestion as accepted and refresh the day's state. Errors are
@@ -108,6 +130,17 @@ final class DayPageViewModel {
     func dismiss(suggestionID: UUID) async {
         do {
             try await inboxStore.dismiss(id: suggestionID)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
+
+    /// Flip the `done` flag on the task with the given id and refresh.
+    /// Errors swallow into `loadError` so the row never throws into SwiftUI.
+    func toggleTask(id: UUID) async {
+        do {
+            try await taskStore.toggle(id: id)
         } catch {
             loadError = error.localizedDescription
         }

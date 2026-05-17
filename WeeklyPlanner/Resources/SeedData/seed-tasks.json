@@ -1,1 +1,103 @@
-[]
+[
+  {
+    "title": "Buy gift for Sara",
+    "due": "2026-05-16T00:00:00-07:00",
+    "done": false,
+    "priority": "high",
+    "category": "family",
+    "reminderText": "11:00 AM"
+  },
+  {
+    "title": "Send Q2 report to Priya",
+    "due": "2026-05-15T00:00:00-07:00",
+    "done": true,
+    "priority": "high",
+    "category": "work"
+  },
+  {
+    "title": "Pick up dry cleaning",
+    "due": "2026-05-14T00:00:00-07:00",
+    "done": false,
+    "priority": "med",
+    "category": "personal",
+    "reminderText": "When I arrive at Marina"
+  },
+  {
+    "title": "Book flights · June Tokyo",
+    "due": "2026-05-17T00:00:00-07:00",
+    "done": false,
+    "priority": "high",
+    "category": "travel"
+  },
+  {
+    "title": "Review insurance renewal",
+    "due": "2026-05-17T00:00:00-07:00",
+    "done": false,
+    "priority": "low",
+    "category": "personal"
+  },
+  {
+    "title": "Reply to Marcus re: contract",
+    "due": "2026-05-12T00:00:00-07:00",
+    "done": true,
+    "priority": "med",
+    "category": "work"
+  },
+  {
+    "title": "Refill prescription",
+    "due": "2026-05-13T00:00:00-07:00",
+    "done": false,
+    "priority": "med",
+    "category": "health",
+    "reminderText": "9:00 AM"
+  },
+  {
+    "title": "Water plants",
+    "due": "2026-05-16T00:00:00-07:00",
+    "done": true,
+    "priority": "low",
+    "category": "personal"
+  },
+  {
+    "title": "Confirm dinner reservation",
+    "due": "2026-05-15T00:00:00-07:00",
+    "done": true,
+    "priority": "low",
+    "category": "personal"
+  },
+  {
+    "title": "Submit timesheet",
+    "due": "2026-05-07T00:00:00-07:00",
+    "done": true,
+    "priority": "high",
+    "category": "work"
+  },
+  {
+    "title": "Renew library books",
+    "due": "2026-05-09T00:00:00-07:00",
+    "done": true,
+    "priority": "med",
+    "category": "personal"
+  },
+  {
+    "title": "Pack for NYC",
+    "due": "2026-05-21T00:00:00-07:00",
+    "done": false,
+    "priority": "high",
+    "category": "travel"
+  },
+  {
+    "title": "Prep Atlas kickoff slides",
+    "due": "2026-05-18T00:00:00-07:00",
+    "done": false,
+    "priority": "med",
+    "category": "work"
+  },
+  {
+    "title": "Q3 OKRs first draft",
+    "due": "2026-05-26T00:00:00-07:00",
+    "done": false,
+    "priority": "med",
+    "category": "work"
+  }
+]

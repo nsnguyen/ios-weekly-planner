@@ -1,23 +1,26 @@
 import Foundation
 import SwiftUI
 
-/// SwiftUI environment plumbing for the two stores the Day page reads from.
+/// SwiftUI environment plumbing for the stores the Day page reads from.
 ///
-/// Production wires real `SwiftDataEventStore` / `SwiftDataInboxStore`
-/// instances at the `App` entry point; previews and ad-hoc views that don't
-/// need real persistence pick up the stub defaults — both return empty
-/// arrays from every read and no-op every write — so they never crash for
-/// want of a SwiftData container.
+/// Production wires real `SwiftDataEventStore` / `SwiftDataInboxStore` /
+/// `SwiftDataTaskStore` instances at the `App` entry point; previews and
+/// ad-hoc views that don't need real persistence pick up the stub defaults —
+/// all three return empty arrays from every read and no-op every write — so
+/// they never crash for want of a SwiftData container.
 ///
 /// The stubs are intentionally `final class` (not structs) to match the
-/// `AnyObject` constraint on `EventStoring` / `InboxStoring`, and they are
-/// `@MainActor` to satisfy the protocols' main-actor isolation.
+/// `AnyObject` constraint on the protocols, and they are `@MainActor` to
+/// satisfy the protocols' main-actor isolation.
 extension EnvironmentValues {
     /// The active `EventStoring` for this subtree. Defaults to `StubEventStore`.
     @Entry var eventStore: any EventStoring = StubEventStore()
 
     /// The active `InboxStoring` for this subtree. Defaults to `StubInboxStore`.
     @Entry var inboxStore: any InboxStoring = StubInboxStore()
+
+    /// The active `TaskStoring` for this subtree. Defaults to `StubTaskStore`.
+    @Entry var taskStore: any TaskStoring = StubTaskStore()
 }
 
 // MARK: - Stubs
@@ -68,4 +71,25 @@ final class StubInboxStore: InboxStoring {
     func upsert(_: InboxSuggestion) async throws {}
     func accept(id _: UUID) async throws {}
     func dismiss(id _: UUID) async throws {}
+}
+
+/// No-op `TaskStoring` companion to `StubEventStore`/`StubInboxStore`. Same
+/// semantics: empty reads, dropped writes. Used as the default value for
+/// `@Environment(\.taskStore)` so previews and ad-hoc views never crash.
+@MainActor
+final class StubTaskStore: TaskStoring {
+    /// Nonisolated initializer for the same reason as `StubEventStore.init()`.
+    nonisolated init() {}
+
+    func tasks(forWeekOffset _: Int, today _: Date) async throws -> [TaskItem] {
+        []
+    }
+
+    func task(id _: UUID) async throws -> TaskItem? {
+        nil
+    }
+
+    func upsert(_: TaskItem) async throws {}
+    func toggle(id _: UUID) async throws {}
+    func delete(id _: UUID) async throws {}
 }

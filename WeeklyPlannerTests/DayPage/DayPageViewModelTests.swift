@@ -8,17 +8,20 @@ final class DayPageViewModelTests: XCTestCase {
     private var container: ModelContainer!
     private var eventStore: SwiftDataEventStore!
     private var inboxStore: SwiftDataInboxStore!
+    private var taskStore: SwiftDataTaskStore!
 
     override func setUp() async throws {
         try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
+        taskStore = SwiftDataTaskStore(context: container.mainContext)
     }
 
     override func tearDown() async throws {
         eventStore = nil
         inboxStore = nil
+        taskStore = nil
         container = nil
         try await super.tearDown()
     }
@@ -49,6 +52,7 @@ final class DayPageViewModelTests: XCTestCase {
                          dayIdx: dayIdx,
                          eventStore: eventStore,
                          inboxStore: inboxStore,
+                         taskStore: taskStore,
                          clock: clock)
     }
 

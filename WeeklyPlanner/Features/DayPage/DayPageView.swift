@@ -1,18 +1,19 @@
 import SwiftUI
 
 /// The composite Day Page view: paper book chrome + ruled lines + red margin
-/// + hole punches + header + events list + inbox block + page-number footer.
+/// + hole punches + header + events list + inbox block + to-do patch +
+/// page-number footer.
 ///
-/// Assembles every Phase 05 paper primitive and every Phase 06 Day-page
+/// Assembles every Phase 05 paper primitive and every Phase 06/07 Day-page
 /// sub-component into the full hobonichi-style page the user sees when the
 /// app opens. Owns a `DayPageViewModel` instance for `(weekOffset, dayIdx)`
 /// and refreshes it once on `.task`; real-time observation is deferred to a
 /// later phase when SwiftData `@Model` values are Sendable across actors.
 ///
 /// Tokens flow in from `@Environment(\.paperTheme)`, `\.paperFont`, and
-/// `\.paperSize`; the two stores are pulled from `@Environment` as well so
-/// previews can inject `StubEventStore` / `StubInboxStore` without standing
-/// up a real SwiftData container.
+/// `\.paperSize`; the three stores are pulled from `@Environment` as well so
+/// previews can inject `StubEventStore` / `StubInboxStore` / `StubTaskStore`
+/// without standing up a real SwiftData container.
 struct DayPageView: View {
     /// Week relative to today's week (0 = current). Forwarded to the view model.
     let weekOffset: Int
@@ -23,6 +24,7 @@ struct DayPageView: View {
 
     @Environment(\.eventStore) private var eventStore
     @Environment(\.inboxStore) private var inboxStore
+    @Environment(\.taskStore) private var taskStore
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -59,7 +61,8 @@ struct DayPageView: View {
                 viewModel = DayPageViewModel(weekOffset: weekOffset,
                                              dayIdx: dayIdx,
                                              eventStore: eventStore,
-                                             inboxStore: inboxStore)
+                                             inboxStore: inboxStore,
+                                             taskStore: taskStore)
             }
             await viewModel?.refresh()
         }
@@ -67,9 +70,9 @@ struct DayPageView: View {
 
     // MARK: - Subviews
 
-    /// Content column: header, optional events list, optional inbox block, or
-    /// the empty-state hint when both are empty. Split out so `body` stays
-    /// readable.
+    /// Content column: header, optional events list, optional inbox block,
+    /// optional to-do patch, or the empty-state hint when all three are
+    /// empty. Split out so `body` stays readable.
     private func content(weekDay: WeekDay, weekMeta: WeekMeta) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             DayPageHeader(weekDay: weekDay,
@@ -81,6 +84,7 @@ struct DayPageView: View {
             if let viewModel {
                 let hasEvents = !viewModel.events.isEmpty
                 let hasInbox = !viewModel.inbox.isEmpty
+                let hasTasks = !viewModel.tasks.isEmpty
 
                 if hasEvents {
                     EventEntryList(events: viewModel.events, onTap: { _ in })
@@ -96,7 +100,14 @@ struct DayPageView: View {
                                })
                 }
 
-                if !hasEvents, !hasInbox {
+                if hasTasks {
+                    TodoBlock(tasks: viewModel.tasks) { id in
+                        Task { await viewModel.toggleTask(id: id) }
+                    }
+                    .padding(.top, 12)
+                }
+
+                if !hasEvents, !hasInbox, !hasTasks {
                     EmptyDayState()
                 }
             }
@@ -115,5 +126,6 @@ struct DayPageView: View {
     }
     .environment(\.eventStore, StubEventStore())
     .environment(\.inboxStore, StubInboxStore())
+    .environment(\.taskStore, StubTaskStore())
     .paperTheme(.cream)
 }
