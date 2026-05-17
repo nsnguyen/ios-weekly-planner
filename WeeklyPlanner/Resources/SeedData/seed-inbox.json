@@ -1,7 +1,7 @@
 [
   {
     "gmailMessageID": "seed-ix1",
-    "proposedStart": "2026-05-17T11:00:00Z",
+    "proposedStart": "2026-05-17T11:00:00-07:00",
     "title": "Yoga makeup class",
     "fromName": "Studio Five",
     "fromEmail": "hello@studiofive.example",
@@ -11,7 +11,7 @@
   },
   {
     "gmailMessageID": "seed-ix2",
-    "proposedStart": "2026-05-19T18:30:00Z",
+    "proposedStart": "2026-05-19T18:30:00-07:00",
     "title": "Pickleball with Dan",
     "fromName": "Dan T.",
     "fromEmail": "dan.t@gmail.com",
@@ -21,7 +21,7 @@
   },
   {
     "gmailMessageID": "seed-ix3",
-    "proposedStart": "2026-05-16T16:00:00Z",
+    "proposedStart": "2026-05-16T16:00:00-07:00",
     "title": "Sara’s gift pickup window",
     "fromName": "Goldbely Orders",
     "fromEmail": "orders@goldbely.com",

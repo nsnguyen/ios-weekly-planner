@@ -1,8 +1,8 @@
 [
   {
     "title": "Team standup",
-    "start": "2026-05-11T09:00:00Z",
-    "end": "2026-05-11T09:30:00Z",
+    "start": "2026-05-11T09:00:00-07:00",
+    "end": "2026-05-11T09:30:00-07:00",
     "location": "Zoom",
     "category": "work",
     "attendeesCount": 6,
@@ -10,8 +10,8 @@
   },
   {
     "title": "Lunch with Sara",
-    "start": "2026-05-11T13:00:00Z",
-    "end": "2026-05-11T14:00:00Z",
+    "start": "2026-05-11T13:00:00-07:00",
+    "end": "2026-05-11T14:00:00-07:00",
     "location": "Café Bleu",
     "category": "personal",
     "attendeesCount": 2,
@@ -19,24 +19,24 @@
   },
   {
     "title": "Yoga",
-    "start": "2026-05-11T18:00:00Z",
-    "end": "2026-05-11T19:00:00Z",
+    "start": "2026-05-11T18:00:00-07:00",
+    "end": "2026-05-11T19:00:00-07:00",
     "location": "Studio Five",
     "category": "health",
     "source": "manual"
   },
   {
     "title": "Dentist",
-    "start": "2026-05-12T10:00:00Z",
-    "end": "2026-05-12T10:45:00Z",
+    "start": "2026-05-12T10:00:00-07:00",
+    "end": "2026-05-12T10:45:00-07:00",
     "location": "Dr. Chen, 4th St.",
     "category": "health",
     "source": "gmail"
   },
   {
     "title": "Project review · Atlas",
-    "start": "2026-05-12T15:00:00Z",
-    "end": "2026-05-12T16:00:00Z",
+    "start": "2026-05-12T15:00:00-07:00",
+    "end": "2026-05-12T16:00:00-07:00",
     "location": "Conf Rm 3",
     "category": "work",
     "attendeesCount": 4,
@@ -44,24 +44,24 @@
   },
   {
     "title": "Book club",
-    "start": "2026-05-12T19:30:00Z",
-    "end": "2026-05-12T21:00:00Z",
+    "start": "2026-05-12T19:30:00-07:00",
+    "end": "2026-05-12T21:00:00-07:00",
     "location": "Mei’s apt.",
     "category": "personal",
     "source": "manual"
   },
   {
     "title": "Morning run",
-    "start": "2026-05-13T08:00:00Z",
-    "end": "2026-05-13T08:45:00Z",
+    "start": "2026-05-13T08:00:00-07:00",
+    "end": "2026-05-13T08:45:00-07:00",
     "location": "Riverside loop",
     "category": "health",
     "source": "manual"
   },
   {
     "title": "Coffee with Mark",
-    "start": "2026-05-13T12:00:00Z",
-    "end": "2026-05-13T13:00:00Z",
+    "start": "2026-05-13T12:00:00-07:00",
+    "end": "2026-05-13T13:00:00-07:00",
     "location": "Sightglass",
     "category": "personal",
     "attendeesCount": 2,
@@ -69,8 +69,8 @@
   },
   {
     "title": "1:1 with Priya",
-    "start": "2026-05-13T16:00:00Z",
-    "end": "2026-05-13T16:30:00Z",
+    "start": "2026-05-13T16:00:00-07:00",
+    "end": "2026-05-13T16:30:00-07:00",
     "location": "Office",
     "category": "work",
     "attendeesCount": 2,
@@ -78,8 +78,8 @@
   },
   {
     "title": "Product sync",
-    "start": "2026-05-14T09:30:00Z",
-    "end": "2026-05-14T10:30:00Z",
+    "start": "2026-05-14T09:30:00-07:00",
+    "end": "2026-05-14T10:30:00-07:00",
     "location": "Conf Rm 1",
     "category": "work",
     "attendeesCount": 8,
@@ -87,16 +87,16 @@
   },
   {
     "title": "Dentist follow-up",
-    "start": "2026-05-14T14:00:00Z",
-    "end": "2026-05-14T14:30:00Z",
+    "start": "2026-05-14T14:00:00-07:00",
+    "end": "2026-05-14T14:30:00-07:00",
     "location": "Dr. Chen, 4th St.",
     "category": "health",
     "source": "manual"
   },
   {
     "title": "Pitch deck review",
-    "start": "2026-05-15T11:00:00Z",
-    "end": "2026-05-15T12:30:00Z",
+    "start": "2026-05-15T11:00:00-07:00",
+    "end": "2026-05-15T12:30:00-07:00",
     "location": "HQ · 12th floor",
     "category": "work",
     "attendeesCount": 5,
@@ -104,8 +104,8 @@
   },
   {
     "title": "Dinner with Mei",
-    "start": "2026-05-15T19:00:00Z",
-    "end": "2026-05-15T21:00:00Z",
+    "start": "2026-05-15T19:00:00-07:00",
+    "end": "2026-05-15T21:00:00-07:00",
     "location": "Nopa",
     "category": "personal",
     "attendeesCount": 2,
@@ -113,24 +113,24 @@
   },
   {
     "title": "Farmers market",
-    "start": "2026-05-16T09:00:00Z",
-    "end": "2026-05-16T10:30:00Z",
+    "start": "2026-05-16T09:00:00-07:00",
+    "end": "2026-05-16T10:30:00-07:00",
     "location": "Ferry Building",
     "category": "personal",
     "source": "manual"
   },
   {
     "title": "Haircut",
-    "start": "2026-05-16T12:00:00Z",
-    "end": "2026-05-16T13:00:00Z",
+    "start": "2026-05-16T12:00:00-07:00",
+    "end": "2026-05-16T13:00:00-07:00",
     "location": "Edo Salon",
     "category": "personal",
     "source": "manual"
   },
   {
     "title": "Sara’s birthday",
-    "start": "2026-05-16T20:00:00Z",
-    "end": "2026-05-16T23:00:00Z",
+    "start": "2026-05-16T20:00:00-07:00",
+    "end": "2026-05-16T23:00:00-07:00",
     "location": "Trick Dog",
     "category": "family",
     "attendeesCount": 12,
@@ -138,8 +138,8 @@
   },
   {
     "title": "Family brunch",
-    "start": "2026-05-17T10:00:00Z",
-    "end": "2026-05-17T12:00:00Z",
+    "start": "2026-05-17T10:00:00-07:00",
+    "end": "2026-05-17T12:00:00-07:00",
     "location": "Mom & Dad’s",
     "category": "family",
     "attendeesCount": 5,
@@ -147,8 +147,8 @@
   },
   {
     "title": "Deep work · Q3 plan",
-    "start": "2026-05-17T15:00:00Z",
-    "end": "2026-05-17T17:00:00Z",
+    "start": "2026-05-17T15:00:00-07:00",
+    "end": "2026-05-17T17:00:00-07:00",
     "location": "Home",
     "category": "focus",
     "source": "manual"
