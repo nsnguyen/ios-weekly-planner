@@ -1,0 +1,125 @@
+import Foundation
+import Observation
+
+/// Drives the Paper Day page for a single `(weekOffset, dayIdx)` cell.
+///
+/// Owns the per-day slice of events and pending inbox suggestions, plus the
+/// derived `isToday` flag used by the header chip. The view triggers
+/// `refresh()` from `.task` on appear and after every mutation; real-time
+/// AsyncStream observation is deferred until SwiftData `@Model` types are
+/// `Sendable` across actor hops (see `EventStore` notes).
+///
+/// All store calls are `@MainActor`-isolated, so this class is too.
+@MainActor
+@Observable
+final class DayPageViewModel {
+    /// Week the page belongs to, relative to "today's week" (0 = current).
+    let weekOffset: Int
+
+    /// Monday-based day index within the week (0 = Mon … 6 = Sun).
+    let dayIdx: Int
+
+    /// Events scheduled for this day, sorted ascending by `start`.
+    var events: [Event] = []
+
+    /// Pending inbox suggestions whose `proposedStart` lands on this day.
+    var inbox: [InboxSuggestion] = []
+
+    /// Localized description of the most recent fetch failure, if any.
+    /// Cleared when a refresh succeeds.
+    var loadError: String?
+
+    private let eventStore: any EventStoring
+    private let inboxStore: any InboxStoring
+    private let clock: () -> Date
+
+    /// Designated initializer.
+    ///
+    /// - Parameters:
+    ///   - weekOffset: Week relative to "now" (0 = current week).
+    ///   - dayIdx: Monday-based index within the week.
+    ///   - eventStore: Store for `Event` reads.
+    ///   - inboxStore: Store for `InboxSuggestion` reads/mutations.
+    ///   - clock: Injected "now" so tests can pin the date. Defaults to
+    ///     `Date()` in production.
+    init(weekOffset: Int,
+         dayIdx: Int,
+         eventStore: any EventStoring,
+         inboxStore: any InboxStoring,
+         clock: @escaping () -> Date = { .init() })
+    {
+        self.weekOffset = weekOffset
+        self.dayIdx = dayIdx
+        self.eventStore = eventStore
+        self.inboxStore = inboxStore
+        self.clock = clock
+    }
+
+    /// `true` iff this page represents the current calendar day. Drives the
+    /// header's `TodayChip` visibility.
+    var isToday: Bool {
+        guard weekOffset == 0 else { return false }
+        let now = clock()
+        let week = WeekMath.weekDays(forOffset: 0, today: now)
+        guard let todayIdx = WeekMath.todayIndex(in: week, for: now) else { return false }
+        return todayIdx == dayIdx
+    }
+
+    /// Re-fetch events + inbox suggestions from the stores and filter them to
+    /// this day. Errors from either store are surfaced via `loadError` while
+    /// the previously-loaded data is left in place.
+    func refresh() async {
+        let calendar = WeekMath.mondayCalendar()
+        let now = clock()
+
+        do {
+            let allEvents = try await eventStore.events(forWeekOffset: weekOffset, today: now)
+            events = allEvents
+                .filter { $0.weekdayIndex(in: calendar) == dayIdx }
+                .sorted { $0.start < $1.start }
+            loadError = nil
+        } catch {
+            loadError = error.localizedDescription
+        }
+
+        do {
+            let allInbox = try await inboxStore.pending(forWeekOffset: weekOffset, today: now)
+            inbox = allInbox
+                .filter { $0.proposedStart.mondayBasedWeekdayIndex(in: calendar) == dayIdx }
+                .sorted { $0.proposedStart < $1.proposedStart }
+        } catch {
+            loadError = error.localizedDescription
+        }
+    }
+
+    /// Mark a suggestion as accepted and refresh the day's state. Errors are
+    /// caught and surfaced via `loadError` so the UI never raises.
+    func accept(suggestionID: UUID) async {
+        do {
+            try await inboxStore.accept(id: suggestionID)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
+
+    /// Mark a suggestion as dismissed and refresh. Same error policy as
+    /// `accept(suggestionID:)`.
+    func dismiss(suggestionID: UUID) async {
+        do {
+            try await inboxStore.dismiss(id: suggestionID)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
+}
+
+private extension Date {
+    /// Monday-based weekday index (0 = Mon … 6 = Sun). Mirrors
+    /// `Event.weekdayIndex(in:)` for non-`Event` date values.
+    func mondayBasedWeekdayIndex(in calendar: Calendar) -> Int {
+        let weekday = calendar.component(.weekday, from: self)
+        return (weekday + 5) % 7
+    }
+}
