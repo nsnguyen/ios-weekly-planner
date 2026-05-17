@@ -1,16 +1,5 @@
 import SwiftUI
 
-/// The six event categories, used everywhere events are rendered.
-/// Raw values are stable identifiers — persisted in SwiftData and EventKit.
-enum Category: String, CaseIterable, Hashable, Codable {
-    case work
-    case personal
-    case health
-    case family
-    case focus
-    case travel
-}
-
 /// Per-category color tokens. Dot / background / ink colors all flow from here.
 ///
 /// Three of the six ink colors (`personal`, `focus`, `travel`) are deliberately
