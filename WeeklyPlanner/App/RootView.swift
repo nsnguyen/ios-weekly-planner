@@ -5,9 +5,10 @@ import SwiftUI
 /// the Day-vs-Week `paperView` toggle, and the `isPickerOpen` flag the week
 /// picker (Group R) will read.
 ///
-/// Lays out a single `BookContainer` for the leather chrome and supplies a
-/// `DayPageView` as its content. Wires the container's nav callbacks back to
-/// the controller:
+/// Lays out a single `BookContainer` for the leather chrome and supplies
+/// either a `DayPageView` or a `WeekPageView` as its content, picked by the
+/// `paperView` toggle. Wires the container's nav callbacks back to the
+/// controller:
 ///
 /// - Top-bar week chevrons: instant `setWeek` in Day view, 3D `flipWeek` in
 ///   Week view (matches the Phase 09 spec's "chevron behavior split").
@@ -15,9 +16,9 @@ import SwiftUI
 ///   via `flipToDay(idx:)`.
 /// - Bottom-controls day chevrons: animated `flipDay(direction:)`.
 ///
-/// Week picker, AI overlay, and the Day/Week toggle's render switch are wired
-/// in later groups (R, T, and Phase 12 respectively); the corresponding
-/// callbacks here are stubs that flip local state only.
+/// The AI overlay is wired in Phase 12; today the `onOpenAI` callback is a
+/// stub. The week picker sheet is presented as a sibling view in the same
+/// ZStack and is fully wired.
 struct RootView: View {
     /// Source-of-truth for which page is on screen. Owned by `RootView` (not
     /// `DayPageView`) so the top bar and the page-flip surface share one
@@ -85,10 +86,12 @@ struct RootView: View {
                           onPrevDay: { controller.flipDay(direction: .prev) },
                           onNextDay: { controller.flipDay(direction: .next) },
                           content: {
-                              // For now, always show DayPage. Group T wires
-                              // the Day/Week toggle to actually switch in a
-                              // Week page here.
-                              DayPageView(controller: controller)
+                              switch paperView {
+                              case .day:
+                                  DayPageView(controller: controller)
+                              case .week:
+                                  WeekPageView(weekOffset: controller.current.week)
+                              }
                           })
 
             WeekPickerSheet(isOpen: $isPickerOpen,

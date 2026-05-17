@@ -5,12 +5,17 @@ import SwiftUI
 /// leather cover), so the off-state ink color is theme-tinted chrome rather
 /// than page ink.
 ///
-/// Geometry matches the JS mock: a 62×24 rounded-7pt capsule whose inner
-/// 2pt padding wraps two segments separated by a 2pt gap. The outer ring is a
-/// 0.5pt translucent white border and a `Color.black.opacity(0.3)` fill so
-/// the control reads as a subtle inset notch on the leather. Active segments
-/// get a `theme.chromeText` fill with `theme.bookSpine` text; inactive ones
-/// stay transparent with `theme.chromeText` text.
+/// Geometry: a rounded-7pt capsule whose inner 2pt padding wraps two segments
+/// separated by a 2pt gap. The outer ring is a 0.5pt translucent white border
+/// and a `Color.black.opacity(0.3)` fill so the control reads as a subtle
+/// inset notch on the leather. Active segments get a `theme.chromeText` fill
+/// with `theme.bookSpine` text; inactive ones stay transparent with
+/// `theme.chromeText` text.
+///
+/// The toggle sizes itself intrinsically (no fixed outer frame) so the
+/// "Day" / "Week" labels render fully at 11pt system semibold; the JS mock's
+/// 62×24 outer frame was authored at a different DPI and clipped the labels
+/// on iOS. Expect ~76-84pt wide × ~24-26pt tall in practice.
 struct DayWeekToggle: View {
     /// Currently selected view. Two-way bound so taps mutate the parent's
     /// `PaperView` state directly.
@@ -24,7 +29,6 @@ struct DayWeekToggle: View {
             segment(for: .week, label: "Week")
         }
         .padding(2)
-        .frame(width: 62, height: 24)
         .background(Color.black.opacity(0.3),
                     in: RoundedRectangle(cornerRadius: 7, style: .continuous))
         .overlay {
@@ -50,7 +54,6 @@ struct DayWeekToggle: View {
                 .foregroundStyle(active ? theme.bookSpine : theme.chromeText)
                 .padding(.vertical, 3)
                 .padding(.horizontal, 12)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(active ? theme.chromeText : Color.clear,
                             in: RoundedRectangle(cornerRadius: 5, style: .continuous))
                 .contentShape(RoundedRectangle(cornerRadius: 5, style: .continuous))

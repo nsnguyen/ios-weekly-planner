@@ -74,7 +74,7 @@ struct BookTopBar: View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
             leftCluster
             Spacer(minLength: 0)
-            AIButton(accent: theme.blueInk, action: onOpenAI)
+            AIButton(action: onOpenAI)
                 .alignmentGuide(.lastTextBaseline) { dim in dim[.bottom] - 6 }
         }
     }
