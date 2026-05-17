@@ -10,10 +10,11 @@ excluded:
 
 disabled_rules:
   - todo
-  - line_length          # handled by swiftformat
-  - trailing_whitespace  # handled by swiftformat
-  - trailing_comma       # swiftformat enforces opposite (commas always)
-  - identifier_name      # too noisy for short SwiftUI identifiers (x, y, dx)
+  - line_length            # handled by swiftformat
+  - trailing_whitespace    # handled by swiftformat
+  - trailing_comma         # swiftformat enforces opposite (commas always)
+  - opening_brace          # swiftformat owns brace placement on wrapped signatures
+  - identifier_name        # too noisy for short SwiftUI identifiers (x, y, dx)
 
 opt_in_rules:
   - force_unwrapping
@@ -27,8 +28,8 @@ opt_in_rules:
   - private_outlet
   - prohibited_super_call
   - redundant_nil_coalescing
-  - sorted_imports
   - toggle_bool
+  # sorted_imports: handled by swiftformat (testable-bottom grouping)
 
 analyzer_rules:
   - unused_import
