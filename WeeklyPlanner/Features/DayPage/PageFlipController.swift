@@ -113,6 +113,31 @@ final class PageFlipController {
         progress = 0
     }
 
+    /// Advance the current coordinate by one whole week. Keeps the same day
+    /// index. Used by the top-bar week chevrons (in Week view) and by the
+    /// Week page's swipe gesture.
+    ///
+    /// - Parameter direction: Direction to flip toward. `.next` advances the
+    ///   week by 1, `.prev` rewinds by 1.
+    func flipWeek(direction: FlipDirection) {
+        guard !isFlipping else { return }
+        let nextWeek = direction == .next ? current.week + 1 : current.week - 1
+        target = PageCoordinate(week: nextWeek, day: current.day)
+        self.direction = direction
+        progress = 0
+    }
+
+    /// Instantly set the week (no flip animation, no target). Used by the Day
+    /// view's chevrons per spec: "shifts weekOffset by ±1 without triggering
+    /// the page-flip animation".
+    ///
+    /// - Parameter week: New week offset (relative to today's week). The day
+    ///   index is preserved.
+    func setWeek(_ week: Int) {
+        guard !isFlipping else { return }
+        current = PageCoordinate(week: week, day: current.day)
+    }
+
     /// Finalize the transition. Called by the view when the animation
     /// completes. Sets `current = target`, clears `target` and `direction`,
     /// and resets `progress` to 0. No-op when there is no in-flight flip.
