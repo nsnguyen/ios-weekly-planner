@@ -1,0 +1,222 @@
+import SwiftUI
+
+/// Drop-down week picker overlay. Sits above the book chrome whenever
+/// `isOpen == true` and renders a 5-month mini grid the user can scroll
+/// through and tap to jump to any week.
+///
+/// Layout:
+/// - A `ZStack` that renders nothing when closed.
+/// - When open: a dark backdrop (tap to dismiss) plus a paper-toned sheet
+///   inset 12pt on the sides, 100pt below the status bar, 16pt from the
+///   bottom — matching the JS mock's geometry.
+///
+/// The view model is owned via `@State` so the picker can re-render
+/// instantly when the user taps a different row before dismissing. The
+/// parent owns the sheet's open/closed state via `isOpen` and the actual
+/// week selection via `onPick`.
+struct WeekPickerSheet: View {
+    /// Two-way binding to the sheet's open state. Set to `false` by the
+    /// backdrop tap, the Close button, and after `onPick` fires.
+    @Binding var isOpen: Bool
+
+    /// The week offset the picker should center on when it opens. Drives
+    /// both the view model's focus month and the auto-scroll target.
+    let initialWeekOffset: Int
+
+    /// Invoked with the chosen week offset. The parent should `setWeek(_:)`
+    /// on its `PageFlipController` and then close the sheet (the sheet
+    /// also flips `isOpen` to `false` itself, but the parent is free to do
+    /// extra work first — e.g., jumping to a specific day).
+    var onPick: (Int) -> Void
+
+    @State private var viewModel: WeekPickerViewModel
+
+    @Environment(\.paperTheme) private var theme
+    @Environment(\.paperFont) private var font
+
+    /// Designated initializer. Constructs the view model eagerly so the
+    /// sheet renders without a frame of empty content on first open.
+    init(isOpen: Binding<Bool>,
+         initialWeekOffset: Int,
+         onPick: @escaping (Int) -> Void)
+    {
+        _isOpen = isOpen
+        self.initialWeekOffset = initialWeekOffset
+        self.onPick = onPick
+        _viewModel = State(initialValue: WeekPickerViewModel(focusWeekOffset: initialWeekOffset))
+    }
+
+    var body: some View {
+        ZStack {
+            if isOpen {
+                backdrop
+                    .transition(.opacity)
+
+                sheet
+                    .transition(.asymmetric(insertion: .offset(y: -14).combined(with: .opacity),
+                                            removal: .opacity))
+            }
+        }
+        .animation(AnimationTokens.pickerDrop, value: isOpen)
+    }
+
+    // MARK: - Backdrop
+
+    /// Translucent dark scrim. Sized to fill its parent so taps anywhere
+    /// outside the sheet dismiss it.
+    private var backdrop: some View {
+        Color(hex: "#0F0A06")
+            .opacity(0.55)
+            .ignoresSafeArea()
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isOpen = false
+            }
+            .accessibilityLabel("Close week picker")
+    }
+
+    // MARK: - Sheet card
+
+    /// The actual picker card. Inset from the screen edges per the mock,
+    /// rounded 12pt, with a double-drop shadow so it reads as floating
+    /// well above the book chrome.
+    private var sheet: some View {
+        VStack(spacing: 0) {
+            header
+            divider
+            dayOfWeekHeader
+            scrollBody
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(sheetBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: Color.black.opacity(0.55), radius: 16, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.25), radius: 2, x: 0, y: 2)
+        .padding(EdgeInsets(top: 100, leading: 12, bottom: 16, trailing: 12))
+    }
+
+    /// 160° linear gradient from `#FCF9EE` to `#F1EAD2`. The hex values are
+    /// inlined from the spec — they are the same in every theme because the
+    /// picker is always a cream sheet over the dark scrim.
+    private var sheetBackground: some View {
+        let points = CSSGradientAngle.unitPoints(degrees: 160)
+        return LinearGradient(colors: [Color(hex: "#FCF9EE"), Color(hex: "#F1EAD2")],
+                              startPoint: points.start,
+                              endPoint: points.end)
+    }
+
+    // MARK: - Header
+
+    /// Header strip: eyebrow + title on the left, Today/Close pill buttons
+    /// on the right. Padding mirrors the JS mock exactly.
+    private var header: some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("JUMP TO WEEK")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(1.6)
+                    .textCase(.uppercase)
+                    .foregroundStyle(theme.ink2)
+
+                Text("Pick a date")
+                    .font(font.font(at: 22, weight: .regular))
+                    .foregroundStyle(theme.ink)
+            }
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 8) {
+                PaperPillButton(title: "Today", variant: .primary, size: .compact) {
+                    onPick(0)
+                    isOpen = false
+                }
+                PaperPillButton(title: "Close", variant: .secondary, size: .compact) {
+                    isOpen = false
+                }
+            }
+        }
+        .padding(EdgeInsets(top: 14, leading: 16, bottom: 10, trailing: 16))
+    }
+
+    /// 0.5pt rule under the header. Matches `border-bottom: 0.5px solid theme.rule`.
+    private var divider: some View {
+        Rectangle()
+            .fill(theme.rule)
+            .frame(height: 0.5)
+    }
+
+    // MARK: - Day-of-week header
+
+    /// Seven single-character weekday labels above the grid. Sits on a faint
+    /// cream tint with a `ruleSoft` hairline beneath so it visually separates
+    /// from the scroll body.
+    private var dayOfWeekHeader: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 3) {
+                Color.clear.frame(width: 28)
+
+                ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { _, letter in
+                    Text(letter)
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1)
+                        .foregroundStyle(theme.ink3)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+            }
+            .padding(EdgeInsets(top: 8, leading: 14, bottom: 6, trailing: 14))
+
+            Rectangle()
+                .fill(theme.ruleSoft)
+                .frame(height: 0.5)
+        }
+        .background(Color(red: 250 / 255, green: 246 / 255, blue: 233 / 255).opacity(0.85))
+    }
+
+    // MARK: - Scroll body
+
+    /// Vertical scroll containing the five months. Uses `ScrollViewReader`
+    /// so the initial appearance can center the focused week.
+    private var scrollBody: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(viewModel.months) { month in
+                        MonthGridView(month: month,
+                                      selectedWeekOffset: viewModel.selectedWeekOffset,
+                                      onPick: handlePick)
+                    }
+
+                    footer
+                }
+                .padding(.horizontal, 0)
+                .padding(.top, 8)
+                .padding(.bottom, 14)
+            }
+            .onAppear {
+                proxy.scrollTo("\(initialWeekOffset)", anchor: .center)
+            }
+        }
+    }
+
+    /// Italic handwritten footer line — purely decorative hint.
+    private var footer: some View {
+        Text("Tap any week to flip there.")
+            .font(.custom("Cochin-Italic", size: 13))
+            .foregroundStyle(theme.ink3)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.bottom, 14)
+            .padding(.top, 8)
+    }
+
+    // MARK: - Row tap handler
+
+    /// Centralized row-tap handler so the same flow runs whether the tap
+    /// comes from a `WeekRowView` or the Today pill: update the picker's
+    /// selection (so the row briefly shows the blue wash before the sheet
+    /// closes), notify the parent, and dismiss.
+    private func handlePick(_ offset: Int) {
+        viewModel.selectedWeekOffset = offset
+        onPick(offset)
+        isOpen = false
+    }
+}

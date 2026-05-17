@@ -51,44 +51,53 @@ struct RootView: View {
         let todayIdx = WeekMath.todayIndex(in: currentWeekDays, for: today)
         let isOnTodayPage = isCurrentWeek && controller.current.day == todayIdx
 
-        return BookContainer(paperView: $paperView,
-                             weekMeta: weekMeta,
-                             isOnTodayPage: isOnTodayPage,
-                             isPickerOpen: isPickerOpen,
-                             onOpenAI: {
-                                 // Phase 12 will wire the AI overlay.
-                             },
-                             onOpenPicker: {
-                                 isPickerOpen.toggle()
-                             },
-                             onJumpToday: {
-                                 if let idx = todayIdx {
-                                     controller.setWeek(0)
-                                     controller.flipToDay(idx: idx)
-                                 }
-                             },
-                             onPrevWeek: {
-                                 if paperView == .day {
-                                     controller.setWeek(controller.current.week - 1)
-                                 } else {
-                                     controller.flipWeek(direction: .prev)
-                                 }
-                             },
-                             onNextWeek: {
-                                 if paperView == .day {
-                                     controller.setWeek(controller.current.week + 1)
-                                 } else {
-                                     controller.flipWeek(direction: .next)
-                                 }
-                             },
-                             onPrevDay: { controller.flipDay(direction: .prev) },
-                             onNextDay: { controller.flipDay(direction: .next) },
-                             content: {
-                                 // For now, always show DayPage. Group T wires
-                                 // the Day/Week toggle to actually switch in a
-                                 // Week page here.
-                                 DayPageView(controller: controller)
-                             })
+        return ZStack {
+            BookContainer(paperView: $paperView,
+                          weekMeta: weekMeta,
+                          isOnTodayPage: isOnTodayPage,
+                          isPickerOpen: isPickerOpen,
+                          onOpenAI: {
+                              // Phase 12 will wire the AI overlay.
+                          },
+                          onOpenPicker: {
+                              isPickerOpen.toggle()
+                          },
+                          onJumpToday: {
+                              if let idx = todayIdx {
+                                  controller.setWeek(0)
+                                  controller.flipToDay(idx: idx)
+                              }
+                          },
+                          onPrevWeek: {
+                              if paperView == .day {
+                                  controller.setWeek(controller.current.week - 1)
+                              } else {
+                                  controller.flipWeek(direction: .prev)
+                              }
+                          },
+                          onNextWeek: {
+                              if paperView == .day {
+                                  controller.setWeek(controller.current.week + 1)
+                              } else {
+                                  controller.flipWeek(direction: .next)
+                              }
+                          },
+                          onPrevDay: { controller.flipDay(direction: .prev) },
+                          onNextDay: { controller.flipDay(direction: .next) },
+                          content: {
+                              // For now, always show DayPage. Group T wires
+                              // the Day/Week toggle to actually switch in a
+                              // Week page here.
+                              DayPageView(controller: controller)
+                          })
+
+            WeekPickerSheet(isOpen: $isPickerOpen,
+                            initialWeekOffset: controller.current.week)
+            { offset in
+                controller.setWeek(offset)
+                isPickerOpen = false
+            }
+        }
     }
 }
 
