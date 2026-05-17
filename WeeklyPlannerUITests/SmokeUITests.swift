@@ -6,12 +6,15 @@ final class SmokeUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Sanity check: the app launches into the foreground and presents at
+    /// least one window within five seconds. We don't assert on any specific
+    /// text because the Day page now renders dynamic seed content — the
+    /// visible strings change by date / locale.
     func testAppLaunches() {
         let app = XCUIApplication()
         app.launch()
 
-        let banner = app.staticTexts["Weekly Planner — bootstrap"]
-        XCTAssertTrue(banner.waitForExistence(timeout: 5),
-                      "Bootstrap placeholder text did not appear within 5 seconds")
+        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 5),
+                      "Application window did not appear within 5 seconds")
     }
 }
