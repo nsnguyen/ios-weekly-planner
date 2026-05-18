@@ -2,8 +2,8 @@ import SwiftUI
 
 /// The root scene the user lands on when the app launches. Owns the top-level
 /// navigation state — `PageFlipController` (which week / day is on screen),
-/// the Day-vs-Week `paperView` toggle, and the `isPickerOpen` flag the week
-/// picker (Group R) will read.
+/// the Day-vs-Week `paperView` toggle, the `isPickerOpen` flag for the week
+/// picker, and the `isAISearchOpen` flag for the Apple Intelligence overlay.
 ///
 /// Lays out a single `BookContainer` for the leather chrome and supplies
 /// either a `DayPageView` or a `WeekPageView` as its content, picked by the
@@ -15,10 +15,14 @@ import SwiftUI
 /// - Top-bar Today pill: hops `setWeek(0)` then animates to today's weekday
 ///   via `flipToDay(idx:)`.
 /// - Bottom-controls day chevrons: animated `flipDay(direction:)`.
+/// - Top-bar AI button: opens the `PaperAISearchView` overlay (Phase 12).
 ///
-/// The AI overlay is wired in Phase 12; today the `onOpenAI` callback is a
-/// stub. The week picker sheet is presented as a sibling view in the same
-/// ZStack and is fully wired.
+/// Citation taps inside the AI overlay close the overlay and surface the
+/// matched event's `id` back to `RootView`. Phase 12 stops there — opening
+/// the matching event detail sheet is left to a future phase that wires a
+/// shared event-detail router (Day and Week pages each own their own
+/// `openEventID` today, with no global routing). For now the user can find
+/// the cited event manually on the day page underneath.
 struct RootView: View {
     /// Source-of-truth for which page is on screen. Owned by `RootView` (not
     /// `DayPageView`) so the top bar and the page-flip surface share one
@@ -34,6 +38,18 @@ struct RootView: View {
     /// `DateRangePill` tap; Group R replaces the no-op overlay with the real
     /// picker sheet.
     @State private var isPickerOpen: Bool = false
+
+    /// True while the Apple Intelligence overlay is open. Flipped by the
+    /// top-bar AI button and by `PaperAISearchView`'s own Close path.
+    @State private var isAISearchOpen: Bool = false
+
+    /// Direct read of the env-injected event store. `PaperAISearchView`
+    /// needs a concrete `EventStoring` at init time to build its
+    /// `AISearchViewModel`, so we forward this value at the call site
+    /// rather than relying on a child-only `@Environment` read.
+    @Environment(\.eventStore) private var eventStore
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init() {
         let today = Date()
@@ -58,7 +74,7 @@ struct RootView: View {
                           isOnTodayPage: isOnTodayPage,
                           isPickerOpen: isPickerOpen,
                           onOpenAI: {
-                              // Phase 12 will wire the AI overlay.
+                              isAISearchOpen = true
                           },
                           onOpenPicker: {
                               isPickerOpen.toggle()
@@ -100,7 +116,24 @@ struct RootView: View {
                 controller.setWeek(offset)
                 isPickerOpen = false
             }
+
+            if isAISearchOpen {
+                PaperAISearchView(isOpen: $isAISearchOpen,
+                                  eventStore: eventStore,
+                                  onTapCitation: { _ in
+                                      // Phase 12 closes the overlay and stops
+                                      // there — routing the citation tap to
+                                      // the matching event detail sheet
+                                      // needs a global router we haven't
+                                      // built (Day and Week each own their
+                                      // own `openEventID`). The user can
+                                      // find the cited event on the page
+                                      // underneath.
+                                  })
+            }
         }
+        .animation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide,
+                   value: isAISearchOpen)
     }
 }
 
