@@ -155,7 +155,7 @@ struct DayPageContent: View {
                                                      in: modelContext)
         {
             AIStickyNote(insight: insight)
-                .padding(.top, 16)
+                .padding(.top, 96)
                 .padding(.trailing, 16)
         }
     }
