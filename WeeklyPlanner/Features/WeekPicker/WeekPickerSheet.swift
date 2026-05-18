@@ -147,18 +147,19 @@ struct WeekPickerSheet: View {
 
     // MARK: - Day-of-week header
 
-    /// Seven single-character weekday labels above the grid. Sits on a faint
+    /// Seven two-character weekday labels above the grid. Sits on a faint
     /// cream tint with a `ruleSoft` hairline beneath so it visually separates
-    /// from the scroll body.
+    /// from the scroll body. Two letters (vs. the JS mock's single letter)
+    /// because the single-letter form repeats T and S and reads as a typo.
     private var dayOfWeekHeader: some View {
         VStack(spacing: 0) {
             HStack(spacing: 3) {
                 Color.clear.frame(width: 28)
 
-                ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { _, letter in
+                ForEach(Array(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].enumerated()), id: \.offset) { _, letter in
                     Text(letter)
                         .font(.system(size: 10, weight: .bold))
-                        .tracking(1)
+                        .tracking(0.6)
                         .foregroundStyle(theme.ink3)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
@@ -176,10 +177,20 @@ struct WeekPickerSheet: View {
 
     /// Vertical scroll containing the five months. Uses `ScrollViewReader`
     /// so the initial appearance can center the focused week.
+    ///
+    /// `ScrollView` is the outer view (standard SwiftUI pattern — putting
+    /// `ScrollViewReader` outside means the frame modifier doesn't propagate
+    /// through to the actual scrolling surface, which left the ScrollView
+    /// sized to its content's natural height and broke the gesture). The
+    /// `.frame(maxHeight: .infinity)` on the ScrollView is what the JS mock's
+    /// `flex: 1, overflowY: 'auto'` does — claim the remaining vertical
+    /// space inside the sheet VStack so content overflows and scrolls.
+    /// `.layoutPriority(1)` reinforces this against the parent VStack's
+    /// other (fixed-height) children.
     private var scrollBody: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(alignment: .leading, spacing: 0) {
+        ScrollView(.vertical, showsIndicators: false) {
+            ScrollViewReader { proxy in
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(viewModel.months) { month in
                         MonthGridView(month: month,
                                       selectedWeekOffset: viewModel.selectedWeekOffset,
@@ -188,14 +199,21 @@ struct WeekPickerSheet: View {
 
                     footer
                 }
-                .padding(.horizontal, 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
                 .padding(.bottom, 14)
-            }
-            .onAppear {
-                proxy.scrollTo("\(initialWeekOffset)", anchor: .center)
+                .onAppear {
+                    // Defer one runloop tick so the VStack is laid out
+                    // before we ask the proxy to scroll — otherwise the
+                    // proxy can pick an offset based on stale row frames.
+                    DispatchQueue.main.async {
+                        proxy.scrollTo("\(initialWeekOffset)", anchor: .center)
+                    }
+                }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .layoutPriority(1)
     }
 
     /// Italic handwritten footer line — purely decorative hint.
