@@ -48,6 +48,7 @@ struct DayPageHeader: View {
                     .tracking(-2)
                     .rotationEffect(.degrees(-3), anchor: .center)
                     .fixedSize()
+                    .padding(.trailing, 8)
             }
 
             if isToday {
