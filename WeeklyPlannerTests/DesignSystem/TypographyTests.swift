@@ -21,6 +21,15 @@ final class TypographyTests: XCTestCase {
         }
     }
 
+    func testPageDateNumberLayoutKeepsGlyphsAwayFromClippedPageEdge() {
+        XCTAssertEqual(DayPageDateNumberLayout.width, 128)
+        XCTAssertEqual(DayPageDateNumberLayout.trailingPadding, 36)
+    }
+
+    func testPageDateNumberDisplayTextIncludesTrailingGlyphGuard() {
+        XCTAssertEqual(DayPageDateNumber.displayText(for: 17), "17\u{00A0}")
+    }
+
     func testEventRampMatchesSpec() {
         XCTAssertEqual(Typography.eventTitle.size, 21)
         XCTAssertEqual(Typography.eventTitle.weight, .semibold)
