@@ -1,33 +1,36 @@
 import SwiftUI
 
-/// The flip-aware Day page entry point. Hosts a `PageFlipController`, draws
-/// the side-tab column on the trailing edge, attaches the horizontal-swipe
-/// gesture, and delegates the actual paper rendering to `DayPageContent` via
-/// `PageFlipContainer`.
+/// The flip-aware Day page surface. Draws the side-tab column on the leading
+/// edge, attaches the horizontal-swipe gesture, and delegates the actual paper
+/// rendering to `DayPageContent` via `PageFlipContainer`.
 ///
-/// `DayPageView` is what `RootView` mounts. It owns the controller as
-/// `@State` so the same instance survives view reloads while the user
-/// navigates between days. Side-tab taps and swipe gestures both flow through
-/// the controller, which means the rest of the app gets a single source of
-/// truth for "which day is the user on right now".
+/// `DayPageView` does **not** own the `PageFlipController` — `RootView` does,
+/// and the controller is passed in so the top bar and the page-flip surface
+/// share a single source of truth. Side-tab taps and swipe gestures still
+/// flow through the controller; the only difference from earlier phases is
+/// the lifecycle (controller now outlives this view's identity, which lets
+/// the Day/Week toggle in Group T swap render trees without resetting the
+/// current page).
+///
+/// `PageFlipController` is `@Observable`, so SwiftUI tracks reads of
+/// `controller.current` automatically — passing the controller as a `let`
+/// property is sufficient to re-render the view tree on each flip.
 ///
 /// Layout:
 /// - `PageFlipContainer` fills the available space; inside it, each rendered
-///   `DayPageContent` brings its own book chrome.
-/// - `SideTabs` is overlaid on the trailing edge with a slight negative
-///   trailing padding so the rounded tabs poke past the edge of the page.
+///   `DayPageContent` brings its own paper-page chrome.
+/// - `SideTabs` is laid out beside the flip surface so the rounded tabs poke
+///   past the leading edge of the page.
 struct DayPageView: View {
+    /// Shared controller injected by `RootView`. Drives both this view's
+    /// side-tab selection / swipe gesture and the top bar's week chevrons.
+    let controller: PageFlipController
+
     @Environment(\.paperTheme) private var theme
 
-    /// Source-of-truth for "which day is on screen". Re-initialized only when
-    /// the parent supplies a new `initialCoordinate`; subsequent flips mutate
-    /// the controller in-place.
-    @State private var controller: PageFlipController
-
-    /// Construct a `DayPageView` anchored on the given starting coordinate.
-    /// Typically `(week: 0, day: todayIdx)` so the user lands on today.
-    init(initialCoordinate: PageCoordinate) {
-        _controller = State(initialValue: PageFlipController(current: initialCoordinate))
+    /// Construct a `DayPageView` over the supplied (shared) controller.
+    init(controller: PageFlipController) {
+        self.controller = controller
     }
 
     var body: some View {
@@ -193,16 +196,12 @@ struct DayPageContent: View {
 // MARK: - Previews
 
 #Preview("DayPageView · Today (stub stores)") {
-    ZStack {
-        BookCover()
-        DayPageView(initialCoordinate: PageCoordinate(week: 0, day: 5))
-            .padding(.top, Spacing.bookTopBarTopPadding)
-            .padding(.bottom, Spacing.tabBarHeight + Spacing.tabBarBottomSafeArea)
-    }
-    .environment(\.eventStore, StubEventStore())
-    .environment(\.inboxStore, StubInboxStore())
-    .environment(\.taskStore, StubTaskStore())
-    .paperTheme(.cream)
+    let controller = PageFlipController(current: PageCoordinate(week: 0, day: 5))
+    return DayPageView(controller: controller)
+        .environment(\.eventStore, StubEventStore())
+        .environment(\.inboxStore, StubInboxStore())
+        .environment(\.taskStore, StubTaskStore())
+        .paperTheme(.cream)
 }
 
 #Preview("DayPageContent · Today (stub stores)") {
