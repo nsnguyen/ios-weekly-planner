@@ -31,6 +31,12 @@ struct WeekDayRow: View {
     /// Invoked when a task row is tapped. Carries the toggled task's id.
     var onToggleTask: (UUID) -> Void
 
+    /// Invoked when an event row is tapped. Carries the tapped event's id
+    /// so `WeekPageView` can open the `PaperEventSheet`. Defaults to a
+    /// no-op so callers that don't wire taps (previews, future test
+    /// hosts) don't have to plumb a closure through.
+    var onTapEvent: (UUID) -> Void = { _ in }
+
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
 
@@ -84,7 +90,7 @@ struct WeekDayRow: View {
         } else {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(events, id: \.id) { event in
-                    WeekEventEntry(event: event)
+                    WeekEventEntry(event: event, onTap: { onTapEvent(event.id) })
                 }
                 ForEach(tasks, id: \.id) { task in
                     WeekTaskEntry(task: task) { onToggleTask(task.id) }
