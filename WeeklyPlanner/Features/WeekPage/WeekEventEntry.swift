@@ -13,16 +13,25 @@ struct WeekEventEntry: View {
     /// The event this row represents.
     let event: Event
 
+    /// Invoked when the row is tapped. The Week page wires this to the
+    /// event-detail sheet via `openEventID`; defaults to a no-op so
+    /// previews and unit tests can omit it.
+    var onTap: () -> Void = {}
+
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 5) {
-            timeColumn
-            titleColumn
-            trailingDot
+        Button(action: onTap) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                timeColumn
+                titleColumn
+                trailingDot
+            }
+            .padding(.bottom, 1)
+            .contentShape(Rectangle())
         }
-        .padding(.bottom, 1)
+        .buttonStyle(.plain)
     }
 
     // MARK: - Subviews

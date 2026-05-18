@@ -26,6 +26,11 @@ struct WeekPageView: View {
     /// appear, at which point we create it and call `refresh()`.
     @State private var viewModel: WeekPageViewModel?
 
+    /// Identifier of the event whose detail sheet is currently open. `nil`
+    /// when no sheet is presented. Tapping any compact `WeekEventEntry`
+    /// row sets this.
+    @State private var openEventID: UUID?
+
     var body: some View {
         let now = Date()
         let days = WeekMath.weekDays(forOffset: weekOffset, today: now)
@@ -33,26 +38,34 @@ struct WeekPageView: View {
         let year = days.first?.year ?? 0
         let todayIdx = weekOffset == 0 ? WeekMath.todayIndex(in: days, for: now) : nil
 
-        return BookPage {
-            PaperSurface {
-                ZStack(alignment: .topLeading) {
-                    PaperGrain()
-                    RuledLines()
-                    RedMarginLine()
-                    HolePunches()
+        return ZStack {
+            BookPage {
+                PaperSurface {
+                    ZStack(alignment: .topLeading) {
+                        PaperGrain()
+                        RuledLines()
+                        RedMarginLine()
+                        HolePunches()
 
-                    content(days: days, weekMeta: weekMeta, year: year, todayIdx: todayIdx)
-                        .padding(EdgeInsets(top: 2, leading: 44, bottom: 14, trailing: 18))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        content(days: days, weekMeta: weekMeta, year: year, todayIdx: todayIdx)
+                            .padding(EdgeInsets(top: 2, leading: 44, bottom: 14, trailing: 18))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-                    stickyNoteOverlay
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                        .padding(.trailing, 14)
-                        .padding(.bottom, 14)
+                        stickyNoteOverlay
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                            .padding(.trailing, 14)
+                            .padding(.bottom, 14)
 
-                    PageNumber(date: days.first?.date ?? .init())
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        PageNumber(date: days.first?.date ?? .init())
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    }
                 }
+            }
+
+            if let id = openEventID {
+                PaperEventSheet(eventID: id,
+                                isOpen: Binding(get: { openEventID != nil },
+                                                set: { if !$0 { openEventID = nil } }))
             }
         }
         .task {
@@ -88,6 +101,9 @@ struct WeekPageView: View {
                                    showSeparator: offset < days.count - 1,
                                    onToggleTask: { id in
                                        Task { await viewModel?.toggleTask(id: id) }
+                                   },
+                                   onTapEvent: { id in
+                                       openEventID = id
                                    })
                     }
                 }

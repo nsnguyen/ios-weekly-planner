@@ -87,33 +87,45 @@ struct DayPageContent: View {
     /// appear, at which point we create it and call `refresh()`.
     @State private var viewModel: DayPageViewModel?
 
+    /// Identifier of the event whose detail sheet is currently open. `nil`
+    /// when no sheet is presented. Tapping any `EventEntryRow` sets this.
+    @State private var openEventID: UUID?
+
     var body: some View {
         let now = Date()
         let days = WeekMath.weekDays(forOffset: weekOffset, today: now)
         let weekDay = days.indices.contains(dayIdx) ? days[dayIdx] : days[0]
         let weekMeta = WeekMath.weekMeta(forOffset: weekOffset, today: now)
 
-        return BookPage {
-            PaperSurface {
-                ZStack(alignment: .topLeading) {
-                    PaperGrain()
-                    RuledLines()
-                    RedMarginLine()
-                    HolePunches()
+        return ZStack {
+            BookPage {
+                PaperSurface {
+                    ZStack(alignment: .topLeading) {
+                        PaperGrain()
+                        RuledLines()
+                        RedMarginLine()
+                        HolePunches()
 
-                    content(weekDay: weekDay, weekMeta: weekMeta)
-                        .padding(.top, 18)
-                        .padding(.leading, 44)
-                        .padding(.trailing, 18)
-                        .padding(.bottom, 18)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .overlay(alignment: .topTrailing) {
-                            stickyNoteOverlay
-                        }
+                        content(weekDay: weekDay, weekMeta: weekMeta)
+                            .padding(.top, 18)
+                            .padding(.leading, 44)
+                            .padding(.trailing, 18)
+                            .padding(.bottom, 18)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            .overlay(alignment: .topTrailing) {
+                                stickyNoteOverlay
+                            }
 
-                    PageNumber(date: weekDay.date)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        PageNumber(date: weekDay.date)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    }
                 }
+            }
+
+            if let id = openEventID {
+                PaperEventSheet(eventID: id,
+                                isOpen: Binding(get: { openEventID != nil },
+                                                set: { if !$0 { openEventID = nil } }))
             }
         }
         .task {
@@ -143,7 +155,7 @@ struct DayPageContent: View {
                                                      in: modelContext)
         {
             AIStickyNote(insight: insight)
-                .padding(.top, 16)
+                .padding(.top, 96)
                 .padding(.trailing, 16)
         }
     }
@@ -165,7 +177,9 @@ struct DayPageContent: View {
                 let hasTasks = !viewModel.tasks.isEmpty
 
                 if hasEvents {
-                    EventEntryList(events: viewModel.events, onTap: { _ in })
+                    EventEntryList(events: viewModel.events, onTap: { event in
+                        openEventID = event.id
+                    })
                 }
 
                 if hasInbox {

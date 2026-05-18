@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import XCTest
 @testable import WeeklyPlanner
 
@@ -18,5 +19,37 @@ final class SideTabsTests: XCTestCase {
                        SideTab.pastel(forIdx: 0).rgbaBytes)
         XCTAssertEqual(SideTab.pastel(forIdx: -1).rgbaBytes,
                        SideTab.pastel(forIdx: 0).rgbaBytes)
+    }
+
+    func testLongWeekdayLabelsCanScaleInsideFixedTabHeight() {
+        let layout = SideTab.labelLayout
+        let names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+        XCTAssertLessThan(layout.minimumScaleFactor, 1)
+        XCTAssertLessThanOrEqual(layout.trackLength, Spacing.sideTabHeight)
+        XCTAssertLessThanOrEqual(layout.lineBoxHeight, Spacing.sideTabWidth)
+
+        for family in PaperFont.allCases {
+            guard let font = UIFont(name: family.postScriptName(for: .bold), size: layout.fontSize) else {
+                XCTFail("Missing font for \(family)")
+                continue
+            }
+
+            XCTAssertLessThanOrEqual(font.lineHeight,
+                                     layout.lineBoxHeight + 0.5,
+                                     "\(family.displayName)'s line height needs to fit inside the tab width after rotation")
+
+            for name in names {
+                let displayText = name.uppercased()
+                let naturalWidth = (displayText as NSString).size(withAttributes: [
+                    .font: font,
+                    .kern: layout.tracking,
+                ]).width
+
+                XCTAssertLessThanOrEqual(naturalWidth * layout.minimumScaleFactor,
+                                         layout.trackLength + 0.5,
+                                         "\(displayText) in \(family.displayName) needs to fit inside the rotated tab track")
+            }
+        }
     }
 }

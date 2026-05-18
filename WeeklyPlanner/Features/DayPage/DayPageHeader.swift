@@ -41,19 +41,50 @@ struct DayPageHeader: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("\(weekDay.dayNumber)")
-                    .font(font.font(at: 62 * size.scale, weight: .bold))
-                    .foregroundStyle(isToday ? theme.redInk : theme.ink)
-                    .opacity(0.85)
-                    .tracking(-2)
-                    .rotationEffect(.degrees(-3), anchor: .center)
-                    .fixedSize()
+                DayPageDateNumber(dayNumber: weekDay.dayNumber, isToday: isToday)
+                    .padding(.trailing, DayPageDateNumberLayout.trailingPadding)
             }
 
             if isToday {
                 TodayChip()
             }
         }
+    }
+}
+
+enum DayPageDateNumberLayout {
+    static let width: CGFloat = 128
+    static let trailingPadding: CGFloat = 36
+
+    fileprivate static let trailingGlyphGuard = "\u{00A0}"
+    fileprivate static let tracking: CGFloat = -2
+    fileprivate static let opacity: Double = 0.85
+}
+
+struct DayPageDateNumber: View {
+    let dayNumber: Int
+    let isToday: Bool
+
+    @Environment(\.paperTheme) private var theme
+    @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
+
+    static func displayText(for dayNumber: Int) -> String {
+        "\(dayNumber)\(DayPageDateNumberLayout.trailingGlyphGuard)"
+    }
+
+    var body: some View {
+        Text(Self.displayText(for: dayNumber))
+            .font(font.font(at: Typography.pageDateNumber.size * size.scale,
+                            weight: Typography.pageDateNumber.weight))
+            .foregroundStyle(isToday ? theme.redInk : theme.ink)
+            .opacity(DayPageDateNumberLayout.opacity)
+            .tracking(DayPageDateNumberLayout.tracking)
+            .rotationEffect(.degrees(Typography.pageDateNumber.rotationDegrees),
+                            anchor: .trailing)
+            .fixedSize()
+            .frame(width: DayPageDateNumberLayout.width, alignment: .trailing)
+            .accessibilityLabel("\(dayNumber)")
     }
 }
 
