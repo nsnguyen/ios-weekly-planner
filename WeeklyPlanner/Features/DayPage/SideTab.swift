@@ -36,29 +36,25 @@ struct SideTab: View {
     var onTap: () -> Void
 
     @Environment(\.paperTheme) private var theme
-    @Environment(\.paperFont) private var font
 
     var body: some View {
         Button(action: onTap) {
-            ZStack(alignment: .topTrailing) {
-                Self.tabShape
-                    .fill(Self.pastel(forIdx: idx))
-                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
-                    .overlay(Text(weekdayLong.uppercased())
-                        .font(font.font(at: 13, weight: .bold))
-                        .tracking(1.5)
-                        .foregroundStyle(theme.ink)
-                        .fixedSize()
-                        .rotationEffect(.degrees(-90)))
-
-                if isToday {
-                    Circle()
-                        .fill(theme.redInk)
-                        .frame(width: 5, height: 5)
-                        .padding(.top, 4)
-                        .padding(.trailing, 3)
+            Self.tabShape
+                .fill(Self.pastel(forIdx: idx))
+                .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                .overlay {
+                    SideTabLabel(text: weekdayLong.uppercased(),
+                                 layout: Self.labelLayout)
                 }
-            }
+                .overlay(alignment: .topTrailing) {
+                    if isToday {
+                        Circle()
+                            .fill(theme.redInk)
+                            .frame(width: 5, height: 5)
+                            .padding(.top, 4)
+                            .padding(.trailing, 3)
+                    }
+                }
             .frame(width: isSelected ? Spacing.sideTabSelectedWidth : Spacing.sideTabWidth,
                    height: Spacing.sideTabHeight)
             .offset(x: isSelected ? Spacing.sideTabSelectedOffset : 0)
@@ -80,7 +76,46 @@ struct SideTab: View {
     }
 }
 
+struct SideTabLabelLayout: Hashable {
+    let fontSize: CGFloat
+    let tracking: CGFloat
+    let verticalInset: CGFloat
+    let lineBoxHeight: CGFloat
+    let minimumScaleFactor: CGFloat
+
+    var trackLength: CGFloat {
+        Spacing.sideTabHeight - (verticalInset * 2)
+    }
+}
+
+private struct SideTabLabel: View {
+    let text: String
+    let layout: SideTabLabelLayout
+
+    @Environment(\.paperTheme) private var theme
+    @Environment(\.paperFont) private var font
+
+    var body: some View {
+        Text(text)
+            .font(font.font(at: layout.fontSize, weight: .bold))
+            .tracking(layout.tracking)
+            .foregroundStyle(theme.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(layout.minimumScaleFactor)
+            .allowsTightening(true)
+            .frame(width: layout.trackLength, height: layout.lineBoxHeight)
+            .rotationEffect(.degrees(-90))
+            .frame(width: Spacing.sideTabWidth, height: Spacing.sideTabHeight)
+    }
+}
+
 extension SideTab {
+    nonisolated static let labelLayout = SideTabLabelLayout(fontSize: 13,
+                                                            tracking: 1.5,
+                                                            verticalInset: 2,
+                                                            lineBoxHeight: Spacing.sideTabWidth,
+                                                            minimumScaleFactor: 0.42)
+
     /// Pastel color for a given Monday-based weekday index. Out-of-range
     /// indices fall back to Monday's color so callers don't need to clamp.
     ///
