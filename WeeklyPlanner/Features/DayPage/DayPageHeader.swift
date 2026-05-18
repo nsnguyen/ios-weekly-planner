@@ -46,9 +46,9 @@ struct DayPageHeader: View {
                     .foregroundStyle(isToday ? theme.redInk : theme.ink)
                     .opacity(0.85)
                     .tracking(-2)
-                    .rotationEffect(.degrees(-3), anchor: .center)
                     .fixedSize()
-                    .padding(.trailing, 8)
+                    .rotationEffect(.degrees(-3), anchor: .center)
+                    .padding(.trailing, 18)
             }
 
             if isToday {
