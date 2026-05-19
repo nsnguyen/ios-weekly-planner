@@ -37,6 +37,7 @@ struct PaperEventSheet: View {
     @Binding var isOpen: Bool
 
     @Environment(\.eventStore) private var eventStore
+    @Environment(\.intelligenceService) private var intelligenceService
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -60,9 +61,15 @@ struct PaperEventSheet: View {
                    value: isOpen)
         .task(id: eventID) {
             if viewModel == nil || viewModel?.eventID != eventID {
-                viewModel = EventDetailViewModel(eventID: eventID, eventStore: eventStore)
+                let generator = intelligenceService.map {
+                    EventSuggestionGenerator(intelligence: $0)
+                }
+                viewModel = EventDetailViewModel(eventID: eventID,
+                                                  eventStore: eventStore,
+                                                  suggestionGenerator: generator)
             }
             await viewModel?.load()
+            await viewModel?.refreshAISuggestion()
         }
         .alert("Delete this event?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive) {
