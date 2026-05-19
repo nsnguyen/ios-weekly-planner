@@ -27,7 +27,6 @@ struct DayWeekToggle: View {
         HStack(spacing: 2) {
             segment(for: .day, label: "Day")
             segment(for: .week, label: "Week")
-            segment(for: .review, label: "Review")
         }
         .padding(2)
         .background(Color.black.opacity(0.3),
@@ -38,13 +37,7 @@ struct DayWeekToggle: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("View")
-        .accessibilityValue({
-            switch selection {
-            case .day: return "Day"
-            case .week: return "Week"
-            case .review: return "Review"
-            }
-        }())
+        .accessibilityValue(selection == .day ? "Day" : "Week")
         .accessibilityAddTraits(.isButton)
     }
 
