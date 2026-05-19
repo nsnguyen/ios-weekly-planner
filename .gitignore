@@ -39,3 +39,6 @@ fastlane/test_output
 # Local override files (developer-specific signing, etc.)
 *.local.xcconfig
 .env.local
+
+# Auto-generated per-session memory context (claude-mem writes this)
+AGENTS.md
