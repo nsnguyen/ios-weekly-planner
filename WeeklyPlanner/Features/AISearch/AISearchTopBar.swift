@@ -22,7 +22,22 @@ struct AISearchTopBar: View {
     @Environment(\.paperFont) private var font
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
+        HStack(alignment: .center, spacing: 8) {
+            Button(action: onClose) {
+                HStack(spacing: 2) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                    Text("Planner")
+                        .font(.system(size: 17, weight: .regular))
+                }
+                .foregroundStyle(theme.chromeText)
+                .padding(.vertical, 6)
+                .padding(.trailing, 6)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Back to planner")
+
             VStack(alignment: .leading, spacing: 0) {
                 Text("ASK THE PLANNER")
                     .font(.system(size: 10, weight: .bold))
@@ -36,12 +51,7 @@ struct AISearchTopBar: View {
             }
 
             Spacer(minLength: 0)
-
-            PaperPillButton(title: "Close",
-                            variant: .secondary,
-                            size: .compact,
-                            action: onClose)
         }
-        .padding(EdgeInsets(top: 54, leading: 26, bottom: 10, trailing: 16))
+        .padding(EdgeInsets(top: 54, leading: 14, bottom: 10, trailing: 16))
     }
 }
