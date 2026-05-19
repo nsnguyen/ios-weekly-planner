@@ -66,7 +66,9 @@ struct AISearchPaperSheet: View {
         if viewModel.thinking {
             ThinkingIndicator()
         } else if let answer = viewModel.answer {
-            AnswerBlock(answer: answer, onTapCitation: onTapCitation)
+            AnswerBlock(answer: answer,
+                        unavailableReason: viewModel.unavailableReason,
+                        onTapCitation: onTapCitation)
         } else {
             SuggestionList { suggestion in
                 Task { await viewModel.ask(suggestion) }
