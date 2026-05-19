@@ -10,6 +10,12 @@ protocol EventStoring: AnyObject {
     func event(id: UUID) async throws -> Event?
     func upsert(_ event: Event) async throws
     func delete(id: UUID) async throws
+
+    /// Returns events inside `query.dateRange` filtered by the optional
+    /// category / keyword / person-name axes. Used by the Intelligence
+    /// layer (Phase 13) so the model can ask narrower questions than
+    /// `events(forWeekOffset:)`.
+    func events(matching query: EventQuery) async throws -> [Event]
 }
 
 // View-side observation: SwiftUI views read events via `@Query` directly
@@ -73,6 +79,30 @@ final class SwiftDataEventStore: EventStoring {
             context.delete(event)
             try context.save()
             changeSubject.post(name: .eventStoreDidChange, object: nil)
+        }
+    }
+
+    func events(matching query: EventQuery) async throws -> [Event] {
+        let start = query.dateRange.lowerBound
+        let end = query.dateRange.upperBound
+        let descriptor = FetchDescriptor<Event>(
+            predicate: #Predicate<Event> { $0.start >= start && $0.start <= end },
+            sortBy: [SortDescriptor(\.start, order: .forward)]
+        )
+        let raw = try context.fetch(descriptor)
+        return raw.filter { event in
+            if let categories = query.categories, !categories.isEmpty {
+                guard categories.contains(where: { $0.rawValue == event.categoryRaw }) else { return false }
+            }
+            if !query.keywords.isEmpty {
+                let lowered = event.title.lowercased()
+                guard query.keywords.contains(where: { lowered.contains($0.lowercased()) }) else { return false }
+            }
+            if let person = query.personName, !person.isEmpty {
+                let lowered = event.title.lowercased()
+                guard lowered.contains(person.lowercased()) else { return false }
+            }
+            return true
         }
     }
 

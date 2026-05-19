@@ -321,4 +321,8 @@ private final class PreviewSeededStore: EventStoring {
     func delete(id _: UUID) async throws {
         stored = nil
     }
+
+    func events(matching _: EventQuery) async throws -> [Event] {
+        stored.map { [$0] } ?? []
+    }
 }
