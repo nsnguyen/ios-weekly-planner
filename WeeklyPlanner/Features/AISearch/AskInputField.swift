@@ -33,6 +33,11 @@ struct AskInputField: View {
     /// decides whether to ignore them.
     var onSubmit: () -> Void
 
+    /// Invoked when the user taps the inline clear button. The caller is
+    /// responsible for emptying `text` and resetting any rendered answer
+    /// so the overlay returns to its suggestion-list state.
+    var onClear: (() -> Void)?
+
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
 
@@ -66,18 +71,29 @@ struct AskInputField: View {
 
                 Spacer(minLength: 0)
 
-                Button {
-                    // Voice input is wired in Phase 13. For Phase 12 the
-                    // button is intentionally inert — the visible icon is
-                    // the only affordance we can ship without speech
-                    // permissions.
-                } label: {
-                    Image(systemName: "mic")
-                        .font(.system(size: 16))
-                        .foregroundStyle(theme.ink3)
-                        .frame(width: 44, height: 44)
+                if !text.isEmpty, let onClear {
+                    Button(action: onClear) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(theme.ink3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear and ask another question")
+                } else {
+                    Button {
+                        // Voice input is wired in a later phase. For now the
+                        // button is intentionally inert — the visible icon is
+                        // the only affordance we can ship without speech
+                        // permissions.
+                    } label: {
+                        Image(systemName: "mic")
+                            .font(.system(size: 16))
+                            .foregroundStyle(theme.ink3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
 
             Rectangle()

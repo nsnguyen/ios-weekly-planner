@@ -44,7 +44,8 @@ struct AISearchPaperSheet: View {
                                       onSubmit: {
                                           let query = viewModel.query
                                           Task { await viewModel.ask(text: query) }
-                                      })
+                                      },
+                                      onClear: { viewModel.clear() })
 
                         body(for: viewModel)
                     }
