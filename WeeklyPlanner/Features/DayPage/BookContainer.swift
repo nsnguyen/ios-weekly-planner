@@ -63,11 +63,19 @@ struct BookContainer<Content: View>: View {
     /// Typically a `DayPageView` (or, after Group T, a `WeekPageView`).
     @ViewBuilder let content: () -> Content
 
+    /// When `true` (default), the container paints its own `BookCover` at the
+    /// bottom of the ZStack. `AppShell` (Phase 15) passes `false` so the
+    /// persistent shell-owned cover can show through and avoid remounting on
+    /// tab switch.
+    var includesCover: Bool = true
+
     @Environment(\.paperTheme) private var theme
 
     var body: some View {
         ZStack(alignment: .top) {
-            BookCover()
+            if includesCover {
+                BookCover()
+            }
 
             VStack(spacing: 0) {
                 BookTopBar(weekMeta: weekMeta,
