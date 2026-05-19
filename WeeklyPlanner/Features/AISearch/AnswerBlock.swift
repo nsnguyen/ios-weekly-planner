@@ -19,6 +19,12 @@ struct AnswerBlock: View {
     /// `AISearchViewModel.ask(text:)` before being assigned.
     let answer: AIAnswer
 
+    /// Surfaced from the view-model. When the case is `.unavailable(...)`
+    /// we render the matching short message in place of the on-device
+    /// elapsed-time footer, so the user knows why the answer came from
+    /// the canned fallback table instead of Apple Intelligence.
+    var unavailableReason: AvailabilityState = .available
+
     /// Invoked when the user taps any citation chip. The host is expected to
     /// close the overlay and then open the matching event detail sheet
     /// 100ms later (per the Phase 12 spec).
@@ -66,12 +72,27 @@ struct AnswerBlock: View {
                 .padding(.top, 12)
             }
 
-            Text("Answered on-device · \(String(format: "%.1f", answer.elapsedSeconds))s")
-                .font(.system(size: 9, weight: .regular).italic())
-                .foregroundStyle(theme.ink3)
+            footer
                 .padding(.top, 18)
         }
         .padding(.top, 8)
+    }
+
+    /// Either the on-device elapsed-time footer (happy path) or the
+    /// availability-state fallback message (Settings off, simulator,
+    /// older device). Both render in the same ink-3 italic micro-type so
+    /// the layout doesn't reflow when the user toggles AI in Settings.
+    @ViewBuilder
+    private var footer: some View {
+        if unavailableReason.isAvailable {
+            Text("Answered on-device · \(String(format: "%.1f", answer.elapsedSeconds))s")
+                .font(.system(size: 9, weight: .regular).italic())
+                .foregroundStyle(theme.ink3)
+        } else {
+            Text(unavailableReason.fallbackMessage)
+                .font(.system(size: 9, weight: .regular).italic())
+                .foregroundStyle(theme.ink3)
+        }
     }
 }
 

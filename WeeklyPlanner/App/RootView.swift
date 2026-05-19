@@ -49,6 +49,12 @@ struct RootView: View {
     /// rather than relying on a child-only `@Environment` read.
     @Environment(\.eventStore) private var eventStore
 
+    /// Same forwarding as `eventStore` — Phase 13's `ToolRegistry` needs
+    /// task + inbox stores so the model can answer questions across all
+    /// three data sources without reaching back into singletons.
+    @Environment(\.taskStore) private var taskStore
+    @Environment(\.inboxStore) private var inboxStore
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init() {
@@ -120,6 +126,7 @@ struct RootView: View {
             if isAISearchOpen {
                 PaperAISearchView(isOpen: $isAISearchOpen,
                                   eventStore: eventStore,
+                                  intelligence: makeIntelligenceService(),
                                   onTapCitation: { _ in
                                       // Phase 12 closes the overlay and stops
                                       // there — routing the citation tap to
@@ -134,6 +141,18 @@ struct RootView: View {
         }
         .animation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide,
                    value: isAISearchOpen)
+    }
+
+    /// Builds a fresh `PlannerLanguageModel` for the AI overlay. Constructed
+    /// inline on demand (and not held on the view) because the overlay is
+    /// the only consumer in Phase 13-a, and a per-open session keeps the
+    /// model's working state from spanning open / close cycles. The
+    /// `settings` closure returns `true` for now; Phase 16 will swap this
+    /// for a live read of `UserSettings.appleIntelligenceEnabled`.
+    private func makeIntelligenceService() -> any IntelligenceService {
+        let registry = ToolRegistry(events: eventStore, tasks: taskStore, inbox: inboxStore)
+        let fallback = StubIntelligenceService(eventStore: eventStore)
+        return PlannerLanguageModel(registry: registry, fallback: fallback)
     }
 }
 

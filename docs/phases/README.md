@@ -120,3 +120,18 @@ ios-weekly-planner/
 - **Page-flip** — 3D `rotation3DEffect` transition with shading, used between days.
 - **Hobonichi** — Japanese planner format with 7 day-rows on one page; our Week page.
 - **Foundation Models** — Apple's on-device LLM framework (iOS 26+).
+
+## Retrospectives
+
+### Phase 13-a — Foundation Models Integration (Core Layer)
+
+Shipped the `WeeklyPlanner/Intelligence/` module: `IntelligenceService` protocol, `PlannerLanguageModel` bridge (iOS 26+ Foundation Models, gated `#if canImport(FoundationModels)` + `@available(iOS 26.0, *)`), `StubIntelligenceService` (reused as the test double *and* the runtime fallback), five tools (FindEvents / FindFreeSlots / ScanInbox / SummarizeWeek / LastInteraction) wired to existing store protocols, `SystemPrompt`, `SafetyGuard`, and `Availability` probe. Added `events(matching: EventQuery)` to `EventStoring` with conformance on all four implementations (SwiftData, EventKit mirror, environment stub, preview-seeded stub).
+
+`AISearchViewModel` now talks to `IntelligenceService` instead of the canned table directly. When the model is unavailable — older device, Apple Intelligence off in Settings, or the planner's own AI toggle off — the overlay still shows the same canned answers via the stub, plus a `unavailableReason.fallbackMessage` the view can render in the footer. `PaperLanguageModel` is constructed inline at AI-overlay open time inside `RootView.makeIntelligenceService()`; no global singleton.
+
+**Deferred to Phase 13-b**: `StickyInsightGenerator`, `WeekSummaryGenerator`, `EventSuggestionGenerator`, and token-level streaming. WeekSummary blocks on Phase 14 (Review page). Sticky and EventSuggestion generators want a background-task scheduler that fits more naturally with Phase 19. Streaming wants on-device validation before we ship the typewriter UX.
+
+**Tests added**: 11 XCTest classes / 31 new test methods under `WeeklyPlannerTests/Intelligence/` and one new fallback-path test in `AISearchViewModelTests`. Full suite: 167 unit tests + SmokeUITests, all green.
+
+**Files**: `WeeklyPlanner/Intelligence/{Availability,IntelligenceService,PlannerContext,PlannerLanguageModel,SafetyGuard,StubIntelligenceService,SystemPrompt}.swift`, `WeeklyPlanner/Intelligence/Tools/{EventQuery,FindEventsTool,FindFreeSlotsTool,LastInteractionTool,ScanInboxTool,SummarizeWeekTool,ToolEventResult,ToolRegistry}.swift`; modified `WeeklyPlanner/Features/AISearch/{AISearchViewModel,PaperAISearchView}.swift`, `WeeklyPlanner/App/RootView.swift`, `WeeklyPlanner/Stores/{Environment+Stores,EventStore,EventStore+EventKit}.swift`, `WeeklyPlanner/Features/EventDetail/PaperEventSheet.swift`.
+
