@@ -20,8 +20,17 @@ final class AISearchViewModelTests: XCTestCase {
         try await super.tearDown()
     }
 
+    private func makeViewModel(clock: @escaping () -> Date = { Date() }) -> AISearchViewModel {
+        AISearchViewModel(
+            eventStore: eventStore,
+            intelligence: StubIntelligenceService(eventStore: eventStore, clock: clock),
+            settings: { true },
+            clock: clock
+        )
+    }
+
     func testAskDentistMapsToDentistAnswer() async {
-        let viewModel = AISearchViewModel(eventStore: eventStore)
+        let viewModel = makeViewModel()
         viewModel.thinkingDelay = .milliseconds(0)
         await viewModel.ask(text: "When's my next dentist appointment?")
         XCTAssertNotNil(viewModel.answer)
@@ -30,7 +39,7 @@ final class AISearchViewModelTests: XCTestCase {
     }
 
     func testAskFreeSlotMapsToFreeAnswer() async {
-        let viewModel = AISearchViewModel(eventStore: eventStore)
+        let viewModel = makeViewModel()
         viewModel.thinkingDelay = .milliseconds(0)
         await viewModel.ask(text: "Find a free 30-min slot tomorrow morning")
         XCTAssertNotNil(viewModel.answer)
@@ -38,7 +47,7 @@ final class AISearchViewModelTests: XCTestCase {
     }
 
     func testGenericQueryReturnsFallbackAnswer() async {
-        let viewModel = AISearchViewModel(eventStore: eventStore)
+        let viewModel = makeViewModel()
         viewModel.thinkingDelay = .milliseconds(0)
         await viewModel.ask(text: "Tell me about the weather")
         XCTAssertNotNil(viewModel.answer)
@@ -46,21 +55,16 @@ final class AISearchViewModelTests: XCTestCase {
     }
 
     func testThinkingFlagSetThenClearedAfterDelay() async {
-        let viewModel = AISearchViewModel(eventStore: eventStore)
+        let viewModel = makeViewModel()
         viewModel.thinkingDelay = .milliseconds(0)
         XCTAssertFalse(viewModel.thinking)
         let task = Task { await viewModel.ask(text: "anything") }
-        // We can't reliably observe the intermediate `thinking == true` because the delay is 0 and
-        // the assignment + sleep both happen synchronously on MainActor before next await.
-        // Instead, verify it's false after completion.
         await task.value
         XCTAssertFalse(viewModel.thinking)
         XCTAssertNotNil(viewModel.answer)
     }
 
     func testCitationsResolveFromEventStore() async throws {
-        // Anchor the event in the same week as the injected clock so the
-        // view model's ±4-week scan finds it.
         let saraStart = Self.may16_2026(hour: 9)
         let saraEvent = Event(title: "Sara's birthday breakfast",
                               start: saraStart,
@@ -68,11 +72,32 @@ final class AISearchViewModelTests: XCTestCase {
                               category: .personal)
         try await eventStore.upsert(saraEvent)
 
-        let viewModel = AISearchViewModel(eventStore: eventStore, clock: { Self.may16_2026() })
+        let viewModel = makeViewModel(clock: { Self.may16_2026() })
         viewModel.thinkingDelay = .milliseconds(0)
         await viewModel.ask(text: "When did I last meet with Sara?")
         XCTAssertEqual(viewModel.answer?.citations.count, 1)
         XCTAssertEqual(viewModel.answer?.citations.first?.title, "Sara's birthday breakfast")
+    }
+
+    func testFallbackPathUsedWhenAIDisabled() async throws {
+        let saraStart = Self.may16_2026(hour: 9)
+        try await eventStore.upsert(Event(
+            title: "Sara's birthday breakfast",
+            start: saraStart,
+            end: saraStart.addingTimeInterval(3600),
+            category: .personal
+        ))
+        let viewModel = AISearchViewModel(
+            eventStore: eventStore,
+            intelligence: StubIntelligenceService(eventStore: eventStore, clock: { Self.may16_2026() }),
+            settings: { false },
+            clock: { Self.may16_2026() }
+        )
+        viewModel.thinkingDelay = .milliseconds(0)
+        await viewModel.ask(text: "When did I last meet with Sara?")
+        XCTAssertNotNil(viewModel.answer)
+        XCTAssertEqual(viewModel.answer?.citations.first?.title, "Sara's birthday breakfast")
+        XCTAssertEqual(viewModel.unavailableReason, .unavailable(.userDisabled))
     }
 
     /// Saturday May 16, 2026 — same anchor used across the planner test
@@ -87,7 +112,7 @@ final class AISearchViewModelTests: XCTestCase {
     }
 
     func testClearResetsState() async {
-        let viewModel = AISearchViewModel(eventStore: eventStore)
+        let viewModel = makeViewModel()
         viewModel.thinkingDelay = .milliseconds(0)
         await viewModel.ask(text: "dentist")
         XCTAssertNotNil(viewModel.answer)

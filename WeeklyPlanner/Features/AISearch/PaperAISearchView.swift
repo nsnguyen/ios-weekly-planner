@@ -39,13 +39,19 @@ struct PaperAISearchView: View {
 
     /// Designated initializer. Builds the `AISearchViewModel` eagerly off
     /// the supplied `eventStore` so citation resolution can run on the
-    /// model's first `ask(text:)`.
+    /// model's first `ask(text:)`. Phase 13 wires the live
+    /// `IntelligenceService` here; pass the host's
+    /// `PlannerLanguageModel` in production and a stub in previews.
     init(isOpen: Binding<Bool>,
          eventStore: any EventStoring,
+         intelligence: any IntelligenceService,
          onTapCitation: @escaping (UUID) -> Void)
     {
         _isOpen = isOpen
-        _viewModel = State(initialValue: AISearchViewModel(eventStore: eventStore))
+        _viewModel = State(initialValue: AISearchViewModel(
+            eventStore: eventStore,
+            intelligence: intelligence
+        ))
         self.onTapCitation = onTapCitation
     }
 
