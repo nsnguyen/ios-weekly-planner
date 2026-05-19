@@ -149,3 +149,15 @@ Streak data is hardcoded to a single "Morning run" row per spec v1.0. A real `St
 
 **Files**: `WeeklyPlanner/Intelligence/WeekSummary.swift`, `WeeklyPlanner/Intelligence/Tasks/WeekSummaryGenerator.swift`, `WeeklyPlanner/Features/Review/{PaperReviewView,ReviewHeader,ReviewSummaryBlock,CategoryTimeRow,TimeSpentBarChart,AINotesList,StreaksBlock,ReviewViewModel}.swift`; modified `WeeklyPlanner/Models/AppStyle.swift`, `WeeklyPlanner/Features/DayPage/DayWeekToggle.swift`, `WeeklyPlanner/App/RootView.swift`.
 
+### Phase 15 — Paper Tab Bar & Navigation Wiring
+
+Shipped the leather-bound bottom tab bar: `PaperTabBar` hosts three `PaperTab` cells (Calendar / Review / Settings) with the cream "index-tab" bookmark popping up behind the active tab, the dashed stitched-seam line near the top edge, and the leather `theme.bookCover` background. `AppShell` is the new root composition — it owns the persistent `BookCover` at z=0 so tab switches cross-fade the inside-the-book content (0.18s) without remounting the cover. Tab selection is held by `TabSelection` (`@Observable`) and persists across launches via the new `UserSettings.lastTabRaw` field, wired through `SettingsStoring`.
+
+The temporary three-segment Day/Week/Review toggle from Phase 14 is gone: `PaperView` reverts to two cases (`.day`, `.week`), `DayWeekToggle` is back to two segments, and the Review screen is reachable only through the tab bar. The Calendar tab's `BookContainer` now gets `includesCover: false` so the shell-owned cover shows through.
+
+`PaperSettingsView` ships as a centered placeholder ("Theme, font, and connections arrive in Phase 16.") — Phase 16 builds the real settings page. Modal overlays (`WeekPickerSheet`, `PaperAISearchView`) migrated from `RootView` into `AppShell` so they continue to layer above both the active tab and the new bar. A `StubSettingsStore` joined the existing store stubs in `Environment+Stores.swift` so previews/tests that read `\.settingsStore` never crash.
+
+**Tests added**: 2 classes / 6 new test methods (`UserSettingsLastTabTests`, `TabSelectionTests`). Full suite: 194 unit tests + UI tests, all green.
+
+**Files**: `WeeklyPlanner/Navigation/{TabSelection,PaperTab,PaperTabBar,AppShell}.swift`, `WeeklyPlanner/Features/Settings/PaperSettingsView.swift`; modified `WeeklyPlanner/Models/{AppStyle,UserSettings}.swift`, `WeeklyPlanner/Features/DayPage/{BookContainer,DayWeekToggle}.swift`, `WeeklyPlanner/App/RootView.swift`, `WeeklyPlanner/Stores/Environment+Stores.swift`.
+

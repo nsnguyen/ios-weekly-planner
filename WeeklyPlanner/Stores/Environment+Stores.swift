@@ -22,6 +22,12 @@ extension EnvironmentValues {
     /// The active `TaskStoring` for this subtree. Defaults to `StubTaskStore`.
     @Entry var taskStore: any TaskStoring = StubTaskStore()
 
+    /// The active `SettingsStoring` for this subtree. Defaults to
+    /// `StubSettingsStore` so previews/tests that read `settingsStore`
+    /// (e.g. `AppShell` constructing `TabSelection`) never crash for
+    /// want of a real SwiftData container.
+    @Entry var settingsStore: any SettingsStoring = StubSettingsStore()
+
     /// The live Intelligence service for this subtree, or `nil` in
     /// previews / tests that don't set it. Phase 13 producers (AI
     /// overlay, event sheet suggestion) read this and skip the AI
@@ -99,4 +105,29 @@ final class StubTaskStore: TaskStoring {
     func upsert(_: TaskItem) async throws {}
     func toggle(id _: UUID) async throws {}
     func delete(id _: UUID) async throws {}
+}
+
+/// In-memory `SettingsStoring` used as the default environment value. Holds
+/// a single `UserSettings` instance that's created on first `current()` and
+/// mutated by `update`. Lets previews and ad-hoc views read/write a
+/// `lastTabRaw` without standing up a real SwiftData container.
+@MainActor
+final class StubSettingsStore: SettingsStoring {
+    /// Nonisolated initializer for the same reason as `StubEventStore.init()`.
+    nonisolated init() {}
+
+    private var cached: UserSettings?
+
+    func current() throws -> UserSettings {
+        if let cached { return cached }
+        let fresh = UserSettings()
+        cached = fresh
+        return fresh
+    }
+
+    func update(_ apply: (UserSettings) -> Void) throws {
+        let settings = try current()
+        apply(settings)
+        settings.updatedAt = .init()
+    }
 }

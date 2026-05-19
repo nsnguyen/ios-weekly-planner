@@ -38,6 +38,10 @@ final class UserSettings {
     var paperViewRaw: String
     var accentHex: String
 
+    /// Active tab on the bottom paper tab bar (Phase 15). Stored as the
+    /// `Tab.rawValue` String so SwiftData can index/predicate-filter it.
+    var lastTabRaw: String
+
     var updatedAt: Date
 
     init(id: UUID = UUID(),
@@ -55,6 +59,7 @@ final class UserSettings {
          modernView: ModernView = .day,
          paperView: PaperView = .day,
          accentHex: String = "#0A84FF",
+         lastTabRaw: String = "calendar",
          updatedAt: Date = .init())
     {
         self.id = id
@@ -72,6 +77,7 @@ final class UserSettings {
         modernViewRaw = modernView.rawValue
         paperViewRaw = paperView.rawValue
         self.accentHex = accentHex
+        self.lastTabRaw = lastTabRaw
         self.updatedAt = updatedAt
     }
 }
