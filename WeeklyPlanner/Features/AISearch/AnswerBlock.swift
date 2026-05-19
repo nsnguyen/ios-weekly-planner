@@ -40,7 +40,7 @@ struct AnswerBlock: View {
                 .foregroundStyle(theme.ink2)
                 .padding(.bottom, 6)
 
-            Text(answer.body)
+            Text(Self.cleanBody(answer.body))
                 .font(font.font(at: 22, weight: .semibold))
                 .lineSpacing(1.3)
                 .tracking(0.1)
@@ -76,6 +76,34 @@ struct AnswerBlock: View {
                 .padding(.top, 18)
         }
         .padding(.top, 8)
+    }
+
+    /// The system prompt asks the model for plain text, but the model still
+    /// occasionally returns markdown asterisks, leading dashes, or headers.
+    /// We strip those before display so the handwriting font doesn't render
+    /// literal `**` markers on the page. Newlines and word order stay intact.
+    static func cleanBody(_ raw: String) -> String {
+        var text = raw
+        // Strip bold/italic markers.
+        text = text.replacingOccurrences(of: "**", with: "")
+        text = text.replacingOccurrences(of: "__", with: "")
+        // Strip stray solo asterisks/underscores used as italic markers.
+        text = text.replacingOccurrences(of: "*", with: "")
+        // Strip leading list-bullet dashes and stars at the start of lines.
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
+            var s = String(line)
+            // Drop leading whitespace then a bullet marker like "-", "*", "•".
+            let trimmed = s.drop(while: { $0 == " " || $0 == "\t" })
+            if let first = trimmed.first, "-•".contains(first) {
+                s = String(trimmed.dropFirst()).trimmingCharacters(in: CharacterSet(charactersIn: " "))
+            } else {
+                s = String(trimmed)
+            }
+            // Strip leading markdown header markers ("#", "##", ...).
+            while s.hasPrefix("#") { s.removeFirst() }
+            return s.trimmingCharacters(in: CharacterSet(charactersIn: " "))
+        }
+        return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Either the on-device elapsed-time footer (happy path) or the
