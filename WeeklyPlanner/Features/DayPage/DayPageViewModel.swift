@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftData
 
 /// Drives the Paper Day page for a single `(weekOffset, dayIdx)` cell.
 ///
@@ -36,6 +37,8 @@ final class DayPageViewModel {
     private let eventStore: any EventStoring
     private let inboxStore: any InboxStoring
     private let taskStore: any TaskStoring
+    private let stickyGenerator: StickyInsightGenerator?
+    private let modelContext: ModelContext?
     private let clock: () -> Date
 
     /// Designated initializer.
@@ -46,6 +49,12 @@ final class DayPageViewModel {
     ///   - eventStore: Store for `Event` reads.
     ///   - inboxStore: Store for `InboxSuggestion` reads/mutations.
     ///   - taskStore: Store for `TaskItem` reads/mutations.
+    ///   - stickyGenerator: Optional Phase 13 generator that produces AI
+    ///     sticky notes on demand. `nil` in tests/previews; the view
+    ///     supplies a real one in production.
+    ///   - modelContext: Optional SwiftData context the generator writes
+    ///     fresh `AIInsight` rows into. Required if `stickyGenerator` is
+    ///     non-nil; ignored otherwise.
     ///   - clock: Injected "now" so tests can pin the date. Defaults to
     ///     `Date()` in production.
     init(weekOffset: Int,
@@ -53,6 +62,8 @@ final class DayPageViewModel {
          eventStore: any EventStoring,
          inboxStore: any InboxStoring,
          taskStore: any TaskStoring,
+         stickyGenerator: StickyInsightGenerator? = nil,
+         modelContext: ModelContext? = nil,
          clock: @escaping () -> Date = { .init() })
     {
         self.weekOffset = weekOffset
@@ -60,6 +71,8 @@ final class DayPageViewModel {
         self.eventStore = eventStore
         self.inboxStore = inboxStore
         self.taskStore = taskStore
+        self.stickyGenerator = stickyGenerator
+        self.modelContext = modelContext
         self.clock = clock
     }
 
@@ -112,6 +125,27 @@ final class DayPageViewModel {
         } catch {
             loadError = error.localizedDescription
         }
+
+        await refreshStickyInsightIfNeeded(now: now)
+    }
+
+    /// Generate a fresh `AIInsight` for this day if one isn't already
+    /// cached. No-op when no generator or model context was injected
+    /// (preview / test path), or when the model is unavailable.
+    private func refreshStickyInsightIfNeeded(now: Date) async {
+        guard let stickyGenerator,
+              let modelContext,
+              StickyNoteGenerator.insight(forWeekOffset: weekOffset,
+                                          dayIdx: dayIdx,
+                                          in: modelContext) == nil
+        else { return }
+
+        guard let insight = await stickyGenerator.generate(weekOffset: weekOffset,
+                                                            dayIdx: dayIdx,
+                                                            events: events,
+                                                            now: now) else { return }
+        modelContext.insert(insight)
+        try? modelContext.save()
     }
 
     /// Mark a suggestion as accepted and refresh the day's state. Errors are

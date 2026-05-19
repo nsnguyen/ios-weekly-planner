@@ -141,6 +141,7 @@ struct RootView: View {
         }
         .animation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide,
                    value: isAISearchOpen)
+        .environment(\.intelligenceService, makeIntelligenceService())
     }
 
     /// Builds a fresh `PlannerLanguageModel` for the AI overlay. Constructed

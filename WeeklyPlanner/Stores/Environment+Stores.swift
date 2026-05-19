@@ -21,6 +21,12 @@ extension EnvironmentValues {
 
     /// The active `TaskStoring` for this subtree. Defaults to `StubTaskStore`.
     @Entry var taskStore: any TaskStoring = StubTaskStore()
+
+    /// The live Intelligence service for this subtree, or `nil` in
+    /// previews / tests that don't set it. Phase 13 producers (AI
+    /// overlay, event sheet suggestion) read this and skip the AI
+    /// pathway when it's missing.
+    @Entry var intelligenceService: (any IntelligenceService)? = nil
 }
 
 // MARK: - Stubs

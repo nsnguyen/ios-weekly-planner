@@ -81,6 +81,7 @@ struct DayPageContent: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.taskStore) private var taskStore
+    @Environment(\.intelligenceService) private var intelligenceService
     @Environment(\.modelContext) private var modelContext
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
@@ -130,11 +131,16 @@ struct DayPageContent: View {
         }
         .task {
             if viewModel == nil {
+                let generator = intelligenceService.map {
+                    StickyInsightGenerator(intelligence: $0)
+                }
                 viewModel = DayPageViewModel(weekOffset: weekOffset,
                                              dayIdx: dayIdx,
                                              eventStore: eventStore,
                                              inboxStore: inboxStore,
-                                             taskStore: taskStore)
+                                             taskStore: taskStore,
+                                             stickyGenerator: generator,
+                                             modelContext: modelContext)
             }
             await viewModel?.refresh()
         }
