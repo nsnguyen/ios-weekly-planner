@@ -135,3 +135,17 @@ Shipped the `WeeklyPlanner/Intelligence/` module: `IntelligenceService` protocol
 
 **Files**: `WeeklyPlanner/Intelligence/{Availability,IntelligenceService,PlannerContext,PlannerLanguageModel,SafetyGuard,StubIntelligenceService,SystemPrompt}.swift`, `WeeklyPlanner/Intelligence/Tools/{EventQuery,FindEventsTool,FindFreeSlotsTool,LastInteractionTool,ScanInboxTool,SummarizeWeekTool,ToolEventResult,ToolRegistry}.swift`; modified `WeeklyPlanner/Features/AISearch/{AISearchViewModel,PaperAISearchView}.swift`, `WeeklyPlanner/App/RootView.swift`, `WeeklyPlanner/Stores/{Environment+Stores,EventStore,EventStore+EventKit}.swift`, `WeeklyPlanner/Features/EventDetail/PaperEventSheet.swift`.
 
+### Phase 14 — Paper Review Page
+
+Shipped the end-of-week reflection surface: `PaperReviewView` composes `ReviewHeader` (rotated -3° completion %), `ReviewSummaryBlock` (AI SUMMARY eyebrow + blue-ink paragraph), `TimeSpentBarChart` with `CategoryTimeRow`s (dotted baseline + proportional fills), `AINotesList` with colored ★ bullets, and `StreaksBlock` with a 7-day pill row. `ReviewViewModel` aggregates per-week hours by category, tasks done/total, and `completionPercent` from the existing stores.
+
+Closed the Phase 13-b WeekSummary deferral: `WeekSummary` value type + `WeekSummaryGenerator` (with the canned `fallback(weekOffset:tasksDone:tasksTotal:)` factory) now power the AI SUMMARY block. The Review page falls back gracefully when Apple Intelligence is off.
+
+Navigation entry is a temporary three-segment Day/Week/Review extension to `DayWeekToggle`. Phase 15 will replace it with a proper tab bar.
+
+Streak data is hardcoded to a single "Morning run" row per spec v1.0. A real `StreakStore` arrives with user-defined habits in a later phase.
+
+**Tests added**: 3 classes / 8 new test methods. Full suite: 188 unit tests + UI tests, all green.
+
+**Files**: `WeeklyPlanner/Intelligence/WeekSummary.swift`, `WeeklyPlanner/Intelligence/Tasks/WeekSummaryGenerator.swift`, `WeeklyPlanner/Features/Review/{PaperReviewView,ReviewHeader,ReviewSummaryBlock,CategoryTimeRow,TimeSpentBarChart,AINotesList,StreaksBlock,ReviewViewModel}.swift`; modified `WeeklyPlanner/Models/AppStyle.swift`, `WeeklyPlanner/Features/DayPage/DayWeekToggle.swift`, `WeeklyPlanner/App/RootView.swift`.
+

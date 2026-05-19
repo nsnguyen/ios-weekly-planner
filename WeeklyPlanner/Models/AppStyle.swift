@@ -11,6 +11,7 @@ enum AppStyle: String, CaseIterable, Hashable, Codable {
 enum PaperView: String, CaseIterable, Hashable, Codable {
     case day
     case week
+    case review
 }
 
 /// Which spread the user is on inside `.modern` style.

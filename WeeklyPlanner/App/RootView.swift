@@ -113,6 +113,8 @@ struct RootView: View {
                                   DayPageView(controller: controller)
                               case .week:
                                   WeekPageView(weekOffset: controller.current.week)
+                              case .review:
+                                  PaperReviewView(weekOffset: controller.current.week)
                               }
                           })
 
