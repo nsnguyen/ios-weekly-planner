@@ -22,7 +22,8 @@ struct SideTab: View {
     let idx: Int
 
     /// 3-letter weekday acronym (`"Mon"`, `"Tue"`, ...). Uppercased and
-    /// rotated +90° when rendered so it reads top-to-bottom on the tab.
+    /// rotated -90° when rendered so it reads bottom-to-top on the tab
+    /// (the natural read direction when tilting your head left).
     let weekdayShort: String
 
     /// Full weekday name (`"Monday"`, `"Tuesday"`, ...) used for
@@ -110,7 +111,7 @@ private struct SideTabLabel: View {
             .minimumScaleFactor(layout.minimumScaleFactor)
             .allowsTightening(true)
             .frame(width: layout.trackLength, height: layout.lineBoxHeight)
-            .rotationEffect(.degrees(90))
+            .rotationEffect(.degrees(-90))
             .frame(width: Spacing.sideTabWidth, height: Spacing.sideTabHeight)
     }
 }
