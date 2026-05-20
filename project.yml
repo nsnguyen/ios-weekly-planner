@@ -41,8 +41,9 @@ packages:
   KeychainAccess:
     url: https://github.com/kishikawakatsumi/KeychainAccess
     from: "4.2.2"
-  # GoogleSignIn-iOS, GoogleAPIClientForREST — deferred to Phase 17/18 where they are first used.
-  # Adding them now bloats the Phase 01 build with unused transitive deps.
+  GoogleSignIn-iOS:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: "7.1.0"
 
 targets:
   WeeklyPlanner:
@@ -78,6 +79,8 @@ targets:
       - package: swift-collections
         product: Collections
       - package: KeychainAccess
+      - package: GoogleSignIn-iOS
+        product: GoogleSignIn
 
   WeeklyPlannerTests:
     type: bundle.unit-test
