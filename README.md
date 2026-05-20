@@ -139,6 +139,46 @@ metadata rewritten to match the static-instance convention.
 ID in `project.yml`, `WeeklyPlanner.entitlements`, and the Google OAuth URL
 type in `Info.plist` before Phase 23.
 
+## Google OAuth setup (Phase 17+)
+
+The app's Gmail integration uses Google's iOS OAuth client. The client ID
+is **not** committed — every developer drops their own (or the team's) into
+a gitignored `Secrets.xcconfig` at the repo root.
+
+### One-time setup
+
+1. Go to https://console.cloud.google.com/apis/credentials
+2. **Create credentials → OAuth client ID**, Application type **iOS**,
+   Bundle ID **`com.weeklyplanner.WeeklyPlanner`**.
+3. Copy the two values Google shows you (Client ID and the iOS URL scheme —
+   they're the same string, inverted).
+4. Copy `Secrets.example.xcconfig` to `Secrets.xcconfig` and paste both
+   values:
+
+   ```
+   GOOGLE_CLIENT_ID = 1234-abcd.apps.googleusercontent.com
+   REVERSED_GOOGLE_CLIENT_ID = com.googleusercontent.apps.1234-abcd
+   ```
+
+5. `xcodegen generate` (XcodeGen picks up `Secrets.xcconfig` via
+   `configFiles`).
+6. Build and run. The Gmail toggle in Settings should now open the real
+   OAuth sheet.
+
+### Scopes + test users
+
+While the OAuth project is in "Testing" mode, only the Google accounts
+listed under **OAuth consent screen → Audience → Test users** can sign in.
+Add your own Gmail address there. App Store submission requires moving to
+Production, which triggers Google's brand verification + CASA security
+assessment (4–6 weeks) — plan for it in Phase 23.
+
+### If `Secrets.xcconfig` is missing
+
+The app still builds and runs; tapping the Gmail toggle surfaces an
+in-app alert ("Gmail isn't configured…") instead of crashing. Every other
+feature continues to work.
+
 ## License
 
 TBD — see `docs/phases/phase-23-app-store-submission.md`. Third-party fonts
