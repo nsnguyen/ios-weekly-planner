@@ -55,6 +55,9 @@ targets:
           - "**/.DS_Store"
           - "Supporting/Info.plist"
           - "Supporting/WeeklyPlanner.entitlements"
+    configFiles:
+      Debug: Secrets.xcconfig
+      Release: Secrets.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.weeklyplanner.WeeklyPlanner
@@ -70,6 +73,7 @@ targets:
         ENABLE_PREVIEWS: YES
         IPHONEOS_DEPLOYMENT_TARGET: "26.0"
         SWIFT_EMIT_LOC_STRINGS: YES
+        INFOPLIST_KEY_GoogleClientID: $(GOOGLE_CLIENT_ID)
     dependencies:
       - package: swift-collections
         product: Collections

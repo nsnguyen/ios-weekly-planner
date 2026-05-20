@@ -89,7 +89,7 @@
             <string>com.weeklyplanner.WeeklyPlanner.googleoauth</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>com.googleusercontent.apps.PLACEHOLDER</string>
+                <string>$(REVERSED_GOOGLE_CLIENT_ID)</string>
             </array>
         </dict>
     </array>
