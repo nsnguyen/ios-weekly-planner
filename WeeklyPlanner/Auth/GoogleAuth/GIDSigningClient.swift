@@ -71,7 +71,11 @@ final class RealGIDSigningClient: GIDSigningClient {
                     email: email,
                     accessToken: user.accessToken.tokenString,
                     refreshToken: user.refreshToken.tokenString,
-                    expiresAt: user.accessToken.expirationDate ?? Date(timeIntervalSinceNow: 3000)
+                    // Nil expirationDate → .distantPast so LiveGoogleAuthService
+                    // treats the token as already-expired and proactively
+                    // refreshes on next accessToken() rather than trusting a
+                    // fabricated future timestamp.
+                    expiresAt: user.accessToken.expirationDate ?? .distantPast
                 )
                 continuation.resume(returning: info)
             }
@@ -103,7 +107,8 @@ final class RealGIDSigningClient: GIDSigningClient {
                     email: email,
                     accessToken: updatedUser.accessToken.tokenString,
                     refreshToken: updatedUser.refreshToken.tokenString,
-                    expiresAt: updatedUser.accessToken.expirationDate ?? Date(timeIntervalSinceNow: 3000)
+                    // See signIn() rationale: nil expiration → force re-refresh.
+                    expiresAt: updatedUser.accessToken.expirationDate ?? .distantPast
                 )
                 continuation.resume(returning: info)
             }
@@ -131,7 +136,8 @@ final class RealGIDSigningClient: GIDSigningClient {
             email: email,
             accessToken: user.accessToken.tokenString,
             refreshToken: user.refreshToken.tokenString,
-            expiresAt: user.accessToken.expirationDate ?? Date(timeIntervalSinceNow: 3000)
+            // See signIn() rationale: nil expiration → force re-refresh.
+            expiresAt: user.accessToken.expirationDate ?? .distantPast
         )
     }
 }
