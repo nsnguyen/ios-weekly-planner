@@ -19,7 +19,8 @@ struct FontCard: View {
                 Text("Aa")
                     .font(sampleFont.font(at: 26, weight: .bold))
                     .foregroundStyle(theme.ink)
-                    .frame(width: 28, alignment: .center)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
                 Text(sampleFont.displayName)
                     .font(sampleFont.font(at: 15, weight: .regular))
