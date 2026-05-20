@@ -3,10 +3,11 @@ import SwiftUI
 
 /// The app entry point. Boots a single `ModelContainer`, constructs the
 /// production `SwiftDataEventStore` / `SwiftDataInboxStore` /
-/// `SwiftDataTaskStore`, and (in DEBUG builds only) seeds the container
-/// from bundled JSON the first time the schema is empty. Stores are then
-/// injected into the environment so any view subtree can read events,
-/// inbox suggestions, or to-dos without prop drilling.
+/// `SwiftDataTaskStore` / `SwiftDataSettingsStore`, and (in DEBUG builds
+/// only) seeds the container from bundled JSON the first time the schema
+/// is empty. Stores are then injected into the environment so any view
+/// subtree can read events, inbox suggestions, to-dos, or settings without
+/// prop drilling.
 ///
 /// `App` is `@MainActor` by SwiftUI convention, which is what lets
 /// `init` legally call `SwiftDataStack.production` and friends — all the
@@ -17,12 +18,14 @@ struct WeeklyPlannerApp: App {
     @State private var eventStore: any EventStoring
     @State private var inboxStore: any InboxStoring
     @State private var taskStore: any TaskStoring
+    @State private var settingsStore: any SettingsStoring
 
     init() {
         let container = SwiftDataStack.production
         let eventStore = SwiftDataEventStore(context: container.mainContext)
         let inboxStore = SwiftDataInboxStore(context: container.mainContext)
         let taskStore = SwiftDataTaskStore(context: container.mainContext)
+        let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
         #endif
@@ -30,6 +33,7 @@ struct WeeklyPlannerApp: App {
         _eventStore = State(initialValue: eventStore)
         _inboxStore = State(initialValue: inboxStore)
         _taskStore = State(initialValue: taskStore)
+        _settingsStore = State(initialValue: settingsStore)
     }
 
     var body: some Scene {
@@ -38,6 +42,7 @@ struct WeeklyPlannerApp: App {
                 .environment(\.eventStore, eventStore)
                 .environment(\.inboxStore, inboxStore)
                 .environment(\.taskStore, taskStore)
+                .environment(\.settingsStore, settingsStore)
                 .modelContainer(container)
         }
     }
