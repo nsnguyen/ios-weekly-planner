@@ -7,12 +7,13 @@ UserNotifications.
 
 ## Status
 
-**Milestones A–F complete** — Phases 01–15 shipped to `main`. The app builds
-and runs end-to-end: leather book chrome, Day / Week pages with hobonichi
-layout, page-flip animations, week picker, event detail + AI search sheets,
-on-device Foundation Models integration, Review page with AI summary, and the
-paper-bottom tab bar with right-edge binder-style day tabs. 198 unit tests +
-UI smoke tests, all green.
+**Milestones A–F + Phase 16 complete** — Phases 01–16 shipped to `main`. The
+app builds and runs end-to-end: leather book chrome, Day / Week pages with
+hobonichi layout, page-flip animations, week picker, event detail + AI
+search sheets, on-device Foundation Models integration, Review page with AI
+summary, the paper-bottom tab bar with right-edge binder-style day tabs, and
+a live-switching Settings page (3 themes × 4 handwriting fonts × 3 text
+sizes). 211 unit tests + UI smoke tests, all green.
 
 | Milestone | Phases | Status |
 |-----------|--------|--------|
@@ -22,7 +23,7 @@ UI smoke tests, all green.
 | D — Sheets & AI        | 11–12 | ✅ done |
 | E — Intelligence       | 13    | ✅ done |
 | F — Other Screens      | 14–15 | ✅ done |
-| G — Settings           | 16–17 | ⏳ next |
+| G — Settings           | 16–17 | 🟡 in progress (Phase 16 ✅) |
 | H — Integrations       | 18–19 | ⏳ pending |
 | I — Polish             | 20–21 | ⏳ pending |
 | J — Ship               | 22–23 | ⏳ pending |
