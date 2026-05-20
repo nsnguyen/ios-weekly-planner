@@ -10,6 +10,7 @@ struct SectionTitle: View {
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
 
     init(_ title: String, eyebrow: String? = nil) {
         self.title = title
@@ -25,7 +26,7 @@ struct SectionTitle: View {
                     .foregroundStyle(theme.ink3)
             }
             Text(title)
-                .font(font.font(at: 22, weight: .bold))
+                .font(font.font(at: 22 * size.scale, weight: .bold))
                 .foregroundStyle(theme.ink)
         }
         .padding(EdgeInsets(top: 0, leading: 2, bottom: 8, trailing: 0))

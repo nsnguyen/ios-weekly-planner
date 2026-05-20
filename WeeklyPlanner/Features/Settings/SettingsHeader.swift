@@ -7,11 +7,12 @@ import SwiftUI
 struct SettingsHeader: View {
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Make it yours")
-                .font(font.font(at: 30, weight: .bold))
+                .font(font.font(at: 30 * size.scale, weight: .bold))
                 .foregroundStyle(theme.ink)
                 .padding(EdgeInsets(top: 14, leading: 18, bottom: 4, trailing: 18))
 

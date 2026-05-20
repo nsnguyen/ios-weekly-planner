@@ -6,10 +6,11 @@ import SwiftUI
 struct AboutFooter: View {
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
 
     var body: some View {
         Text("The Planner · v1.0 · made with care")
-            .font(font.font(at: 16, weight: .regular))
+            .font(font.font(at: 16 * size.scale, weight: .regular))
             .italic()
             .foregroundStyle(theme.ink3)
             .frame(maxWidth: .infinity, alignment: .center)
