@@ -89,6 +89,7 @@ final class StubInboxStore: InboxStoring {
     func upsert(_: InboxSuggestion) async throws {}
     func accept(id _: UUID) async throws {}
     func dismiss(id _: UUID) async throws {}
+    func clearPending() async throws {}
 }
 
 /// No-op `TaskStoring` companion to `StubEventStore`/`StubInboxStore`. Same

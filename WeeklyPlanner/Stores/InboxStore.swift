@@ -8,6 +8,11 @@ protocol InboxStoring: AnyObject {
     func upsert(_ suggestion: InboxSuggestion) async throws
     func accept(id: UUID) async throws
     func dismiss(id: UUID) async throws
+
+    /// Deletes every `InboxSuggestion` row whose status is `.pending`. Called
+    /// from `ConnectionsViewModel.disconnectGmail` so a re-connect doesn't
+    /// resurrect stale rows from a previous account.
+    func clearPending() async throws
 }
 
 @MainActor
@@ -64,6 +69,17 @@ final class SwiftDataInboxStore: InboxStoring {
     func dismiss(id: UUID) async throws {
         guard let suggestion = try await suggestion(id: id) else { return }
         suggestion.status = .dismissed
+        try context.save()
+    }
+
+    func clearPending() async throws {
+        let pendingRaw = InboxStatus.pending.rawValue
+        let descriptor = FetchDescriptor<InboxSuggestion>(
+            predicate: #Predicate<InboxSuggestion> { $0.statusRaw == pendingRaw }
+        )
+        for row in try context.fetch(descriptor) {
+            context.delete(row)
+        }
         try context.save()
     }
 }
