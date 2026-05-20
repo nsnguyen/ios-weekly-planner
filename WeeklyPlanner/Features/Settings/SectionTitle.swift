@@ -20,14 +20,13 @@ struct SectionTitle: View {
         VStack(alignment: .leading, spacing: 1) {
             if let eyebrow {
                 Text(eyebrow.uppercased())
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 10, weight: .bold))
                     .tracking(1.6)
                     .foregroundStyle(theme.ink3)
             }
             Text(title)
                 .font(font.font(at: 22, weight: .bold))
                 .foregroundStyle(theme.ink)
-                .lineSpacing(0)
         }
         .padding(EdgeInsets(top: 0, leading: 2, bottom: 8, trailing: 0))
         .frame(maxWidth: .infinity, alignment: .leading)
