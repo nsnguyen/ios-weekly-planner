@@ -4,14 +4,18 @@ import SwiftUI
 /// the icon+label when active, so the active tab reads as a paper bookmark
 /// poking out of the leather book.
 ///
-/// Geometry, per spec:
+/// Geometry:
 /// - Cell padding `top: 8`, column spacing `3`.
 /// - Icon `22pt`, label `10pt` system, weight `.bold` active / `.medium` inactive.
-/// - Active ink/icon `theme.ink`; inactive `theme.chromeMuted`.
-/// - Bookmark `52×26pt` cream rectangle, rounded `4pt` at the top corners,
-///   centered horizontally, vertical offset `-8pt` so it extends above the
-///   tab area. Lives at the bottom of the `ZStack` so the icon/label paint
-///   on top.
+/// - Active ink/icon `theme.ink` (dark) on the cream bookmark; inactive
+///   `theme.chromeMuted` (light) on dark leather.
+/// - Bookmark `52×52pt` cream rectangle, rounded `4pt` at the top corners,
+///   centered horizontally, vertical offset `-8pt` so it extends 8pt above
+///   the tab area and 44pt down — large enough to fully back the icon+label
+///   so the `theme.ink` (dark) active color has cream contrast underneath.
+///   The spec's original `52×26pt` only covered the top half of the icon and
+///   left the label rendering as dark-on-dark on the leather underneath.
+///   Lives at the bottom of the `ZStack` so the icon/label paint on top.
 struct PaperTab: View {
     let tab: Tab
     let isActive: Bool
@@ -52,7 +56,7 @@ struct PaperTab: View {
                                                    topTrailing: 4),
                                style: .continuous)
             .fill(theme.cream)
-            .frame(width: 52, height: 26)
+            .frame(width: 52, height: 52)
             .shadow(color: .black.opacity(0.4), radius: 1, x: 0, y: -1)
             .offset(y: -8)
     }
