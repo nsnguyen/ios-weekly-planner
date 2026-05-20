@@ -7,8 +7,28 @@ UserNotifications.
 
 ## Status
 
-Phase **01 — Project Bootstrap & Tooling** is complete on branch
-`milestone-a-foundation`. See `docs/phases/README.md` for the full 23-phase plan.
+**Milestones A–F complete** — Phases 01–15 shipped to `main`. The app builds
+and runs end-to-end: leather book chrome, Day / Week pages with hobonichi
+layout, page-flip animations, week picker, event detail + AI search sheets,
+on-device Foundation Models integration, Review page with AI summary, and the
+paper-bottom tab bar with right-edge binder-style day tabs. 198 unit tests +
+UI smoke tests, all green.
+
+| Milestone | Phases | Status |
+|-----------|--------|--------|
+| A — Foundation         | 01–04 | ✅ done |
+| B — Day Page           | 05–08 | ✅ done |
+| C — Week Nav           | 09–10 | ✅ done |
+| D — Sheets & AI        | 11–12 | ✅ done |
+| E — Intelligence       | 13    | ✅ done |
+| F — Other Screens      | 14–15 | ✅ done |
+| G — Settings           | 16–17 | ⏳ next |
+| H — Integrations       | 18–19 | ⏳ pending |
+| I — Polish             | 20–21 | ⏳ pending |
+| J — Ship               | 22–23 | ⏳ pending |
+
+See `docs/phases/README.md` for the full 23-phase plan and per-phase
+retrospectives.
 
 ## Requirements
 

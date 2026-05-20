@@ -31,31 +31,34 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 
 ## Phase Map
 
-| #  | Phase                                                | Milestone           |
-|----|------------------------------------------------------|---------------------|
-| 01 | Project Bootstrap & Tooling                          | A — Foundation      |
-| 02 | Design System (Theme, Fonts, Tokens)                 | A                   |
-| 03 | Data Models & SwiftData Persistence                  | A                   |
-| 04 | EventKit & Calendar Integration                      | A                   |
-| 05 | Paper Primitives & Book Chrome                       | B — Day Page        |
-| 06 | Paper Day Page (Static Layout + Events + Inbox)      | B                   |
-| 07 | Day Page To-Do Block & AI Sticky Note                | B                   |
-| 08 | Side Tabs & Page-Flip System                         | B                   |
-| 09 | Top Bar & Week Picker                                | C — Week Nav        |
-| 10 | Paper Week Page                                      | C                   |
-| 11 | Paper Event Detail Sheet                             | D — Sheets          |
-| 12 | Paper AI Search Overlay (UI)                         | D                   |
-| 13 | Foundation Models (Apple Intelligence) Integration   | E — Intelligence    |
-| 14 | Paper Review Page                                    | F — Other Screens   |
-| 15 | Paper Tab Bar & Navigation Wiring                    | F                   |
-| 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        |
-| 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   |
-| 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    |
-| 19 | Notifications (Time + Location Reminders)            | H                   |
-| 20 | Modern Mode (Alternative Stock-iOS Theme)            | I — Polish          |
-| 21 | Accessibility, Dynamic Type, Localization, RTL       | I                   |
-| 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            |
-| 23 | App Store Submission & TestFlight                    | J                   |
+| #  | Phase                                                | Milestone           | Status |
+|----|------------------------------------------------------|---------------------|--------|
+| 01 | Project Bootstrap & Tooling                          | A — Foundation      | ✅     |
+| 02 | Design System (Theme, Fonts, Tokens)                 | A                   | ✅     |
+| 03 | Data Models & SwiftData Persistence                  | A                   | ✅     |
+| 04 | EventKit & Calendar Integration                      | A                   | ✅     |
+| 05 | Paper Primitives & Book Chrome                       | B — Day Page        | ✅     |
+| 06 | Paper Day Page (Static Layout + Events + Inbox)      | B                   | ✅     |
+| 07 | Day Page To-Do Block & AI Sticky Note                | B                   | ✅     |
+| 08 | Side Tabs & Page-Flip System                         | B                   | ✅     |
+| 09 | Top Bar & Week Picker                                | C — Week Nav        | ✅     |
+| 10 | Paper Week Page                                      | C                   | ✅     |
+| 11 | Paper Event Detail Sheet                             | D — Sheets          | ✅     |
+| 12 | Paper AI Search Overlay (UI)                         | D                   | ✅     |
+| 13 | Foundation Models (Apple Intelligence) Integration   | E — Intelligence    | ✅     |
+| 14 | Paper Review Page                                    | F — Other Screens   | ✅     |
+| 15 | Paper Tab Bar & Navigation Wiring                    | F                   | ✅     |
+| 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        | ⏳     |
+| 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ⏳     |
+| 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ⏳     |
+| 19 | Notifications (Time + Location Reminders)            | H                   | ⏳     |
+| 20 | Modern Mode (Alternative Stock-iOS Theme)            | I — Polish          | ⏳     |
+| 21 | Accessibility, Dynamic Type, Localization, RTL       | I                   | ⏳     |
+| 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
+| 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
+
+**Current state:** Milestones A–F shipped (Phases 01–15). 198 unit tests
+green. Next up: Milestone G — Settings (Phase 16).
 
 ## Reading a Phase Doc
 
