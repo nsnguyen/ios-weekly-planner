@@ -48,7 +48,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 13 | Foundation Models (Apple Intelligence) Integration   | E — Intelligence    | ✅     |
 | 14 | Paper Review Page                                    | F — Other Screens   | ✅     |
 | 15 | Paper Tab Bar & Navigation Wiring                    | F                   | ✅     |
-| 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        | ⏳     |
+| 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        | ✅     |
 | 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ⏳     |
 | 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ⏳     |
 | 19 | Notifications (Time + Location Reminders)            | H                   | ⏳     |
@@ -57,8 +57,8 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
 | 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
 
-**Current state:** Milestones A–F shipped (Phases 01–15). 198 unit tests
-green. Next up: Milestone G — Settings (Phase 16).
+**Current state:** Milestones A–F + Phase 16 shipped. 211 unit tests
+green. Next up: Phase 17 — Settings (Connections).
 
 ## Reading a Phase Doc
 
@@ -163,4 +163,16 @@ The temporary three-segment Day/Week/Review toggle from Phase 14 is gone: `Paper
 **Tests added**: 2 classes / 6 new test methods (`UserSettingsLastTabTests`, `TabSelectionTests`). Full suite: 194 unit tests + UI tests, all green.
 
 **Files**: `WeeklyPlanner/Navigation/{TabSelection,PaperTab,PaperTabBar,AppShell}.swift`, `WeeklyPlanner/Features/Settings/PaperSettingsView.swift`; modified `WeeklyPlanner/Models/{AppStyle,UserSettings}.swift`, `WeeklyPlanner/Features/DayPage/{BookContainer,DayWeekToggle}.swift`, `WeeklyPlanner/App/RootView.swift`, `WeeklyPlanner/Stores/Environment+Stores.swift`.
+
+### Phase 16 — Settings (Theme, Handwriting, Size, Preferences)
+
+Shipped the embedded Settings page: a `BookPage` + `PaperSurface` paper page on top of the persistent leather cover, hosting a `SettingsHeader` ("Make it yours" + Cochin italic sub-line + gradient rule), then five sections — `ThemeCardsGrid` (cream / kraft / midnight), `FontCardsGrid` (caveat / architects / kalam / indie), `SizeSegmented` (S / M / L with live handwriting preview), `ConnectionsPlaceholder` (Phase 17 fills it), and `PreferencesGroup` (Week-starts-on / Default-reminder / Apple Intelligence) — closing with the centered italic `AboutFooter`. `SettingsViewModel` reads on init from `SettingsStoring.current()` and writes through `SettingsStoring.update`, so every selection persists.
+
+Closed two Phase 15 gaps along the way: `WeeklyPlannerApp` now injects a production `SwiftDataSettingsStore` (it was falling through to `StubSettingsStore`, so tab selection wasn't actually surviving relaunches), and `AppShell` now reads the persisted row via `@Query` and re-injects `\.paperTheme` / `\.paperFont` / `\.paperSize` at the top of `body`. The whole app re-renders on every settings write — book cover, page chrome, ink, and handwriting all flip live. Verified end-to-end in the simulator: flipping `themeKey`/`fontKey`/`sizeKey` in the SwiftData store immediately changed every paper view on next launch (screenshot at `docs/phases/phase-16-settings.png`).
+
+Snapshot tests are deferred to Phase 21 (we have no `swift-snapshot-testing` dep). `PaperSettingsViewTests` instead asserts structural invariants — 3 themes / 4 fonts / 3 sizes / 5 reminder options / 2 week-start choices — and the visual diff is performed manually against `docs/mock/paper-settings.jsx`.
+
+**Tests added**: 2 classes / 13 new test methods (`SettingsViewModelTests` × 7, `PaperSettingsViewTests` × 6). Full suite: 211 unit tests + UI tests, all green.
+
+**Files**: `WeeklyPlanner/Features/Settings/{SettingsViewModel,SettingsHeader,SectionTitle,ThemeCardsGrid,ThemeCard,FontCardsGrid,FontCard,SizeSegmented,ConnectionsPlaceholder,PreferencesGroup,PrefRow,ToggleRow,AboutFooter}.swift`; modified `WeeklyPlanner/Features/Settings/PaperSettingsView.swift`, `WeeklyPlanner/App/WeeklyPlannerApp.swift`, `WeeklyPlanner/Navigation/AppShell.swift`.
 

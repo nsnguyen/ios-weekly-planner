@@ -24,11 +24,23 @@ struct AppShell: View {
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @Query private var settingsRows: [UserSettings]
+
     @State private var selection: TabSelection
     @State private var controller: PageFlipController
     @State private var paperView: PaperView = .day
     @State private var isPickerOpen: Bool = false
     @State private var isAISearchOpen: Bool = false
+
+    /// The current settings row, or a fresh default if SwiftData hasn't
+    /// materialized one yet. `@Query` returns at most one element here
+    /// because `SwiftDataSettingsStore.current()` lazy-creates exactly one
+    /// `UserSettings` instance.
+    private var settings: UserSettings { settingsRows.first ?? UserSettings() }
+
+    private var resolvedTheme: PaperTheme { settings.paperTheme.theme }
+    private var resolvedFont: PaperFont { settings.paperFont }
+    private var resolvedSize: PaperSize { settings.paperSize }
 
     init(settingsStore: any SettingsStoring) {
         let today = Date()
@@ -85,6 +97,9 @@ struct AppShell: View {
         .animation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide,
                    value: isAISearchOpen)
         .environment(\.intelligenceService, makeIntelligenceService())
+        .paperTheme(resolvedTheme)
+        .paperFont(resolvedFont)
+        .paperSize(resolvedSize)
     }
 
     @ViewBuilder
