@@ -30,6 +30,7 @@ struct SideTabs: View {
         VStack(spacing: 4) {
             ForEach(weekDays, id: \.idx) { day in
                 SideTab(idx: day.idx,
+                        weekdayShort: day.weekdayShort,
                         weekdayLong: day.weekdayLong,
                         isSelected: day.idx == selectedIdx,
                         isToday: day.idx == todayIdx)
@@ -39,7 +40,7 @@ struct SideTabs: View {
             }
         }
         .padding(.top, 30)
-        .frame(width: Spacing.sideTabSelectedWidth, alignment: .leading)
+        .frame(width: Spacing.sideTabSelectedWidth, alignment: .trailing)
     }
 }
 

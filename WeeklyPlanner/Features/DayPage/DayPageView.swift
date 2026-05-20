@@ -41,17 +41,17 @@ struct DayPageView: View {
         let isCurrentWeek = controller.current.week == 0
 
         return HStack(alignment: .top, spacing: 4) {
-            SideTabs(weekDays: weekDays,
-                     selectedIdx: controller.current.day,
-                     todayIdx: isCurrentWeek ? todayIdx : nil,
-                     onSelect: { idx in controller.flipToDay(idx: idx) })
-
             PageFlipContainer(controller: controller) { coord in
                 DayPageContent(weekOffset: coord.week, dayIdx: coord.day)
             }
             .horizontalSwipe { direction in
                 controller.flipDay(direction: direction)
             }
+
+            SideTabs(weekDays: weekDays,
+                     selectedIdx: controller.current.day,
+                     todayIdx: isCurrentWeek ? todayIdx : nil,
+                     onSelect: { idx in controller.flipToDay(idx: idx) })
         }
     }
 }
