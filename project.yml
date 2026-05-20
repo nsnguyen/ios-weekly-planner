@@ -90,6 +90,7 @@ targets:
       - path: WeeklyPlannerTests
         excludes:
           - "**/.DS_Store"
+          - "WeeklyPlannerTests.entitlements"
     dependencies:
       - target: WeeklyPlanner
     settings:
@@ -97,6 +98,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.weeklyplanner.WeeklyPlannerTests
         GENERATE_INFOPLIST_FILE: YES
         IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        CODE_SIGN_ENTITLEMENTS: WeeklyPlannerTests/WeeklyPlannerTests.entitlements
 
   WeeklyPlannerUITests:
     type: bundle.ui-testing
