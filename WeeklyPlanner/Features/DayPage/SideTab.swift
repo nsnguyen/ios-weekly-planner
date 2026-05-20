@@ -1,15 +1,17 @@
 import SwiftUI
 
-/// One tab in the seven-tab pastel column that runs down the page edge of the
-/// Day view. The tab paints a per-weekday pastel rectangle, rounded only on
-/// its leading (inner) edge so it reads as something tabbed onto the side of
-/// the book, with the rotated weekday name running vertically across the tab.
+/// One tab in the seven-tab pastel column that runs down the right edge of
+/// the Day page, binder-tab style. The tab paints a per-weekday pastel
+/// rectangle, rounded only on its trailing (outer) edge so it reads as a
+/// binder tab clipped onto the right side of the page, with the 3-letter
+/// weekday acronym running top-to-bottom across the tab.
 ///
 /// Selection state changes two things: the width grows from
 /// `Spacing.sideTabWidth` (22pt) to `Spacing.sideTabSelectedWidth` (28pt) and
-/// the whole tab nudges leftward by `Spacing.sideTabSelectedOffset` (-6pt) so
-/// it pokes further into the page area. A small red dot in the top-trailing
-/// corner marks the tab that represents today.
+/// the whole tab nudges rightward by `Spacing.sideTabSelectedOffset` (+6pt)
+/// so it pokes further into the outer leather margin. A small red dot in
+/// the top-leading (inner, near the page) corner marks the tab that
+/// represents today.
 ///
 /// Colors come from `pastel(forIdx:)` — these are spec values from the mock
 /// rather than theme tokens, so they're hard-coded on purpose. Ink color and
@@ -19,12 +21,16 @@ struct SideTab: View {
     /// and the rotated weekday label.
     let idx: Int
 
-    /// Full weekday name (`"Monday"`, `"Tuesday"`, ...). Uppercased and
-    /// rotated -90° when rendered.
+    /// 3-letter weekday acronym (`"Mon"`, `"Tue"`, ...). Uppercased and
+    /// rotated +90° when rendered so it reads top-to-bottom on the tab.
+    let weekdayShort: String
+
+    /// Full weekday name (`"Monday"`, `"Tuesday"`, ...) used for
+    /// accessibility only — the visible label is `weekdayShort`.
     let weekdayLong: String
 
     /// `true` when this tab is the currently focused day. Selected tabs are
-    /// wider and offset leftward.
+    /// wider and offset rightward.
     let isSelected: Bool
 
     /// `true` when this tab represents the real-world today (i.e., the page
@@ -43,16 +49,16 @@ struct SideTab: View {
                 .fill(Self.pastel(forIdx: idx))
                 .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 .overlay {
-                    SideTabLabel(text: weekdayLong.uppercased(),
+                    SideTabLabel(text: weekdayShort.uppercased(),
                                  layout: Self.labelLayout)
                 }
-                .overlay(alignment: .topTrailing) {
+                .overlay(alignment: .topLeading) {
                     if isToday {
                         Circle()
                             .fill(theme.redInk)
                             .frame(width: 5, height: 5)
                             .padding(.top, 4)
-                            .padding(.trailing, 3)
+                            .padding(.leading, 3)
                     }
                 }
             .frame(width: isSelected ? Spacing.sideTabSelectedWidth : Spacing.sideTabWidth,
@@ -66,13 +72,13 @@ struct SideTab: View {
         .animation(.smooth(duration: 0.18), value: isSelected)
     }
 
-    /// Tab silhouette: rounded only on the leading edge so the trailing
-    /// (outer) edge butts flat against the side of the page area.
+    /// Tab silhouette: rounded only on the trailing edge so the leading
+    /// (inner) edge butts flat against the side of the page area.
     private static var tabShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(cornerRadii: RectangleCornerRadii(topLeading: 6,
-                                                                 bottomLeading: 6,
-                                                                 bottomTrailing: 0,
-                                                                 topTrailing: 0))
+        UnevenRoundedRectangle(cornerRadii: RectangleCornerRadii(topLeading: 0,
+                                                                 bottomLeading: 0,
+                                                                 bottomTrailing: 6,
+                                                                 topTrailing: 6))
     }
 }
 
@@ -104,7 +110,7 @@ private struct SideTabLabel: View {
             .minimumScaleFactor(layout.minimumScaleFactor)
             .allowsTightening(true)
             .frame(width: layout.trackLength, height: layout.lineBoxHeight)
-            .rotationEffect(.degrees(-90))
+            .rotationEffect(.degrees(90))
             .frame(width: Spacing.sideTabWidth, height: Spacing.sideTabHeight)
     }
 }
@@ -139,20 +145,16 @@ extension SideTab {
 // MARK: - Previews
 
 #Preview("SideTab · All seven, Friday selected") {
-    ZStack {
+    let longNames = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                     "Friday", "Saturday", "Sunday"]
+    let shortNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    return ZStack {
         BookCover()
         VStack(spacing: 4) {
             ForEach(0 ..< 7, id: \.self) { idx in
                 SideTab(idx: idx,
-                        weekdayLong: [
-                            "Monday",
-                            "Tuesday",
-                            "Wednesday",
-                            "Thursday",
-                            "Friday",
-                            "Saturday",
-                            "Sunday",
-                        ][idx],
+                        weekdayShort: shortNames[idx],
+                        weekdayLong: longNames[idx],
                         isSelected: idx == 4,
                         isToday: idx == 4) {}
             }

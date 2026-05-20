@@ -54,6 +54,8 @@ enum Spacing {
     static let sideTabWidth: CGFloat = 22
     static let sideTabSelectedWidth: CGFloat = 28
     static let sideTabHeight: CGFloat = 56
-    /// Horizontal offset applied to the selected side tab so it pokes out.
-    static let sideTabSelectedOffset: CGFloat = -6
+    /// Horizontal offset applied to the selected side tab so it pokes out
+    /// (rightward into the outer leather margin, since the day tabs sit on
+    /// the right side of the page binder-tab style).
+    static let sideTabSelectedOffset: CGFloat = 6
 }
