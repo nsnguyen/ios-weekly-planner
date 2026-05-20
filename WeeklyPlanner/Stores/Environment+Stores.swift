@@ -33,6 +33,11 @@ extension EnvironmentValues {
     /// overlay, event sheet suggestion) read this and skip the AI
     /// pathway when it's missing.
     @Entry var intelligenceService: (any IntelligenceService)? = nil
+
+    /// The active `GoogleAuthService`. Defaults to `StubGoogleAuthService`
+    /// so previews never crash. Production wires `LiveGoogleAuthService`
+    /// in `WeeklyPlannerApp`.
+    @Entry var googleAuthService: any GoogleAuthService = StubGoogleAuthService()
 }
 
 // MARK: - Stubs

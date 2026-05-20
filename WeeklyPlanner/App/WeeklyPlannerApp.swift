@@ -19,6 +19,7 @@ struct WeeklyPlannerApp: App {
     @State private var inboxStore: any InboxStoring
     @State private var taskStore: any TaskStoring
     @State private var settingsStore: any SettingsStoring
+    @State private var googleAuthService: any GoogleAuthService
 
     init() {
         let container = SwiftDataStack.production
@@ -26,6 +27,13 @@ struct WeeklyPlannerApp: App {
         let inboxStore = SwiftDataInboxStore(context: container.mainContext)
         let taskStore = SwiftDataTaskStore(context: container.mainContext)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
+        let googleAuthService = LiveGoogleAuthService(
+            config: .fromBundle(),
+            client: RealGIDSigningClient(),
+            keychain: TokenKeychainStore<GoogleAccountInfo>(
+                serviceID: "com.weeklyplanner.WeeklyPlanner.google"
+            )
+        )
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
         #endif
@@ -34,6 +42,7 @@ struct WeeklyPlannerApp: App {
         _inboxStore = State(initialValue: inboxStore)
         _taskStore = State(initialValue: taskStore)
         _settingsStore = State(initialValue: settingsStore)
+        _googleAuthService = State(initialValue: googleAuthService)
     }
 
     var body: some Scene {
@@ -43,7 +52,11 @@ struct WeeklyPlannerApp: App {
                 .environment(\.inboxStore, inboxStore)
                 .environment(\.taskStore, taskStore)
                 .environment(\.settingsStore, settingsStore)
+                .environment(\.googleAuthService, googleAuthService)
                 .modelContainer(container)
+                .onOpenURL { url in
+                    _ = RealGIDSigningClient().handle(url: url)
+                }
         }
     }
 }
