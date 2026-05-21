@@ -27,7 +27,7 @@ final class EventExtractorTests: XCTestCase {
             isEvent: true,
             title: "Dinner at Café Bleu",
             startISO: "2026-06-12T19:00:00Z",
-            endISO: nil,
+            endISO: "",
             location: "Café Bleu",
             categoryHint: "social",
             confidence: 0.92
@@ -51,8 +51,8 @@ final class EventExtractorTests: XCTestCase {
     func testFakeAmbiguousEmailReturnsIsEventFalse() async throws {
         let fake = FakeEventExtractor()
         fake.nextResult = ExtractedEvent(
-            isEvent: false, title: nil, startISO: nil, endISO: nil,
-            location: nil, categoryHint: nil, confidence: 0.2
+            isEvent: false, title: "", startISO: "", endISO: "",
+            location: "", categoryHint: "", confidence: 0.2
         )
 
         let result = try await fake.extract(
@@ -63,17 +63,17 @@ final class EventExtractorTests: XCTestCase {
         XCTAssertFalse(result.isEvent)
     }
 
-    func testFakeMissingTimeReturnsNilStart() async throws {
+    func testFakeMissingTimeReturnsEmptyStart() async throws {
         let fake = FakeEventExtractor()
         fake.nextResult = ExtractedEvent(
-            isEvent: true, title: "Meeting", startISO: nil, endISO: nil,
-            location: nil, categoryHint: "work", confidence: 0.6
+            isEvent: true, title: "Meeting", startISO: "", endISO: "",
+            location: "", categoryHint: "work", confidence: 0.6
         )
 
         let result = try await fake.extract(subject: "", snippet: "", fromName: "", fromEmail: "", body: "")
 
         XCTAssertTrue(result.isEvent)
-        XCTAssertNil(result.startISO)
+        XCTAssertEqual(result.startISO, "")
     }
 }
 
@@ -82,8 +82,8 @@ final class EventExtractorTests: XCTestCase {
 @MainActor
 final class FakeEventExtractor: EventExtractor {
     var nextResult: ExtractedEvent = ExtractedEvent(
-        isEvent: false, title: nil, startISO: nil, endISO: nil,
-        location: nil, categoryHint: nil, confidence: 0
+        isEvent: false, title: "", startISO: "", endISO: "",
+        location: "", categoryHint: "", confidence: 0
     )
     var nextError: Error?
     private(set) var callCount = 0

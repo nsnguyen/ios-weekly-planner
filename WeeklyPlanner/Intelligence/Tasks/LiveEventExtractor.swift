@@ -34,8 +34,8 @@ final class LiveEventExtractor: EventExtractor {
         }
         #endif
         return ExtractedEvent(
-            isEvent: false, title: nil, startISO: nil, endISO: nil,
-            location: nil, categoryHint: nil, confidence: 0
+            isEvent: false, title: "", startISO: "", endISO: "",
+            location: "", categoryHint: "", confidence: 0
         )
     }
 
@@ -50,10 +50,27 @@ final class LiveEventExtractor: EventExtractor {
     ) async throws -> ExtractedEvent {
         let session = LanguageModelSession(instructions: Self.systemPrompt)
         let prompt = """
-        From the email below, extract a single calendar event.
-        If no event is present, set isEvent=false and leave other fields null.
-        Never invent details: if a field is not in the email, leave it null.
+        Extract a single calendar event from the email below.
 
+        Decision rules:
+        - Set isEvent=true ONLY if the email announces a specific event with a
+          date/time (invitation, confirmation, reservation, appointment, ticket).
+        - When isEvent=true, you MUST populate title and startISO with the
+          values you find in the email body. These fields are required — do
+          not leave them null when isEvent=true.
+        - title: a short human-readable name for the event (e.g. "Dinner at
+          Café Bleu", "Dr. Smith appointment").
+        - startISO: the event start in ISO 8601 with timezone, e.g.
+          "2026-05-23T19:00:00-07:00" or "2026-05-23T19:00:00Z". Resolve the
+          date and time precisely from the email body — pick the explicit
+          date if one is given.
+        - endISO, location, categoryHint: populate when explicitly stated;
+          otherwise leave null. These are the only truly optional fields.
+        - confidence: 0…1, your confidence that this is a real event.
+
+        If isEvent=false, leave all other fields null.
+
+        Email:
         From: \(fromName) <\(fromEmail)>
         Subject: \(subject)
         Snippet: \(snippet)
@@ -65,11 +82,13 @@ final class LiveEventExtractor: EventExtractor {
     }
 
     private static let systemPrompt = """
-    You are an event extractor for a calendar app. Given an email, return
-    structured JSON describing the event it announces. Set isEvent=false
-    if the email is not an invitation, confirmation, or reservation.
-    All time fields use ISO 8601. Never fabricate missing data — leave
-    fields null rather than guessing.
+    You are an event extractor for a calendar app. You read emails and
+    return structured JSON describing the calendar event they announce.
+    When the email IS an event (invitation, confirmation, reservation,
+    appointment, ticket), you always populate title and startISO with the
+    values present in the email — those two fields are required whenever
+    isEvent=true. endISO, location, and categoryHint may be null when the
+    email doesn't state them. All time fields use ISO 8601.
     """
     #endif
 }

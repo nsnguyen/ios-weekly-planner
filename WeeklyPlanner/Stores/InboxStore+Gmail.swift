@@ -10,13 +10,13 @@ extension InboxSuggestion {
         fallbackCategory: Category = .personal
     ) -> InboxSuggestion? {
         guard extracted.isEvent,
-              let title = extracted.title,
-              let startISO = extracted.startISO,
-              let start = ISO8601DateFormatter().date(from: startISO)
+              !extracted.title.isEmpty,
+              !extracted.startISO.isEmpty,
+              let start = Self.parseDate(extracted.startISO)
         else { return nil }
 
-        let end = extracted.endISO.flatMap { ISO8601DateFormatter().date(from: $0) }
-        let category = Category(rawValue: extracted.categoryHint ?? "") ?? fallbackCategory
+        let end = extracted.endISO.isEmpty ? nil : Self.parseDate(extracted.endISO)
+        let category = Category(rawValue: extracted.categoryHint) ?? fallbackCategory
         let fromHeader = message.header("From") ?? ""
         let (fromName, fromEmail) = parseFromHeader(fromHeader)
 
@@ -24,14 +24,30 @@ extension InboxSuggestion {
             gmailMessageID: message.id,
             proposedStart: start,
             proposedEnd: end,
-            title: title,
+            title: extracted.title,
             fromName: fromName,
             fromEmail: fromEmail,
             category: category,
             subject: message.header("Subject") ?? "",
             bodySnippet: message.snippet,
-            proposedLocation: extracted.location
+            proposedLocation: extracted.location.isEmpty ? nil : extracted.location
         )
+    }
+
+    /// Tolerant ISO 8601 parser. Foundation Models sometimes returns dates
+    /// without a 'Z'/offset (e.g. "2026-05-23T19:00:00"). Tries the strict
+    /// formatter first, falls back to one without timezone.
+    private static func parseDate(_ raw: String) -> Date? {
+        let strict = ISO8601DateFormatter()
+        strict.formatOptions = [.withInternetDateTime]
+        if let date = strict.date(from: raw) { return date }
+        let loose = ISO8601DateFormatter()
+        loose.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = loose.date(from: raw) { return date }
+        let noTZ = ISO8601DateFormatter()
+        noTZ.formatOptions = [.withYear, .withMonth, .withDay, .withTime,
+                              .withDashSeparatorInDate, .withColonSeparatorInTime]
+        return noTZ.date(from: raw)
     }
 
     /// Splits an RFC-822 From header ("Display Name <user@example.com>")

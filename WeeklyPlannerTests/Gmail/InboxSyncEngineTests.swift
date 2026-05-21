@@ -107,7 +107,7 @@ final class InboxSyncEngineTests: XCTestCase {
         fakeExtractor.nextResult = ExtractedEvent(
             isEvent: true, title: "Yesterday",
             startISO: "2025-01-01T10:00:00Z",
-            endISO: nil, location: nil, categoryHint: nil, confidence: 0.9
+            endISO: "", location: "", categoryHint: "", confidence: 0.9
         )
         fakeClient.profileResponse = GmailProfile(emailAddress: "u@x.com", historyId: "100", messagesTotal: 1)
 
@@ -169,9 +169,9 @@ final class InboxSyncEngineTests: XCTestCase {
             isEvent: true,
             title: title,
             startISO: "2026-06-12T19:00:00Z",
-            endISO: nil,
+            endISO: "",
             location: "Café Bleu",
-            categoryHint: nil,
+            categoryHint: "",
             confidence: 0.9
         )
     }

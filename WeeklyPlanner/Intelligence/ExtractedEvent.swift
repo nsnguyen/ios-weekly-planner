@@ -17,32 +17,32 @@ import FoundationModels
 struct ExtractedEvent: Codable, Equatable, Sendable {
     @Guide(description: "True if the email announces a calendar event, reservation, or appointment.")
     let isEvent: Bool
-    @Guide(description: "Short human-readable title for the event, or nil if not found.")
-    let title: String?
-    /// ISO 8601 date-time (Foundation Models returns these as strings).
-    @Guide(description: "ISO 8601 start date-time (e.g. 2026-06-12T19:00:00Z), or nil if unknown.")
-    let startISO: String?
-    @Guide(description: "ISO 8601 end date-time, or nil if unknown.")
-    let endISO: String?
-    @Guide(description: "Venue or location string, or nil if not mentioned.")
-    let location: String?
-    /// One of "work", "personal", "health", "social", "errand" — or nil.
-    @Guide(description: "One of: work, personal, health, social, errand — or nil.")
-    let categoryHint: String?
-    /// 0…1; below 0.55 the engine skips upserting an InboxSuggestion.
-    @Guide(description: "Confidence from 0 to 1 that this email contains a real event.")
+    /// REQUIRED when isEvent=true. Use empty string "" when isEvent=false.
+    @Guide(description: "Short event title taken from the email subject or body. Always provide this when isEvent=true. Use empty string only when isEvent=false.")
+    let title: String
+    /// REQUIRED when isEvent=true. ISO 8601 with timezone offset. Use empty
+    /// string "" when isEvent=false.
+    @Guide(description: "Event start in ISO 8601 with timezone, e.g. '2026-05-23T19:00:00-07:00'. Always provide this when isEvent=true. Use empty string only when isEvent=false.")
+    let startISO: String
+    @Guide(description: "ISO 8601 end date-time. Empty string if the email doesn't state an end time.")
+    let endISO: String
+    @Guide(description: "Venue or location from the email body. Empty string if not mentioned.")
+    let location: String
+    @Guide(description: "One of: work, personal, health, social, errand. Empty string if unclear.")
+    let categoryHint: String
+    @Guide(description: "Confidence from 0 to 1 that this email describes a real upcoming event.")
     let confidence: Double
 }
 #else
 struct ExtractedEvent: Codable, Equatable, Sendable {
     let isEvent: Bool
-    let title: String?
-    /// ISO 8601 date-time (Foundation Models returns these as strings).
-    let startISO: String?
-    let endISO: String?
-    let location: String?
-    /// One of "work", "personal", "health", "social", "errand" — or nil.
-    let categoryHint: String?
+    /// REQUIRED when isEvent=true. Empty string when isEvent=false.
+    let title: String
+    /// REQUIRED when isEvent=true. ISO 8601 with timezone. Empty when isEvent=false.
+    let startISO: String
+    let endISO: String
+    let location: String
+    let categoryHint: String
     /// 0…1; below 0.55 the engine skips upserting an InboxSuggestion.
     let confidence: Double
 }

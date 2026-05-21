@@ -31,11 +31,11 @@ final class StubEventExtractor: EventExtractor {
     ) async throws -> ExtractedEvent {
         ExtractedEvent(
             isEvent: false,
-            title: nil,
-            startISO: nil,
-            endISO: nil,
-            location: nil,
-            categoryHint: nil,
+            title: "",
+            startISO: "",
+            endISO: "",
+            location: "",
+            categoryHint: "",
             confidence: 0
         )
     }
