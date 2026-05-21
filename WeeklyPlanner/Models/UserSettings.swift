@@ -31,6 +31,10 @@ final class UserSettings {
     var gmailAccountEmail: String?
     var googleCalendarConnected: Bool
     var appleMailConnected: Bool
+    /// Gmail history API cursor. Set by `GmailDeltaSync` after each
+    /// successful sync; `nil` means a full re-sync is required (first
+    /// run, or after `history?` returned 404 because the cursor aged out).
+    var gmailLastHistoryId: String?
 
     // Style
     var styleRaw: String
@@ -55,6 +59,7 @@ final class UserSettings {
          gmailAccountEmail: String? = nil,
          googleCalendarConnected: Bool = false,
          appleMailConnected: Bool = true,
+         gmailLastHistoryId: String? = nil,
          style: AppStyle = .paper,
          modernView: ModernView = .day,
          paperView: PaperView = .day,
@@ -73,6 +78,7 @@ final class UserSettings {
         self.gmailAccountEmail = gmailAccountEmail
         self.googleCalendarConnected = googleCalendarConnected
         self.appleMailConnected = appleMailConnected
+        self.gmailLastHistoryId = gmailLastHistoryId
         styleRaw = style.rawValue
         modernViewRaw = modernView.rawValue
         paperViewRaw = paperView.rawValue
