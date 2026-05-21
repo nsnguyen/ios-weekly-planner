@@ -41,6 +41,7 @@ final class FakeNotificationCenter: NotificationCentering {
     }
 
     func removeAllPending() {
+        removedIdentifiers.append(contentsOf: addedRequests.map(\.identifier))
         addedRequests.removeAll()
         removeAllCount += 1
     }
