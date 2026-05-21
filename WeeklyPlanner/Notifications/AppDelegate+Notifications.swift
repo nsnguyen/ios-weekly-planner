@@ -13,7 +13,7 @@ import os
 /// The delegate stays SwiftData-free in `application(_:didFinishLaunchingWithOptions:)`
 /// — region-entry cold-launches must finish quickly to avoid OS termination.
 @MainActor
-final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
     private static let log = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", category: "Notifications")
 
     /// Set by `WeeklyPlannerApp.init` after construction. Optionality keeps the

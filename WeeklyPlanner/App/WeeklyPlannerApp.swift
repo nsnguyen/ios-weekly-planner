@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UserNotifications
 
 /// The app entry point. Boots a single `ModelContainer`, constructs the
 /// production `SwiftDataEventStore` / `SwiftDataInboxStore` /
@@ -14,6 +15,8 @@ import SwiftUI
 /// store types are also main-actor isolated.
 @main
 struct WeeklyPlannerApp: App {
+    @UIApplicationDelegateAdaptor(NotificationsAppDelegate.self) private var appDelegate
+
     @State private var container: ModelContainer
     @State private var eventStore: any EventStoring
     @State private var inboxStore: any InboxStoring
@@ -24,6 +27,15 @@ struct WeeklyPlannerApp: App {
     @State private var inboxSyncEngine: InboxSyncEngine
     @State private var bgRefreshScheduler: BackgroundRefreshScheduler
     @State private var eventKitAuth: EventKitAuthorization
+
+    // MARK: Phase 19 — notifications wiring
+    @State private var notificationCenter: any NotificationCentering
+    @State private var notificationAuth: NotificationAuthorization
+    @State private var locationManager: LocationReminderManager
+    @State private var eventScheduler: EventNotificationScheduler
+    @State private var taskScheduler: TaskNotificationScheduler
+    @State private var rescheduleObserver: NotificationReschedulingObserver
+    @State private var deepLinkRouter: DeepLinkRouter
 
     init() {
         let container = SwiftDataStack.production
@@ -69,6 +81,22 @@ struct WeeklyPlannerApp: App {
         )
         let scheduler = BackgroundRefreshScheduler(engine: syncEngine)
         scheduler.registerHandler()
+
+        // MARK: Phase 19 — notifications wiring
+        let center: any NotificationCentering = LiveNotificationCenter()
+        let authWrapper = NotificationAuthorization(center: center)
+        let location = LiveLocationManager()
+        let locationMgr = LocationReminderManager(location: location, center: center)
+        let eventSched = EventNotificationScheduler(center: center,
+                                                    locationRegistrar: locationMgr,
+                                                    eventStore: eventStore)
+        let taskSched = TaskNotificationScheduler(center: center,
+                                                  locationRegistrar: locationMgr,
+                                                  taskStore: taskStore)
+        let rescheduler = NotificationReschedulingObserver(eventScheduler: eventSched,
+                                                           taskScheduler: taskSched)
+        let router = DeepLinkRouter()
+
         _container = State(initialValue: container)
         _eventStore = State(initialValue: eventStore)
         _inboxStore = State(initialValue: wiredInboxStore)
@@ -79,6 +107,13 @@ struct WeeklyPlannerApp: App {
         _inboxSyncEngine = State(initialValue: syncEngine)
         _bgRefreshScheduler = State(initialValue: scheduler)
         _eventKitAuth = State(initialValue: eventKitAuth)
+        _notificationCenter = State(initialValue: center)
+        _notificationAuth = State(initialValue: authWrapper)
+        _locationManager = State(initialValue: locationMgr)
+        _eventScheduler = State(initialValue: eventSched)
+        _taskScheduler = State(initialValue: taskSched)
+        _rescheduleObserver = State(initialValue: rescheduler)
+        _deepLinkRouter = State(initialValue: router)
     }
 
     var body: some Scene {
@@ -91,6 +126,11 @@ struct WeeklyPlannerApp: App {
                 .environment(\.googleAuthService, googleAuthService)
                 .environment(\.gmailClient, gmailClient)
                 .environment(\.inboxSyncEngine, inboxSyncEngine)
+                .environment(\.notificationCenter, notificationCenter)
+                .environment(\.eventNotificationScheduler, eventScheduler)
+                .environment(\.taskNotificationScheduler, taskScheduler)
+                .environment(\.locationReminderManager, locationManager)
+                .environment(\.deepLinkRouter, deepLinkRouter)
                 .modelContainer(container)
                 .onOpenURL { url in
                     _ = RealGIDSigningClient().handle(url: url)
@@ -100,6 +140,13 @@ struct WeeklyPlannerApp: App {
                     // EventKit decorator can mirror accepted suggestions
                     // (and any future Event writes) into the system Calendar.
                     await eventKitAuth.requestEventsIfNeeded()
+                    // Hand the delegate the live references it needs to route taps.
+                    appDelegate.router = deepLinkRouter
+                    appDelegate.taskStore = taskStore
+                    appDelegate.center = notificationCenter
+                    // Probe authorization once on launch so the denied-banner
+                    // in ConnectionsSection has accurate state on first render.
+                    _ = await notificationAuth.status()
                 }
         }
     }

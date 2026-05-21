@@ -14,7 +14,7 @@ final class NotificationReschedulingObserver {
 
     private let eventScheduler: EventNotificationScheduler
     private let taskScheduler: TaskNotificationScheduler
-    private var observers: [NSObjectProtocol] = []
+    private nonisolated(unsafe) var observers: [NSObjectProtocol] = []
 
     init(eventScheduler: EventNotificationScheduler, taskScheduler: TaskNotificationScheduler) {
         self.eventScheduler = eventScheduler
