@@ -21,6 +21,7 @@ struct WeekPageView: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.taskStore) private var taskStore
     @Environment(\.inboxStore) private var inboxStore
+    @Environment(\.inboxSyncEngine) private var inboxSyncEngine
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -47,9 +48,14 @@ struct WeekPageView: View {
                         RedMarginLine()
                         HolePunches()
 
-                        content(days: days, weekMeta: weekMeta, year: year, todayIdx: todayIdx)
-                            .padding(EdgeInsets(top: 2, leading: 44, bottom: 14, trailing: 18))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        ScrollView {
+                            content(days: days, weekMeta: weekMeta, year: year, todayIdx: todayIdx)
+                                .padding(EdgeInsets(top: 2, leading: 44, bottom: 14, trailing: 18))
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                        }
+                        .refreshable {
+                            await viewModel?.refresh(via: inboxSyncEngine)
+                        }
 
                         stickyNoteOverlay
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)

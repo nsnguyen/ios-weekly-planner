@@ -86,6 +86,16 @@ final class DayPageViewModel {
         return todayIdx == dayIdx
     }
 
+    /// Triggered by pull-to-refresh on the Day page. Delegates to the
+    /// shared `InboxSyncEngine`. Errors are swallowed (user-facing state
+    /// is just "no new suggestions appeared").
+    func refresh(via engine: InboxSyncEngine?) async {
+        guard let engine else { return }
+        _ = try? await engine.sync(now: Date())
+        // After a successful sync, re-fetch suggestions for the current week.
+        await refresh()
+    }
+
     /// Re-fetch events, inbox suggestions, and to-dos from the stores and
     /// filter them to this day. Errors from any store are surfaced via
     /// `loadError` while previously-loaded data is left in place.

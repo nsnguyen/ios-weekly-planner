@@ -83,6 +83,7 @@ struct DayPageContent: View {
     @Environment(\.taskStore) private var taskStore
     @Environment(\.intelligenceService) private var intelligenceService
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.inboxSyncEngine) private var inboxSyncEngine
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -107,15 +108,20 @@ struct DayPageContent: View {
                         RedMarginLine()
                         HolePunches()
 
-                        content(weekDay: weekDay, weekMeta: weekMeta)
-                            .padding(.top, 18)
-                            .padding(.leading, 44)
-                            .padding(.trailing, 18)
-                            .padding(.bottom, 18)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                            .overlay(alignment: .topTrailing) {
-                                stickyNoteOverlay
-                            }
+                        ScrollView {
+                            content(weekDay: weekDay, weekMeta: weekMeta)
+                                .padding(.top, 18)
+                                .padding(.leading, 44)
+                                .padding(.trailing, 18)
+                                .padding(.bottom, 18)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                                .overlay(alignment: .topTrailing) {
+                                    stickyNoteOverlay
+                                }
+                        }
+                        .refreshable {
+                            await viewModel?.refresh(via: inboxSyncEngine)
+                        }
 
                         PageNumber(date: weekDay.date)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
