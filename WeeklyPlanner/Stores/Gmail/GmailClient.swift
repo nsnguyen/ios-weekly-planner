@@ -1,5 +1,15 @@
 import Foundation
 
+@MainActor
+protocol GmailClientProtocol: AnyObject {
+    func listMessages(query: String, maxResults: Int) async throws -> [GmailMessageStub]
+    func fetchMessage(id: String, format: GmailMessageFormat) async throws -> GmailMessage
+    func history(startHistoryId: String) async throws -> GmailHistoryResponse
+    func profile() async throws -> GmailProfile
+}
+
+extension GmailClient: GmailClientProtocol {}
+
 enum GmailClientError: Error, Equatable {
     /// The Gmail history cursor we passed is too old. Caller should do a full re-sync.
     case historyExpired

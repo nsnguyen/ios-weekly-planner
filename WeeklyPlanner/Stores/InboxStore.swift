@@ -13,6 +13,11 @@ protocol InboxStoring: AnyObject {
     /// from `ConnectionsViewModel.disconnectGmail` so a re-connect doesn't
     /// resurrect stale rows from a previous account.
     func clearPending() async throws
+
+    /// Returns the suggestion with the given gmailMessageID regardless of
+    /// status (pending/accepted/dismissed). Used by InboxSyncEngine to
+    /// skip messages it has already handled in a previous sync.
+    func anyStatus(forMessageID id: String) async throws -> InboxSuggestion?
 }
 
 @MainActor
@@ -112,5 +117,11 @@ final class SwiftDataInboxStore: InboxStoring {
             context.delete(row)
         }
         try context.save()
+    }
+
+    func anyStatus(forMessageID id: String) async throws -> InboxSuggestion? {
+        try context.fetch(FetchDescriptor<InboxSuggestion>(
+            predicate: #Predicate<InboxSuggestion> { $0.gmailMessageID == id }
+        )).first
     }
 }
