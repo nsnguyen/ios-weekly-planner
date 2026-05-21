@@ -1,5 +1,6 @@
 import MessageUI
 import SwiftUI
+import UserNotifications
 
 /// The real Connections card — replaces Phase 16's `ConnectionsPlaceholder`
 /// body. Three rows separated by 0.5pt rules: Gmail (interactive — drives
@@ -12,6 +13,9 @@ struct ConnectionsSection: View {
     @Environment(\.settingsStore) private var settingsStore
     @Environment(\.inboxStore) private var inboxStore
 
+    @Environment(\.notificationCenter) private var notificationCenter
+    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+
     @State private var viewModel: ConnectionsViewModel?
     @State private var showDisconnectConfirm = false
 
@@ -19,8 +23,14 @@ struct ConnectionsSection: View {
         // The SECTION TITLE for "Connections" is rendered by `PaperSettingsView`
         // (the call site that wraps each section). This view returns just the
         // card so we don't duplicate the eyebrow + heading.
-        card
+        VStack(alignment: .leading, spacing: 12) {
+            if notificationStatus == .denied {
+                deniedBanner
+            }
+            card
+        }
         .task {
+            notificationStatus = await notificationCenter.authorizationStatus()
             if viewModel == nil {
                 viewModel = ConnectionsViewModel(
                     settingsStore: settingsStore,
@@ -42,6 +52,37 @@ struct ConnectionsSection: View {
         } message: {
             Text("Pending inbox suggestions for this account will be removed.")
         }
+    }
+
+    private var deniedBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "bell.slash")
+                .foregroundStyle(theme.ink)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Notifications are off")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(theme.ink)
+                Text("Reminders won't fire. Open Settings to enable.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.ink2)
+            }
+            Spacer()
+            Button(action: openSystemSettings) {
+                Text("Open Settings")
+                    .font(.system(size: 13, weight: .semibold))
+            }
+        }
+        .padding(12)
+        .background(theme.creamHi)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10).strokeBorder(theme.rule, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     // MARK: - Card body
