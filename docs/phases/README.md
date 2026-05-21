@@ -49,7 +49,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 14 | Paper Review Page                                    | F — Other Screens   | ✅     |
 | 15 | Paper Tab Bar & Navigation Wiring                    | F                   | ✅     |
 | 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        | ✅     |
-| 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ⏳     |
+| 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ✅     |
 | 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ⏳     |
 | 19 | Notifications (Time + Location Reminders)            | H                   | ⏳     |
 | 20 | Modern Mode (Alternative Stock-iOS Theme)            | I — Polish          | ⏳     |
@@ -57,8 +57,8 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
 | 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
 
-**Current state:** Milestones A–F + Phase 16 shipped. 211 unit tests
-green. Next up: Phase 17 — Settings (Connections).
+**Current state:** Milestones A–F + Phases 16, 17 shipped. 234 unit
+tests green. Next up: Phase 18 — Gmail Inbox Pipeline.
 
 ## Reading a Phase Doc
 
@@ -175,4 +175,83 @@ Snapshot tests are deferred to Phase 21 (we have no `swift-snapshot-testing` dep
 **Tests added**: 2 classes / 13 new test methods (`SettingsViewModelTests` × 7, `PaperSettingsViewTests` × 6). Full suite: 211 unit tests + UI tests, all green.
 
 **Files**: `WeeklyPlanner/Features/Settings/{SettingsViewModel,SettingsHeader,SectionTitle,ThemeCardsGrid,ThemeCard,FontCardsGrid,FontCard,SizeSegmented,ConnectionsPlaceholder,PreferencesGroup,PrefRow,ToggleRow,AboutFooter}.swift`; modified `WeeklyPlanner/Features/Settings/PaperSettingsView.swift`, `WeeklyPlanner/App/WeeklyPlannerApp.swift`, `WeeklyPlanner/Navigation/AppShell.swift`.
+
+### Phase 17 — Settings (Connections)
+
+Shipped the real Connections card: `ConnectionsSection` replaces the
+Phase 16 placeholder via a one-line `ConnectionsPlaceholder` shim, so
+`PaperSettingsView` doesn't churn. Three rows — Gmail (interactive),
+Apple Mail (read-only, mirrors `MFMailComposeViewController.canSendMail()`),
+Google Calendar ("Coming soon", disabled) — inside the cream card with
+0.5pt dividers. Each row hosts its own brand mark: hand-rolled SwiftUI
+Canvas for the Gmail "M", `Image(systemName: "apple.logo")` for Apple,
+and a stylized "31" tile for Google Calendar.
+
+The auth foundation is the bigger piece: `GoogleAuthService` protocol +
+`LiveGoogleAuthService` composes `GoogleAuthConfig` (reads
+`GoogleClientID` from Info.plist), a thin `GIDSigningClient` SDK seam
+(`RealGIDSigningClient` in production, `FakeGIDSigningClient` for the
+seven-test `GoogleAuthServiceTests` suite), and a generic
+`TokenKeychainStore<GoogleAccountInfo>` wrapping `KeychainAccess`. The
+SDK seam returns our own `GoogleAccountInfo` rather than `GIDGoogleUser`,
+keeping Google SDK types out of every test boundary.
+
+`RealGIDSigningClient` bridges GoogleSignIn-iOS 7.1.0's callback-based
+APIs to Swift `async/await` via `withCheckedThrowingContinuation` (the
+SDK at that version doesn't expose async overloads), extracting all
+`Sendable` token fields inside the callback so the non-`Sendable`
+`GIDGoogleUser` never crosses an isolation boundary. Cancel detection
+uses the documented `kGIDSignInErrorDomain` + `-5` (kGIDSignInErrorCodeCanceled);
+nil `expirationDate` falls back to `.distantPast` so a missing-expiry
+SDK response forces a proactive refresh rather than trusting a fabricated
+future timestamp.
+
+Tokens auto-refresh when `<5min` remain via the cached refresh token.
+
+Secret plumbing lives in a gitignored `Secrets.xcconfig` whose
+`GOOGLE_CLIENT_ID` and `REVERSED_GOOGLE_CLIENT_ID` flow through XcodeGen
+`configFiles` and `INFOPLIST_KEY_GoogleClientID` into the bundled
+Info.plist (replacing the Phase 01 `PLACEHOLDER` URL scheme). A
+committed `Secrets.example.xcconfig` documents the contract; missing
+secrets surface as `GoogleAuthError.notConfigured` → in-app "Gmail
+isn't configured…" alert rather than a crash. The Info.plist source
+file also declares `<key>GoogleClientID</key><string>$(GOOGLE_CLIENT_ID)</string>`
+explicitly — Xcode's `INFOPLIST_KEY_` build setting fills in an existing
+key but does not add a missing one.
+
+`ConnectionsViewModel` (`@Observable`) owns the connect/disconnect
+choreography: optimistic toggle → `auth.signIn` → persist + broadcast
+`Notification.Name.gmailDidConnect` (Phase 18 will listen). On cancel:
+silent revert. On network/notConfigured: revert + alert. On disconnect:
+confirmation dialog → `signOut` + Keychain clear + `inboxStore.clearPending()`
+so re-connect doesn't resurrect stale `InboxSuggestion` rows. Six
+view-model tests cover the four connect paths and two disconnect paths.
+
+The `.onOpenURL` handler in `WeeklyPlannerApp` hands incoming OAuth
+callback URLs to `GIDSignIn.sharedInstance.handle(_:)`.
+
+Verified end-to-end on simulator with a real Google account
+(`nsnguyen19@gmail.com`): tap toggle → ASWebAuthenticationSession sheet
+appears → "Google hasn't verified this app" interstitial (expected for
+Testing-mode OAuth projects) → consent screen lists `gmail.readonly`
+and `userinfo.email` → return to app → row updates to
+"nsnguyen19@gmail.com · syncing events". Token persisted in Keychain;
+Phase 18 will consume it for the actual inbox fetch.
+
+**Plan deviations encountered**: (1) iOS Simulator Keychain requires
+entitlements, so the test target gained
+`WeeklyPlannerTests/WeeklyPlannerTests.entitlements` (keychain-access-groups
+via ad-hoc signing) and the project-wide build commands switched from
+`CODE_SIGNING_ALLOWED=NO` to `CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO`.
+(2) GoogleSignIn-iOS 7.1.0 is callback-only (no async/await surface);
+`RealGIDSigningClient` bridges via continuations. (3) `Info.plist`
+needed an explicit `GoogleClientID` key declaration for `INFOPLIST_KEY_`
+substitution to work.
+
+**Tests added**: 4 classes / 23 new test methods
+(`TokenKeychainStoreTests` × 4, `GoogleAuthServiceTests` × 7,
+`ConnectionsViewModelTests` × 6, `ConnectionsSectionTests` × 6). Full
+suite: 234 tests, all green. Snapshot tests deferred to Phase 21.
+
+**Files**: `WeeklyPlanner/Auth/GoogleAuth/{GoogleAccountInfo,GoogleAuthConfig,GoogleAuthError,GoogleAuthService,GIDSigningClient,LiveGoogleAuthService,TokenKeychainStore}.swift`, `WeeklyPlanner/Features/Settings/{ConnectionsSection,ConnectionRow,ConnectionsViewModel}.swift`, `WeeklyPlanner/Features/Settings/Logos/{GmailBrandLogo,AppleBrandLogo,GoogleCalLogo}.swift`, `WeeklyPlannerTests/WeeklyPlannerTests.entitlements`; modified `WeeklyPlanner/Stores/{Environment+Stores,InboxStore}.swift`, `WeeklyPlanner/App/WeeklyPlannerApp.swift`, `WeeklyPlanner/Features/Settings/ConnectionsPlaceholder.swift`, `project.yml`, `WeeklyPlanner/Supporting/Info.plist`, `.gitignore`, `README.md`.
 
