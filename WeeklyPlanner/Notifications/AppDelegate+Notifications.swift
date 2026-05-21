@@ -66,8 +66,12 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, UNUserNot
         case NotificationCategoryIDs.Action.markDone:
             if let id = uuid(forKey: "task.id", in: userInfo) {
                 Task { @MainActor [weak self] in
-                    try? await self?.taskStore?.toggle(id: id)
-                    self?.center?.removePending(withIdentifiers: [request.identifier])
+                    do {
+                        try await self?.taskStore?.toggle(id: id)
+                        self?.center?.removePending(withIdentifiers: [request.identifier])
+                    } catch {
+                        Self.log.error("markDone toggle failed: \(String(describing: error), privacy: .public)")
+                    }
                 }
             }
         default:
