@@ -50,15 +50,15 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 15 | Paper Tab Bar & Navigation Wiring                    | F                   | ✅     |
 | 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        | ✅     |
 | 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ✅     |
-| 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ⏳     |
+| 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ✅     |
 | 19 | Notifications (Time + Location Reminders)            | H                   | ⏳     |
 | 20 | Modern Mode (Alternative Stock-iOS Theme)            | I — Polish          | ⏳     |
 | 21 | Accessibility, Dynamic Type, Localization, RTL       | I                   | ⏳     |
 | 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
 | 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
 
-**Current state:** Milestones A–F + Phases 16, 17 shipped. 234 unit
-tests green. Next up: Phase 18 — Gmail Inbox Pipeline.
+**Current state:** Milestones A–F + Phases 16, 17, 18 shipped. 258
+unit tests green. Next up: Phase 19 — Notifications.
 
 ## Reading a Phase Doc
 
@@ -254,4 +254,97 @@ substitution to work.
 suite: 234 tests, all green. Snapshot tests deferred to Phase 21.
 
 **Files**: `WeeklyPlanner/Auth/GoogleAuth/{GoogleAccountInfo,GoogleAuthConfig,GoogleAuthError,GoogleAuthService,GIDSigningClient,LiveGoogleAuthService,TokenKeychainStore}.swift`, `WeeklyPlanner/Features/Settings/{ConnectionsSection,ConnectionRow,ConnectionsViewModel}.swift`, `WeeklyPlanner/Features/Settings/Logos/{GmailBrandLogo,AppleBrandLogo,GoogleCalLogo}.swift`, `WeeklyPlannerTests/WeeklyPlannerTests.entitlements`; modified `WeeklyPlanner/Stores/{Environment+Stores,InboxStore}.swift`, `WeeklyPlanner/App/WeeklyPlannerApp.swift`, `WeeklyPlanner/Features/Settings/ConnectionsPlaceholder.swift`, `project.yml`, `WeeklyPlanner/Supporting/Info.plist`, `.gitignore`, `README.md`.
+
+### Phase 18 — Gmail Inbox Pipeline
+
+Shipped the end-to-end pipeline that turns Phase 17's OAuth token into
+real `InboxSuggestion` rows and accepts them as real iOS Calendar
+events. Validated on-device with a real Gmail account.
+
+`GmailClient` wraps Gmail REST v1 over a `URLSessionProtocol` seam
+(tests use `URLProtocolStub`, production uses `URLSession.shared`).
+Bearer-token injection with auto-refresh on 401 (one retry; second 401
+throws `.reauthenticationRequired`); `Retry-After`-aware backoff on 429
+(up to 5 retries); `history?` 404 maps to `.historyExpired` so the
+engine falls back to a full re-sync. `MessageClassifier` is the cheap
+pre-filter (subject keywords + sender domains + promo/noise hard-fail)
+that gates the expensive Foundation Models call.
+
+`InboxSyncEngine` is the orchestrator, single-flight via a
+`@MainActor`-isolated `isRunning` flag. Decides between delta sync (via
+`GmailDeltaSync` cursor in `UserSettings.gmailLastHistoryId`) and full
+re-sync. Per-iteration `do/catch` so a single bad message (404, decode
+failure, model hiccup) doesn't kill the loop. Emits `SyncProgress` via
+`AsyncStream` for UI hookup.
+
+`LiveEventExtractor` uses `LanguageModelSession.respond(to:generating:)`
+with `@Generable` + `@Guide` on `ExtractedEvent` for structured output —
+no string parsing. `StubEventExtractor` always returns `isEvent=false`
+and is used by tests + as the runtime fallback when Foundation Models
+is unavailable.
+
+Accept-flow: `SwiftDataInboxStore.init` now optionally takes an
+`EventStoring` + `SettingsStoring`; `accept(id:)` builds an `Event`
+with `source=.gmail` plus the round-trip `gmailMessageID/from/subject`
+fields, applies `DefaultReminderPolicy`, and calls `EventStore.upsert`
+— which mirrors to EventKit via the (newly-wired) Phase 04 decorator.
+
+`BackgroundRefreshScheduler` registers
+`com.weeklyplanner.WeeklyPlanner.gmailRefresh` with `BGTaskScheduler`
+and submits a 1-hour `BGAppRefreshTaskRequest` after every foreground
+sync. UI: `DayPageViewModel.refresh(via:)` and `WeekPageViewModel.refresh(via:)`
+delegate to the engine; `.refreshable` on the Day/Week ScrollViews
+binds pull-to-refresh; `AppShell` listens for `.gmailDidConnect` and
+kicks a one-shot sync the moment Phase 17's connect flow completes.
+
+**Plan deviations encountered (and the fixes)**:
+
+1. **`@Generable` requires `String`, not `String?`**: First on-device test
+   showed Foundation Models returning `isEvent=true, confidence=1.0` with
+   `title=nil, startISO=nil` for every event email. The model treated
+   `Optional<String>` fields as "may be null" and skipped them, even
+   with explicit prompt instructions to populate them. Fix: refactored
+   `ExtractedEvent.title/startISO/endISO/location/categoryHint` to
+   non-optional `String` with empty-string as the "not provided"
+   sentinel. `InboxSuggestion.fromExtractedEvent` checks `!isEmpty`
+   instead of `guard let`. Both the system prompt and per-call prompt
+   strengthened to demand title + startISO whenever isEvent=true.
+
+2. **Per-iteration try/catch**: a single 404 on `client.fetchMessage`
+   (Gmail's history API includes records for messages later deleted /
+   moved to spam) was throwing out of the whole sync loop, swallowed
+   by the `try?` at every caller. The engine appeared dead. Wrapped each
+   iteration in `do/catch` that logs and continues. Added `os.Logger`
+   diagnostics (subsystem `com.weeklyplanner.WeeklyPlanner`, category
+   `InboxSync`) at every step so future debugging on-device is fast.
+
+3. **Phase 04 EventKit decorator was dormant**: a comment in
+   `EventStore+EventKit.swift` said "Phase 16 wires it" but Phase 16
+   shipped Theme/Font/Size instead. Accepted suggestions landed in
+   SwiftData only — never in iOS Calendar. Wired in this phase:
+   `WeeklyPlannerApp.init` now constructs `SystemEventKitGateway` +
+   `CategoryCalendarManager` + `EventKitAuthorization` and wraps
+   `SwiftDataEventStore` in `EventKitMirroringEventStore`. A
+   `.task { await eventKitAuth.requestEventsIfNeeded() }` at the
+   `WindowGroup` level fires the system Calendar permission prompt on
+   first launch.
+
+4. **Tolerant ISO 8601 date parsing**: Foundation Models returns dates
+   in several formats (with/without offset, with/without fractional
+   seconds, sometimes no Z). `InboxSuggestion.fromExtractedEvent.parseDate`
+   tries strict, fractional-seconds, and no-timezone variants.
+
+5. **Duplicate "SOURCES / Connections" header (Phase 17 latent bug)**:
+   first time we actually rendered the Settings page during Phase 18
+   verification, we saw two stacked section titles. Fixed by removing
+   the `SectionTitle` from inside `ConnectionsSection` (PaperSettingsView
+   already renders one for the section).
+
+**Tests added**: 6 classes / 24 new test methods
+(`GmailClientTests` × 5, `GmailQueryBuilderTests` × 2,
+`MessageClassifierTests` × 4, `EventExtractorTests` × 4,
+`InboxSyncEngineTests` × 6, `DefaultReminderPolicyTests` × 3). Full
+suite: 258 tests, all green.
+
+**Files**: `WeeklyPlanner/Stores/Gmail/{GmailMessage,URLSessionProtocol,GmailClient,GmailQueryBuilder,MessageClassifier,GmailDeltaSync,InboxSyncEngine,BackgroundRefreshScheduler}.swift`, `WeeklyPlanner/Stores/InboxStore+Gmail.swift`, `WeeklyPlanner/Intelligence/{ExtractedEvent,EventExtractor}.swift`, `WeeklyPlanner/Intelligence/Tasks/LiveEventExtractor.swift`, `WeeklyPlanner/Notifications/DefaultReminderPolicy.swift`; modified `WeeklyPlanner/Models/{UserSettings,InboxSuggestion}.swift`, `WeeklyPlanner/Stores/{InboxStore,Environment+Stores}.swift`, `WeeklyPlanner/App/WeeklyPlannerApp.swift` (env wiring + EventKit decorator), `WeeklyPlanner/Supporting/Info.plist` (BGTaskSchedulerPermittedIdentifiers), `WeeklyPlanner/Features/{DayPage,WeekPage}/*ViewModel.swift` + `*View.swift` (pull-to-refresh), `WeeklyPlanner/Navigation/AppShell.swift` (gmailDidConnect listener), `WeeklyPlanner/Features/Settings/ConnectionsSection.swift` (header dedup).
 
