@@ -16,11 +16,10 @@ struct ConnectionsSection: View {
     @State private var showDisconnectConfirm = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SectionTitle("Connections", eyebrow: "SOURCES")
-
-            card
-        }
+        // The SECTION TITLE for "Connections" is rendered by `PaperSettingsView`
+        // (the call site that wraps each section). This view returns just the
+        // card so we don't duplicate the eyebrow + heading.
+        card
         .task {
             if viewModel == nil {
                 viewModel = ConnectionsViewModel(
