@@ -25,6 +25,7 @@ struct AppShell: View {
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.deepLinkRouter) private var deepLinkRouter
 
     @Query private var settingsRows: [UserSettings]
 
@@ -95,6 +96,12 @@ struct AppShell: View {
             Task { @MainActor in
                 _ = try? await engine?.sync(now: Date())
             }
+        }
+        .onChange(of: deepLinkRouter.pending) { _, new in
+            guard new != nil else { return }
+            selection.current = .calendar
+            // DayPageView consumes the router itself; we just make sure the
+            // calendar tab is visible.
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             PaperTabBar(selection: Binding(
