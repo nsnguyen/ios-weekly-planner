@@ -64,12 +64,19 @@ struct WeeklyPlannerApp: App {
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
         #endif
+        // MARK: Phase 19 — notifications wiring
+        // Constructed before wiredInboxStore so authWrapper can be injected
+        // into the inbox store for the first-event permission probe.
+        let center: any NotificationCentering = LiveNotificationCenter()
+        let authWrapper = NotificationAuthorization(center: center)
+
         // Rebuild the inbox store now that eventStore + settingsStore are
         // available — the accept-flow needs them to mirror to EventKit.
         let wiredInboxStore = SwiftDataInboxStore(
             context: container.mainContext,
             eventStore: eventStore,
-            settingsStore: settingsStore
+            settingsStore: settingsStore,
+            notificationAuth: authWrapper
         )
         let gmailClient = GmailClient(auth: googleAuthService, session: URLSession.shared)
         let extractor: any EventExtractor = LiveEventExtractor()
@@ -81,10 +88,6 @@ struct WeeklyPlannerApp: App {
         )
         let scheduler = BackgroundRefreshScheduler(engine: syncEngine)
         scheduler.registerHandler()
-
-        // MARK: Phase 19 — notifications wiring
-        let center: any NotificationCentering = LiveNotificationCenter()
-        let authWrapper = NotificationAuthorization(center: center)
         let location = LiveLocationManager()
         let locationMgr = LocationReminderManager(location: location, center: center)
         let eventSched = EventNotificationScheduler(center: center,

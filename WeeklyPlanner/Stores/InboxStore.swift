@@ -25,15 +25,18 @@ final class SwiftDataInboxStore: InboxStoring {
     private let context: ModelContext
     private let eventStore: (any EventStoring)?
     private let settingsStore: (any SettingsStoring)?
+    private let notificationAuth: NotificationAuthorization?
 
     init(
         context: ModelContext,
         eventStore: (any EventStoring)? = nil,
-        settingsStore: (any SettingsStoring)? = nil
+        settingsStore: (any SettingsStoring)? = nil,
+        notificationAuth: NotificationAuthorization? = nil
     ) {
         self.context = context
         self.eventStore = eventStore
         self.settingsStore = settingsStore
+        self.notificationAuth = notificationAuth
     }
 
     func pending(forWeekOffset offset: Int, today: Date = .init()) async throws -> [InboxSuggestion] {
@@ -96,6 +99,18 @@ final class SwiftDataInboxStore: InboxStoring {
                 DefaultReminderPolicy.apply(to: event, settings: settings)
             }
             try await eventStore.upsert(event)
+            // Phase 19: if the user has reminders but hasn't been asked for
+            // notification permission yet, prompt them once. The rescheduling
+            // observer (registered for .eventStoreDidChange) then takes care
+            // of the actual notification scheduling.
+            if let auth = notificationAuth, event.reminders.isEmpty == false {
+                Task { @MainActor in
+                    let status = await auth.status()
+                    if status == .notDetermined {
+                        _ = await auth.request()
+                    }
+                }
+            }
         }
 
         suggestion.status = .accepted
