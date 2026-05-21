@@ -86,7 +86,7 @@ final class TaskNotificationScheduler {
             do { tasks.append(contentsOf: try await store.tasks(forWeekOffset: offset, today: now)) }
             catch { Self.log.error("rescheduleAll task fetch failed: \(String(describing: error), privacy: .public)") }
         }
-        for task in tasks where task.done == false {
+        for task in tasks where task.done == false && window.contains(task.due) {
             do { try await schedule(task: task) }
             catch { Self.log.error("rescheduleAll task schedule failed: \(String(describing: error), privacy: .public)") }
         }
