@@ -95,5 +95,10 @@
             </array>
         </dict>
     </array>
+
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.weeklyplanner.WeeklyPlanner.gmailRefresh</string>
+    </array>
 </dict>
 </plist>
