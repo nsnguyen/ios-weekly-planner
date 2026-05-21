@@ -14,6 +14,7 @@ struct ConnectionsSection: View {
     @Environment(\.inboxStore) private var inboxStore
 
     @Environment(\.notificationCenter) private var notificationCenter
+    @Environment(\.scenePhase) private var scenePhase
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     @State private var viewModel: ConnectionsViewModel?
@@ -38,6 +39,13 @@ struct ConnectionsSection: View {
                     auth: auth
                 )
             }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Re-probe whenever the app returns to the foreground — the user
+            // may have flipped notification permission in iOS Settings while we
+            // were backgrounded. Without this, the denied banner stays stale.
+            guard phase == .active else { return }
+            Task { notificationStatus = await notificationCenter.authorizationStatus() }
         }
         .alert(item: alertBinding) { a in
             Alert(title: Text(a.title), message: Text(a.message), dismissButton: .default(Text("OK")))
