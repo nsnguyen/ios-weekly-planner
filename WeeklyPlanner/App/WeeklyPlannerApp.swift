@@ -23,10 +23,11 @@ struct WeeklyPlannerApp: App {
     @State private var gmailClient: GmailClient
     @State private var inboxSyncEngine: InboxSyncEngine
     @State private var bgRefreshScheduler: BackgroundRefreshScheduler
+    @State private var eventKitAuth: EventKitAuthorization
 
     init() {
         let container = SwiftDataStack.production
-        let eventStore = SwiftDataEventStore(context: container.mainContext)
+        let baseEventStore = SwiftDataEventStore(context: container.mainContext)
         let taskStore = SwiftDataTaskStore(context: container.mainContext)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         let googleAuthService = LiveGoogleAuthService(
@@ -35,6 +36,18 @@ struct WeeklyPlannerApp: App {
             keychain: TokenKeychainStore<GoogleAccountInfo>(
                 serviceID: "com.weeklyplanner.WeeklyPlanner.google"
             )
+        )
+        // Wire the Phase 04 EventKit decorator. SystemEventKitGateway wraps
+        // EKEventStore; the decorator mirrors every write into the user's iOS
+        // Calendar once permission is granted. Without this, accept-flow
+        // writes land in SwiftData only — not visible in Calendar.app.
+        let eventKitGateway = SystemEventKitGateway()
+        let calendarManager = CategoryCalendarManager(gateway: eventKitGateway)
+        let eventKitAuth = EventKitAuthorization(gateway: eventKitGateway)
+        let eventStore: any EventStoring = EventKitMirroringEventStore(
+            base: baseEventStore,
+            gateway: eventKitGateway,
+            calendarManager: calendarManager
         )
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
@@ -65,6 +78,7 @@ struct WeeklyPlannerApp: App {
         _gmailClient = State(initialValue: gmailClient)
         _inboxSyncEngine = State(initialValue: syncEngine)
         _bgRefreshScheduler = State(initialValue: scheduler)
+        _eventKitAuth = State(initialValue: eventKitAuth)
     }
 
     var body: some Scene {
@@ -80,6 +94,12 @@ struct WeeklyPlannerApp: App {
                 .modelContainer(container)
                 .onOpenURL { url in
                     _ = RealGIDSigningClient().handle(url: url)
+                }
+                .task {
+                    // Prompt for Calendar access on first launch so the
+                    // EventKit decorator can mirror accepted suggestions
+                    // (and any future Event writes) into the system Calendar.
+                    await eventKitAuth.requestEventsIfNeeded()
                 }
         }
     }
