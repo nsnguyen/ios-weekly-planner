@@ -18,9 +18,17 @@ protocol InboxStoring: AnyObject {
 @MainActor
 final class SwiftDataInboxStore: InboxStoring {
     private let context: ModelContext
+    private let eventStore: (any EventStoring)?
+    private let settingsStore: (any SettingsStoring)?
 
-    init(context: ModelContext) {
+    init(
+        context: ModelContext,
+        eventStore: (any EventStoring)? = nil,
+        settingsStore: (any SettingsStoring)? = nil
+    ) {
         self.context = context
+        self.eventStore = eventStore
+        self.settingsStore = settingsStore
     }
 
     func pending(forWeekOffset offset: Int, today: Date = .init()) async throws -> [InboxSuggestion] {
@@ -62,6 +70,29 @@ final class SwiftDataInboxStore: InboxStoring {
 
     func accept(id: UUID) async throws {
         guard let suggestion = try await suggestion(id: id) else { return }
+
+        // If we have an EventStore, mirror the suggestion to a real Event
+        // (Phase 18 wires this; Phase 17 tests / previews pass nil and we
+        // just flip the status).
+        if let eventStore {
+            let endDate = suggestion.proposedEnd ?? suggestion.proposedStart.addingTimeInterval(3600)
+            let event = Event(
+                title: suggestion.title,
+                start: suggestion.proposedStart,
+                end: endDate,
+                location: suggestion.proposedLocation,
+                category: suggestion.category,
+                source: .gmail,
+                gmailMessageID: suggestion.gmailMessageID,
+                gmailFrom: suggestion.fromEmail,
+                gmailSubject: suggestion.subject
+            )
+            if let settings = try? settingsStore?.current() {
+                DefaultReminderPolicy.apply(to: event, settings: settings)
+            }
+            try await eventStore.upsert(event)
+        }
+
         suggestion.status = .accepted
         try context.save()
     }
