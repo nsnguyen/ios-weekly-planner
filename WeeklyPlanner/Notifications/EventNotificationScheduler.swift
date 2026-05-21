@@ -73,12 +73,13 @@ final class EventNotificationScheduler {
             return
         }
         // Compute a coarse week range bracketing the window.
-        let startOffset = Self.weekOffset(from: window.lowerBound, today: Date())
-        let endOffset = Self.weekOffset(from: window.upperBound, today: Date())
+        let now = Date()
+        let startOffset = Self.weekOffset(from: window.lowerBound, today: now)
+        let endOffset = Self.weekOffset(from: window.upperBound, today: now)
         var events: [Event] = []
         for offset in startOffset...endOffset {
             do {
-                let weekEvents = try await store.events(forWeekOffset: offset, today: Date())
+                let weekEvents = try await store.events(forWeekOffset: offset, today: now)
                 events.append(contentsOf: weekEvents)
             } catch {
                 Self.log.error("rescheduleAll fetch failed for offset \(offset, privacy: .public): \(String(describing: error), privacy: .public)")
@@ -118,7 +119,7 @@ final class EventNotificationScheduler {
         let identifier = "event-\(event.id.uuidString)-arrive"
         let title = event.title
         let location = event.location
-        let _ = locationRegistrar.register(
+        _ = locationRegistrar.register(
             eventID: event.id,
             reminder: reminder,
             content: {
