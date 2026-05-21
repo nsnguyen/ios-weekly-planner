@@ -51,14 +51,14 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 16 | Settings — Theme, Handwriting, Size, Preferences     | G — Settings        | ✅     |
 | 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ✅     |
 | 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ✅     |
-| 19 | Notifications (Time + Location Reminders)            | H                   | ⏳     |
+| 19 | Notifications (Time + Location Reminders)            | H                   | ✅     |
 | 20 | Modern Mode (Alternative Stock-iOS Theme)            | I — Polish          | ⏳     |
 | 21 | Accessibility, Dynamic Type, Localization, RTL       | I                   | ⏳     |
 | 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
 | 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
 
-**Current state:** Milestones A–F + Phases 16, 17, 18 shipped. 258
-unit tests green. Next up: Phase 19 — Notifications.
+**Current state:** Milestones A–H shipped. 276 unit tests green.
+Next up: Phase 20 — Modern Mode.
 
 ## Reading a Phase Doc
 
@@ -347,4 +347,118 @@ kicks a one-shot sync the moment Phase 17's connect flow completes.
 suite: 258 tests, all green.
 
 **Files**: `WeeklyPlanner/Stores/Gmail/{GmailMessage,URLSessionProtocol,GmailClient,GmailQueryBuilder,MessageClassifier,GmailDeltaSync,InboxSyncEngine,BackgroundRefreshScheduler}.swift`, `WeeklyPlanner/Stores/InboxStore+Gmail.swift`, `WeeklyPlanner/Intelligence/{ExtractedEvent,EventExtractor}.swift`, `WeeklyPlanner/Intelligence/Tasks/LiveEventExtractor.swift`, `WeeklyPlanner/Notifications/DefaultReminderPolicy.swift`; modified `WeeklyPlanner/Models/{UserSettings,InboxSuggestion}.swift`, `WeeklyPlanner/Stores/{InboxStore,Environment+Stores}.swift`, `WeeklyPlanner/App/WeeklyPlannerApp.swift` (env wiring + EventKit decorator), `WeeklyPlanner/Supporting/Info.plist` (BGTaskSchedulerPermittedIdentifiers), `WeeklyPlanner/Features/{DayPage,WeekPage}/*ViewModel.swift` + `*View.swift` (pull-to-refresh), `WeeklyPlanner/Navigation/AppShell.swift` (gmailDidConnect listener), `WeeklyPlanner/Features/Settings/ConnectionsSection.swift` (header dedup).
+
+### Phase 19 — Notifications (Time + Location Reminders)
+
+Shipped the local-notifications stack that wires Phase 03's
+`Reminder.timeBefore` / `Reminder.onArrive` and `TaskItem.reminderTime` /
+`TaskItem.locationReminder` to real iOS banners via
+`UNUserNotificationCenter` and `CLCircularRegion`. Two SDK seams
+(`NotificationCentering` over `UNUserNotificationCenter`, `LocationManaging`
+over `CLLocationManager`) let the schedulers and the 20-region priority
+queue be unit-tested without touching the real frameworks. Two parallel
+schedulers (`EventNotificationScheduler`, `TaskNotificationScheduler`)
+emit stable-identifier requests (`event-{uuid}-time-{n}` /
+`event-{uuid}-arrive` / `task-{uuid}-time` / `task-{uuid}-arrive`) so the
+single `NotificationReschedulingObserver` — driven by `.eventStoreDidChange`
+and `.taskStoreDidChange` already posted by the SwiftData stores — can
+clear by prefix and re-emit idempotently on every store mutation.
+
+`LocationReminderManager` is the real `LocationRegistering` impl. Its
+priority queue (sort by `proximityInDays` ascending, cap at 20) evicts
+far-future entries when today's events arrive, and escalates from
+`requestWhenInUseAuthorization` to `requestAlwaysAuthorization` only
+when a `.onArrive` reminder is enabled on an event >24h out — matches
+the spec's "escalate only when necessary" rule. Region entry routes
+through the `CLLocationManagerDelegate` callback, hops to MainActor with
+the region's `identifier: String` (a `Sendable` value type) rather than
+the non-`Sendable` `CLRegion` itself, and dispatches a
+`UNNotificationRequest` built from the entry's stored content factory.
+
+`NotificationsAppDelegate` (mounted via `@UIApplicationDelegateAdaptor`)
+registers `NotificationCategoryIDs.all()` at launch, returns
+`[.banner, .list, .sound]` for foreground presentation, and routes
+`didReceive` actions: default-tap / View action → `DeepLinkRouter.request(.event)`
+or `.task`, Snooze 10 → re-add the same content with a 10-min
+`UNTimeIntervalNotificationTrigger`, Mark Done → `TaskStoring.toggle(id:)`
++ remove the pending request. `DeepLinkRouter.pending` is observed by
+`AppShell` (which flips `selection.current = .calendar`) and by
+`DayPageView` (which sets `openEventID` and consumes the router).
+
+Permission-prompt timing follows the spec: `SwiftDataInboxStore.accept(id:)`
+optionally probes `NotificationAuthorization`, firing the system dialog
+only when the user accepts an inbox suggestion that has at least one
+reminder attached AND status is `.notDetermined` — never on app launch.
+After grant, the rescheduling observer (already listening to
+`.eventStoreDidChange` posted by the same accept) schedules the event's
+reminder for free. `ConnectionsSection` renders a "Notifications are off —
+Reminders won't fire" banner (with an Open Settings deep-link) above the
+SOURCES / Connections card when the OS reports `.denied`.
+
+The `time-sensitive` entitlement (`com.apple.developer.usernotifications.time-sensitive`)
+landed in Task 1, and `NotificationContentBuilder` sets
+`interruptionLevel = .timeSensitive` on every content — so reminders
+deliver during Focus modes, which App Store reviewers will check.
+
+**Plan deviations encountered**:
+
+1. **Stale date fixtures**: the plan's test fixtures used
+   `Date(timeIntervalSinceReferenceDate: 800_000_000)` which resolves to
+   2026-05-07 — already in the past by execution time (2026-05-20). Three
+   scheduler tests failed because the `guard fireDate > Date()` past-skip
+   path correctly swallowed them. Tasks 6 and 7 switched the future-event
+   fixtures to `Date().addingTimeInterval(7 * 24 * 3600)` (1 week out).
+   `testPastTimeReminderIsSkipped` keeps the near-future-start +
+   large-`minutesBefore` shape it always had — the skip path is still
+   meaningfully tested.
+
+2. **Swift 6 strict concurrency** required four adaptations beyond the
+   plan code: (a) `@preconcurrency UNUserNotificationCenterDelegate`
+   conformance on `NotificationsAppDelegate` (Apple's documented seam
+   for legacy delegate protocols that predate `Sendable`); (b)
+   `nonisolated(unsafe) var observers` in `NotificationReschedulingObserver`
+   so `deinit` (which is nonisolated) can iterate the token array; (c)
+   `LocationReminderManager.locationManager(_:didEnterRegion:)` captures
+   `region.identifier: String` instead of the non-`Sendable` `CLRegion`
+   when hopping to `@MainActor`; (d) `nonisolated init()` added to
+   `DeepLinkRouter` so `@Entry` could synthesize its default value in a
+   synchronous nonisolated context.
+
+3. **`theme.inkMuted` does not exist on `PaperTheme`**. The denied
+   banner's subtitle was specced with `theme.inkMuted`, but the actual
+   secondary-text token in this codebase is `theme.ink2` (used by every
+   other settings row). Substituted; future plans should reference
+   `theme.ink2`.
+
+4. **`ConnectionsSection` denied banner went stale on foreground**:
+   `.task` only fires once per view mount, so after the user toggled
+   "Allow Notifications" in iOS Settings while the app was backgrounded
+   and returned, the banner kept showing the pre-background state. Added
+   an `.onChange(of: scenePhase)` modifier that re-probes
+   `notificationCenter.authorizationStatus()` on every `.active`
+   transition. Caught during on-device verification, not by tests.
+
+5. **`xcrun simctl privacy` doesn't cover notifications.** Used the
+   manual iOS Settings → Weekly Planner toggle to test the denied path
+   (privacy CLI supports calendar/contacts/location/etc. but not
+   notifications). Documented for future on-device verification runs.
+
+**On-device verification on iPhone 17 Pro simulator (iOS 26.5)**:
+permission prompt fired exactly once after the first inbox accept;
+`Console.app` showed `Scheduled event-time event-<uuid>-time-15 for
+2026-05-23 …` for two accepted Trade Confirmations suggestions; a
+synthetic `xcrun simctl push` payload delivered the
+`Trade Confirmations / 7:00 AM / In 15 minutes.` banner with the
+`TIME SENSITIVE` label (entitlement verified); tapping the banner woke
+the app, flipped the tab bar to Calendar, and opened `PaperEventSheet`
+for the correct UUID end-to-end; iOS Settings → off produced the
+denied banner with the working Open Settings deep-link.
+
+**Tests added**: 5 classes / 18 new test methods
+(`NotificationContentBuilderTests` × 3, `EventNotificationSchedulerTests`
+× 5, `TaskNotificationSchedulerTests` × 4,
+`LocationReminderManagerTests` × 4, `DeepLinkRouterTests` × 2). Full
+suite: 276 tests, all green.
+
+**Files**: `WeeklyPlanner/Notifications/{NotificationCentering,NotificationAuthorization,NotificationCategoryIDs,NotificationContentBuilder,EventNotificationScheduler,TaskNotificationScheduler,LocationManaging,LocationReminderManager,LocationRegistering,DeepLinkRouter,NotificationReschedulingObserver,AppDelegate+Notifications}.swift`, `WeeklyPlannerTests/Notifications/{NotificationContentBuilderTests,EventNotificationSchedulerTests,TaskNotificationSchedulerTests,LocationReminderManagerTests,DeepLinkRouterTests}.swift`, `WeeklyPlannerTests/Notifications/Support/{FakeNotificationCenter,FakeLocationManager}.swift`; modified `WeeklyPlanner/Supporting/WeeklyPlanner.entitlements` (`time-sensitive`), `WeeklyPlanner/Stores/{InboxStore,Environment+Stores}.swift` (`notificationAuth` parameter + five env keys), `WeeklyPlanner/App/WeeklyPlannerApp.swift` (`@UIApplicationDelegateAdaptor` + full notification stack construction), `WeeklyPlanner/Navigation/AppShell.swift` + `WeeklyPlanner/Features/DayPage/DayPageView.swift` (DeepLinkRouter routing), `WeeklyPlanner/Features/Settings/ConnectionsSection.swift` (denied banner + scenePhase re-probe).
 
