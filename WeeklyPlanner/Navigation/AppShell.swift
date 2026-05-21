@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Root composition for the paper app. Sits above `RootView` (which only
 /// hosts the environment values) and below every page. Owns:
@@ -22,6 +23,7 @@ struct AppShell: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.taskStore) private var taskStore
     @Environment(\.inboxStore) private var inboxStore
+    @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @Query private var settingsRows: [UserSettings]
@@ -86,6 +88,12 @@ struct AppShell: View {
                                       // sheet stays out of scope until the shared
                                       // event-detail router lands.
                                   })
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gmailDidConnect)) { _ in
+            let engine = inboxSyncEngine
+            Task { @MainActor in
+                _ = try? await engine?.sync(now: Date())
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
