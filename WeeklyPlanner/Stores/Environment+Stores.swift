@@ -38,6 +38,15 @@ extension EnvironmentValues {
     /// so previews never crash. Production wires `LiveGoogleAuthService`
     /// in `WeeklyPlannerApp`.
     @Entry var googleAuthService: any GoogleAuthService = StubGoogleAuthService()
+
+    /// The active `GmailClientProtocol`. Defaults to a stub that throws on
+    /// every call so previews/tests don't accidentally make network calls.
+    @Entry var gmailClient: (any GmailClientProtocol)? = nil
+
+    /// The active `InboxSyncEngine`. Phase 18 wires the production
+    /// instance in `WeeklyPlannerApp`. Nil in previews/tests means
+    /// pull-to-refresh becomes a no-op.
+    @Entry var inboxSyncEngine: InboxSyncEngine? = nil
 }
 
 // MARK: - Stubs

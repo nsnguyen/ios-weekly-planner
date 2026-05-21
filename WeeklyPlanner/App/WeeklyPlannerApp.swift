@@ -20,11 +20,13 @@ struct WeeklyPlannerApp: App {
     @State private var taskStore: any TaskStoring
     @State private var settingsStore: any SettingsStoring
     @State private var googleAuthService: any GoogleAuthService
+    @State private var gmailClient: GmailClient
+    @State private var inboxSyncEngine: InboxSyncEngine
+    @State private var bgRefreshScheduler: BackgroundRefreshScheduler
 
     init() {
         let container = SwiftDataStack.production
         let eventStore = SwiftDataEventStore(context: container.mainContext)
-        let inboxStore = SwiftDataInboxStore(context: container.mainContext)
         let taskStore = SwiftDataTaskStore(context: container.mainContext)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         let googleAuthService = LiveGoogleAuthService(
@@ -37,12 +39,32 @@ struct WeeklyPlannerApp: App {
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
         #endif
+        // Rebuild the inbox store now that eventStore + settingsStore are
+        // available — the accept-flow needs them to mirror to EventKit.
+        let wiredInboxStore = SwiftDataInboxStore(
+            context: container.mainContext,
+            eventStore: eventStore,
+            settingsStore: settingsStore
+        )
+        let gmailClient = GmailClient(auth: googleAuthService, session: URLSession.shared)
+        let extractor: any EventExtractor = LiveEventExtractor()
+        let syncEngine = InboxSyncEngine(
+            client: gmailClient,
+            extractor: extractor,
+            inboxStore: wiredInboxStore,
+            deltaSync: GmailDeltaSync(settingsStore: settingsStore)
+        )
+        let scheduler = BackgroundRefreshScheduler(engine: syncEngine)
+        scheduler.registerHandler()
         _container = State(initialValue: container)
         _eventStore = State(initialValue: eventStore)
-        _inboxStore = State(initialValue: inboxStore)
+        _inboxStore = State(initialValue: wiredInboxStore)
         _taskStore = State(initialValue: taskStore)
         _settingsStore = State(initialValue: settingsStore)
         _googleAuthService = State(initialValue: googleAuthService)
+        _gmailClient = State(initialValue: gmailClient)
+        _inboxSyncEngine = State(initialValue: syncEngine)
+        _bgRefreshScheduler = State(initialValue: scheduler)
     }
 
     var body: some Scene {
@@ -53,6 +75,8 @@ struct WeeklyPlannerApp: App {
                 .environment(\.taskStore, taskStore)
                 .environment(\.settingsStore, settingsStore)
                 .environment(\.googleAuthService, googleAuthService)
+                .environment(\.gmailClient, gmailClient)
+                .environment(\.inboxSyncEngine, inboxSyncEngine)
                 .modelContainer(container)
                 .onOpenURL { url in
                     _ = RealGIDSigningClient().handle(url: url)
