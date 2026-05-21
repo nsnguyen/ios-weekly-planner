@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Root composition for the paper app. Sits above `RootView` (which only
 /// hosts the environment values) and below every page. Owns:
@@ -22,7 +23,9 @@ struct AppShell: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.taskStore) private var taskStore
     @Environment(\.inboxStore) private var inboxStore
+    @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.deepLinkRouter) private var deepLinkRouter
 
     @Query private var settingsRows: [UserSettings]
 
@@ -87,6 +90,18 @@ struct AppShell: View {
                                       // event-detail router lands.
                                   })
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gmailDidConnect)) { _ in
+            let engine = inboxSyncEngine
+            Task { @MainActor in
+                _ = try? await engine?.sync(now: Date())
+            }
+        }
+        .onChange(of: deepLinkRouter.pending) { _, new in
+            guard new != nil else { return }
+            selection.current = .calendar
+            // DayPageView consumes the router itself; we just make sure the
+            // calendar tab is visible.
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             PaperTabBar(selection: Binding(

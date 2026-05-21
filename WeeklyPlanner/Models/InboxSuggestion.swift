@@ -23,6 +23,10 @@ final class InboxSuggestion {
     var subject: String
     /// First ~280 chars of the message body; full body is fetched on demand.
     var bodySnippet: String?
+    /// Location proposed by the extractor (Foundation Models output's
+    /// `location` field). `nil` when the email didn't mention one; the
+    /// accept-flow passes it through to `Event.location`.
+    var proposedLocation: String?
 
     var statusRaw: String
     var createdAt: Date
@@ -37,6 +41,7 @@ final class InboxSuggestion {
          category: Category = .personal,
          subject: String,
          bodySnippet: String? = nil,
+         proposedLocation: String? = nil,
          status: InboxStatus = .pending,
          createdAt: Date = .init())
     {
@@ -50,6 +55,7 @@ final class InboxSuggestion {
         categoryRaw = category.rawValue
         self.subject = subject
         self.bodySnippet = bodySnippet
+        self.proposedLocation = proposedLocation
         statusRaw = status.rawValue
         self.createdAt = createdAt
     }

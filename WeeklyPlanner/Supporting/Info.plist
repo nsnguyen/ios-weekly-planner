@@ -81,7 +81,9 @@
         <string>IndieFlower-Regular.ttf</string>
     </array>
 
-    <!-- Google OAuth callback URL scheme. Reversed client ID is filled in during Phase 17. -->
+    <!-- Google OAuth configuration. Secrets filled in from Secrets.xcconfig during Phase 17. -->
+    <key>GoogleClientID</key>
+    <string>$(GOOGLE_CLIENT_ID)</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
@@ -89,9 +91,14 @@
             <string>com.weeklyplanner.WeeklyPlanner.googleoauth</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>com.googleusercontent.apps.PLACEHOLDER</string>
+                <string>$(REVERSED_GOOGLE_CLIENT_ID)</string>
             </array>
         </dict>
+    </array>
+
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.weeklyplanner.WeeklyPlanner.gmailRefresh</string>
     </array>
 </dict>
 </plist>

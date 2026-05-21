@@ -40,5 +40,8 @@ fastlane/test_output
 *.local.xcconfig
 .env.local
 
+# Google OAuth secrets — local-only, never commit
+Secrets.xcconfig
+
 # Auto-generated per-session memory context (claude-mem writes this)
 AGENTS.md

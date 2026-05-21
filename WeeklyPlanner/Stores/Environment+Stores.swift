@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UserNotifications
 
 /// SwiftUI environment plumbing for the stores the Day page reads from.
 ///
@@ -33,6 +34,37 @@ extension EnvironmentValues {
     /// overlay, event sheet suggestion) read this and skip the AI
     /// pathway when it's missing.
     @Entry var intelligenceService: (any IntelligenceService)? = nil
+
+    /// The active `GoogleAuthService`. Defaults to `StubGoogleAuthService`
+    /// so previews never crash. Production wires `LiveGoogleAuthService`
+    /// in `WeeklyPlannerApp`.
+    @Entry var googleAuthService: any GoogleAuthService = StubGoogleAuthService()
+
+    /// The active `GmailClientProtocol`. Defaults to a stub that throws on
+    /// every call so previews/tests don't accidentally make network calls.
+    @Entry var gmailClient: (any GmailClientProtocol)? = nil
+
+    /// The active `InboxSyncEngine`. Phase 18 wires the production
+    /// instance in `WeeklyPlannerApp`. Nil in previews/tests means
+    /// pull-to-refresh becomes a no-op.
+    @Entry var inboxSyncEngine: InboxSyncEngine? = nil
+
+    /// Notification center seam — Phase 19. Defaults to a no-op so previews
+    /// and tests don't trigger the permission prompt or leak requests.
+    @Entry var notificationCenter: any NotificationCentering = StubNotificationCenter()
+
+    /// Event-side notification scheduler — Phase 19. Optional so previews can
+    /// skip wiring; nil means scheduling is a silent no-op.
+    @Entry var eventNotificationScheduler: EventNotificationScheduler? = nil
+
+    /// Task-side notification scheduler — Phase 19.
+    @Entry var taskNotificationScheduler: TaskNotificationScheduler? = nil
+
+    /// Location reminder manager — Phase 19. Optional for the same reason.
+    @Entry var locationReminderManager: LocationReminderManager? = nil
+
+    /// Deep-link routing target for notification taps — Phase 19.
+    @Entry var deepLinkRouter: DeepLinkRouter = DeepLinkRouter()
 }
 
 // MARK: - Stubs
@@ -84,6 +116,8 @@ final class StubInboxStore: InboxStoring {
     func upsert(_: InboxSuggestion) async throws {}
     func accept(id _: UUID) async throws {}
     func dismiss(id _: UUID) async throws {}
+    func clearPending() async throws {}
+    func anyStatus(forMessageID _: String) async throws -> InboxSuggestion? { nil }
 }
 
 /// No-op `TaskStoring` companion to `StubEventStore`/`StubInboxStore`. Same
@@ -130,4 +164,20 @@ final class StubSettingsStore: SettingsStoring {
         apply(settings)
         settings.updatedAt = .init()
     }
+}
+
+/// No-op `NotificationCentering` used as the default environment value. Lets
+/// previews and tests render views that read `\.notificationCenter` without
+/// touching the system service.
+@MainActor
+final class StubNotificationCenter: NotificationCentering {
+    nonisolated init() {}
+
+    func authorizationStatus() async -> UNAuthorizationStatus { .notDetermined }
+    func requestAuthorization(options _: UNAuthorizationOptions) async throws -> Bool { false }
+    func setNotificationCategories(_: Set<UNNotificationCategory>) {}
+    func add(_: UNNotificationRequest) async throws {}
+    func pendingRequests() async -> [UNNotificationRequest] { [] }
+    func removePending(withIdentifiers _: [String]) {}
+    func removeAllPending() {}
 }

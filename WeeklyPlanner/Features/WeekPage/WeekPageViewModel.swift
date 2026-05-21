@@ -73,6 +73,16 @@ final class WeekPageViewModel {
         tasksByDay.values.flatMap(\.self).count(where: { !$0.done })
     }
 
+    /// Triggered by pull-to-refresh on the Week page. Delegates to the
+    /// shared `InboxSyncEngine`. Errors are swallowed (user-facing state
+    /// is just "no new suggestions appeared").
+    func refresh(via engine: InboxSyncEngine?) async {
+        guard let engine else { return }
+        _ = try? await engine.sync(now: Date())
+        // After a successful sync, re-fetch suggestions for the current week.
+        await refresh()
+    }
+
     /// Re-fetch events + tasks + the pending-inbox count for the week and
     /// group them by Monday-based weekday index. Errors from any store are
     /// surfaced via `loadError` while previously-loaded data is left in place
