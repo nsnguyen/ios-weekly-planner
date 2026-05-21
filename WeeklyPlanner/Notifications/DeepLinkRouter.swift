@@ -14,6 +14,8 @@ final class DeepLinkRouter {
 
     private(set) var pending: Destination?
 
+    nonisolated init() {}
+
     func request(_ destination: Destination) {
         pending = destination
     }
