@@ -176,6 +176,9 @@ struct DayPageContent: View {
             openEventID = id
             deepLinkRouter.consume()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .eventStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
+        }
     }
 
     // MARK: - Subviews

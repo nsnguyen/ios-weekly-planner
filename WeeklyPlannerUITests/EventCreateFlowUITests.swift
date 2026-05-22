@@ -52,13 +52,13 @@ final class EventCreateFlowUITests: XCTestCase {
 
         // Give the async `viewModel.save()` time to complete, then the
         // sheet's `isOpen = false` to flip and the dismissal animation to
-        // settle. The Day page does not auto-observe the event store, so
-        // the new row will not appear on its own; we trigger a pull-to-
-        // refresh below to force `viewModel.refresh()` to re-fetch.
+        // settle.
         _ = save.waitForNonExistence(timeout: 5)
 
-        // Pull-to-refresh on the page so DayPageViewModel re-fetches and
-        // the freshly-saved event lands in `viewModel.events`.
+        // Auto-refresh on .eventStoreDidChange should make the row visible
+        // without manual intervention, but we keep a short pull-to-refresh
+        // here as a fallback for simulator timing flakes (notification → Task
+        // → SwiftUI re-render can lag a few frames).
         let firstWindow = app.windows.firstMatch
         let start = firstWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
         let finish = firstWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))

@@ -83,6 +83,9 @@ struct WeekPageView: View {
             }
             await viewModel?.refresh()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .eventStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
+        }
     }
 
     // MARK: - Subviews
