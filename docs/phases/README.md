@@ -11,7 +11,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 - **Gmail API + OAuth** for inbox-sourced event suggestions.
 - **UserNotifications + Core Location** for time-based and location-based reminders.
 - **3 themes × 4 handwriting fonts × 3 text sizes** — live-switchable.
-- **Modern mode** fallback (stock iOS look) toggleable in Settings.
+- ~~Modern mode fallback (stock iOS look) toggleable in Settings.~~ *(archived — v1.0 ships Paper only)*
 
 ## Target Configuration
 
@@ -52,13 +52,13 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 17 | Settings — Connections (Gmail OAuth, Google, Apple)  | G                   | ✅     |
 | 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ✅     |
 | 19 | Notifications (Time + Location Reminders)            | H                   | ✅     |
-| 20 | Modern Mode (Alternative Stock-iOS Theme)            | I — Polish          | ⏳     |
-| 21 | Accessibility, Dynamic Type, Localization, RTL       | I                   | ⏳     |
+| 20 | ~~Modern Mode (Alternative Stock-iOS Theme)~~        | — archived          | 🗄️     |
+| 21 | Accessibility, Dynamic Type, Localization, RTL       | I — Polish          | ⏳     |
 | 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
 | 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
 
-**Current state:** Milestones A–H shipped. 276 unit tests green.
-Next up: Phase 20 — Modern Mode.
+**Current state:** Milestones A–H shipped. 276 unit tests green. Phase 20 (Modern Mode) implemented end-to-end on 2026-05-21, then archived before merge — code preserved at git tag `phase-20-archive`; the app ships Paper only. Milestone I is now Phase 21 alone.
+Next up: Phase 21 — Accessibility, Dynamic Type, Localization, RTL.
 
 ## Reading a Phase Doc
 

@@ -1,5 +1,12 @@
 # Phase 20 — Modern Mode (Alternative Stock-iOS Theme)
 
+> **🗄️ ARCHIVED 2026-05-21.** Phase 20 was implemented end-to-end on branch
+> `milestone-i-polish` (22 commits, 308 unit tests green) and then reverted in
+> full before merge — v1.0 ships Paper only. The Modern code is preserved at
+> git tag `phase-20-archive`; check it out if you ever want to ship a stock-iOS
+> alternative. This doc is kept as the original scope contract; do not treat
+> any task in it as actionable for v1.0.
+
 ## Goal
 Implement the alternative "modern" theme — stock iOS look (SF Pro, system colors, segmented Day/2-Day/Week, time-grid layout, modern AI overlay, modern event sheet, modern tab bar). Toggleable in a dev-only Tweaks panel (and shipped as an alternative style toggle, OFF by default for v1.0).
 
