@@ -30,6 +30,7 @@ struct InboxSuggestionRow: View {
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
+    @Environment(\.dynamicTypeSize) private var dtSize
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
@@ -43,14 +44,14 @@ struct InboxSuggestionRow: View {
 
     // MARK: - Subviews
 
-    /// 48pt-wide leading column: Cochin time label tinted with `theme.ink3`
-    /// so the suggestion's start time reads as muted next to the confirmed
-    /// event rows above it.
+    /// Leading column: Cochin time label tinted with `theme.ink3` so the
+    /// suggestion's start time reads as muted next to confirmed event rows.
+    /// Width widens from 48pt to 64pt at AX2+ to match `EventEntryRow`.
     private var timeGutter: some View {
         Text(EventEntryRow.timeLabel(for: suggestion.proposedStart))
             .font(.custom("Cochin", size: 12).weight(.semibold))
             .foregroundStyle(theme.ink3)
-            .frame(width: 48, alignment: .leading)
+            .frame(width: DynamicTypeLayout.timeGutterWidth(at: dtSize), alignment: .leading)
     }
 
     /// Middle column: italic handwritten title + small category dot stacked
