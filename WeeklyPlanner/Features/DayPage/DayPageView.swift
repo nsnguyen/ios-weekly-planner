@@ -125,6 +125,11 @@ struct DayPageContent: View {
                         .refreshable {
                             await viewModel?.refresh(via: inboxSyncEngine)
                         }
+                        .accessibilityRotor("Events") {
+                            ForEach(viewModel?.events ?? [], id: \.id) { event in
+                                AccessibilityRotorEntry(event.title, id: event.id)
+                            }
+                        }
 
                         PageNumber(date: weekDay.date)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)

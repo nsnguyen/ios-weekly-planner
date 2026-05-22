@@ -36,8 +36,8 @@ struct AIButton: View {
             .frame(width: 34, height: 34)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Apple Intelligence")
-        .accessibilityAddTraits(.isButton)
+        .accessibleAIButton()
+        .accessibilityIdentifier(AccessibilityIDs.daypageAIButton)
     }
 }
 

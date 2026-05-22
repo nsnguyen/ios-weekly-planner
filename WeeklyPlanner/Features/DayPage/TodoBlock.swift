@@ -47,6 +47,8 @@ struct TodoBlock: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(sortedTasks, id: \.id) { task in
                     TodoRow(task: task) { onToggle(task.id) }
+                        .accessibleTask(task) { onToggle(task.id) }
+                        .accessibilityIdentifier(AccessibilityIDs.daypageTodoRow(task.id))
                 }
             }
         }

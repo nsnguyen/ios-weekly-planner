@@ -72,8 +72,9 @@ struct SideTab: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(weekdayLong)
-        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibleSideTab(weekdayFull: weekdayLong, dayN: idx + 1)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier(AccessibilityIDs.sideTab(idx))
         .animation(.smooth(duration: 0.18), value: isSelected)
     }
 

@@ -49,6 +49,9 @@ struct DayPageHeader: View {
                 TodayChip()
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(weekDay.weekdayLong), \(weekDay.dayNumber) \(weekDay.monthShort), week \(weekMeta.weekNumber)")
+        .accessibilityAddTraits(.isHeader)
     }
 }
 

@@ -56,6 +56,7 @@ struct AIStickyTab: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel("Show AI note")
         .accessibilityAddTraits(.isButton)
     }

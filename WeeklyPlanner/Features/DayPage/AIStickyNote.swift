@@ -77,9 +77,10 @@ struct AIStickyNote: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("AI note: \(insight.text)")
-        .accessibilityHint("Double tap to fold")
+        .accessibilityLabel("AI insight: \(insight.text)")
+        .accessibilityHint("Double tap to fold or expand")
         .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier(AccessibilityIDs.daypageStickyNote)
     }
 
     /// "AI" eyebrow caption rendered in tiny system-font caps with a tracked

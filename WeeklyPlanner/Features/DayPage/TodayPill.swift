@@ -31,7 +31,8 @@ struct TodayPill: View {
                 }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Jump to today")
+        .accessibleTodayPill()
+        .accessibilityIdentifier(AccessibilityIDs.daypageTodayPill)
     }
 }
 

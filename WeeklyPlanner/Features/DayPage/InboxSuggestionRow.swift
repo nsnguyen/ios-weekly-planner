@@ -40,6 +40,8 @@ struct InboxSuggestionRow: View {
         }
         .padding(.vertical, 5)
         .opacity(0.78)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Inbox suggestion: \(suggestion.title), \(suggestion.proposedStart.formatted(date: .omitted, time: .shortened))")
     }
 
     // MARK: - Subviews
@@ -92,6 +94,7 @@ struct InboxSuggestionRow: View {
             .buttonStyle(.plain)
             .contentShape(Rectangle().inset(by: -8))
             .accessibilityLabel("Accept suggestion")
+            .accessibilityHint("Adds this event to your calendar")
 
             Button {
                 onDismiss()
@@ -101,6 +104,7 @@ struct InboxSuggestionRow: View {
             .buttonStyle(.plain)
             .contentShape(Rectangle().inset(by: -8))
             .accessibilityLabel("Dismiss suggestion")
+            .accessibilityHint("Removes this suggestion from inbox")
         }
         .padding(.top, 2)
     }
