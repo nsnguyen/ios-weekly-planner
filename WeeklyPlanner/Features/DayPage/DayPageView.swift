@@ -87,6 +87,7 @@ struct DayPageContent: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.deepLinkRouter) private var deepLinkRouter
+    @Environment(\.eventCreationRequest) private var creationRequest
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -95,6 +96,8 @@ struct DayPageContent: View {
     /// Identifier of the event whose detail sheet is currently open. `nil`
     /// when no sheet is presented. Tapping any `EventEntryRow` sets this.
     @State private var openEventID: UUID?
+
+    @State private var creatingEventAt: Date?
 
     var body: some View {
         let now = Date()
@@ -142,6 +145,11 @@ struct DayPageContent: View {
                                 isOpen: Binding(get: { openEventID != nil },
                                                 set: { if !$0 { openEventID = nil } }))
             }
+            if let anchor = creatingEventAt {
+                PaperEventSheet(mode: .create(at: anchor),
+                                isOpen: Binding(get: { creatingEventAt != nil },
+                                                set: { if !$0 { creatingEventAt = nil } }))
+            }
         }
         .task {
             if viewModel == nil {
@@ -157,6 +165,11 @@ struct DayPageContent: View {
                                              modelContext: modelContext)
             }
             await viewModel?.refresh()
+        }
+        .onChange(of: creationRequest.anchorDate) { _, new in
+            guard let anchor = new else { return }
+            creatingEventAt = anchor
+            creationRequest.consume()
         }
         .onChange(of: deepLinkRouter.pending) { _, new in
             guard case let .event(id) = new else { return }
