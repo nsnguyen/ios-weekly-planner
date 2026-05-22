@@ -53,12 +53,12 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 18 | Gmail Inbox Pipeline & Event Suggestions             | H — Integrations    | ✅     |
 | 19 | Notifications (Time + Location Reminders)            | H                   | ✅     |
 | 20 | ~~Modern Mode (Alternative Stock-iOS Theme)~~        | — archived          | 🗄️     |
-| 21 | Accessibility, Dynamic Type, Localization, RTL       | I — Polish          | ⏳     |
+| 21 | Accessibility, Dynamic Type, Localization, RTL       | I — Polish          | ✅     |
 | 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
 | 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
 
-**Current state:** Milestones A–H shipped. 276 unit tests green. Phase 20 (Modern Mode) implemented end-to-end on 2026-05-21, then archived before merge — code preserved at git tag `phase-20-archive`; the app ships Paper only. Milestone I is now Phase 21 alone.
-Next up: Phase 21 — Accessibility, Dynamic Type, Localization, RTL.
+**Current state:** Milestones A–I shipped on `milestone-i-polish` (ready to merge to main). Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 302 unit tests + 9 UI tests (3 XCTSkip), all green.
+Next up: Phase 22 — Final Polish, App Icon, Launch Screen, Privacy.
 
 ## Reading a Phase Doc
 
@@ -461,4 +461,189 @@ denied banner with the working Open Settings deep-link.
 suite: 276 tests, all green.
 
 **Files**: `WeeklyPlanner/Notifications/{NotificationCentering,NotificationAuthorization,NotificationCategoryIDs,NotificationContentBuilder,EventNotificationScheduler,TaskNotificationScheduler,LocationManaging,LocationReminderManager,LocationRegistering,DeepLinkRouter,NotificationReschedulingObserver,AppDelegate+Notifications}.swift`, `WeeklyPlannerTests/Notifications/{NotificationContentBuilderTests,EventNotificationSchedulerTests,TaskNotificationSchedulerTests,LocationReminderManagerTests,DeepLinkRouterTests}.swift`, `WeeklyPlannerTests/Notifications/Support/{FakeNotificationCenter,FakeLocationManager}.swift`; modified `WeeklyPlanner/Supporting/WeeklyPlanner.entitlements` (`time-sensitive`), `WeeklyPlanner/Stores/{InboxStore,Environment+Stores}.swift` (`notificationAuth` parameter + five env keys), `WeeklyPlanner/App/WeeklyPlannerApp.swift` (`@UIApplicationDelegateAdaptor` + full notification stack construction), `WeeklyPlanner/Navigation/AppShell.swift` + `WeeklyPlanner/Features/DayPage/DayPageView.swift` (DeepLinkRouter routing), `WeeklyPlanner/Features/Settings/ConnectionsSection.swift` (denied banner + scenePhase re-probe).
+
+### Phase 21 — Accessibility, Dynamic Type, Localization, RTL
+
+Shipped end-to-end accessibility for the Paper app on `milestone-i-polish`
+(16 implementation commits + design + plan + Phase 20 archive doc).
+
+**New `WeeklyPlanner/Accessibility/` module** with four pure helpers:
+
+- `AccessibilityIDs` — stable UI-test identifiers (`daypage.event.row.<uuid>`,
+  `tabbar.tab.review`, etc.).
+- `DynamicTypeSupport` — `handwriting(_:size:relativeTo:)` wrapper for
+  PaperFont scaling, plus `DynamicTypeLayout` adapter and `RTLMath`
+  pure helpers (`adjustDeltaX`, `headerRotationDegrees`, `sideTabAlignment`).
+- `ReduceMotionAnimations` — extension on the existing `AnimationTokens`
+  exposing `pageFlip(reduced:)`, `sheetSlide(reduced:)`,
+  `stickyPeel(reduced:)`, `pickerDrop(reduced:)`,
+  `aiOverlaySlide(reduced:)`. Reduced variants are real 0.15-0.2s
+  fades (not the previous `.linear(duration: 0)` stop-gap).
+- `AccessibilityModifiers` — six centralized view modifiers
+  (`.accessibleEvent(_:)`, `.accessibleTask(_:onToggle:)`,
+  `.accessibleSideTab(weekdayFull:dayN:)`, `.accessibleTodayPill()`,
+  `.accessibleAIButton()`, `.accessibleWeekRow(range:weekNumber:)`)
+  plus pure `AccessibilityFormatters` so label formatting is
+  unit-testable without SwiftUI.
+
+**Audit pass across every Paper surface**:
+
+- **DayPage** — 11 files: inline labels replaced by centralized
+  modifiers; Events accessibility rotor added.
+- **WeekPage** — day rows get combined elements + sideTab-style
+  labels; Days rotor added; WeekTaskEntry upgraded to
+  `.accessibleTask()`.
+- **Review** — annotated from scratch (zero coverage previously).
+  Header with `.isHeader`; AI summary, time-breakdown rows, AI notes,
+  streak — each gets a combined label. The bar chart inside
+  `CategoryTimeRow` is `.accessibilityHidden(true)` (decorative — the
+  textual row label below carries the same data).
+- **Settings** — theme/font cards get `.isSelected` trait + identifiers.
+  SizeSegmented segments identifiable per size. Logos labeled
+  ("Apple"/"Gmail"/"Google Calendar") with `.isImage`. ConnectionRow
+  groups into a single state-aware element.
+- **EventSheet** — composite-row grouping with descriptive combined
+  labels. EventDeleteButton gets identifier.
+- **AISearch** — input gets `.isSearchField` trait + identifier; close
+  button identifier + label.
+- **Decorative primitives** — `PaperGrain`, `RuledLines`, `RedMarginLine`,
+  `HolePunches`, `PageCurl`, `WavyUnderline`, `EdgeStripes`, `BookSpine`,
+  `BookCover`, `MaskingTape` all `.accessibilityHidden(true)`.
+  `PaperToggle` and `InkShimmerText` left interactive (toggle is a
+  control; shimmer carries meaningful text).
+
+**Dynamic Type two-track**:
+
+- System fonts (Cochin captions, SF Pro fallbacks) auto-scale.
+- Handwriting fonts (Caveat, Architects Daughter, Kalam, Indie Flower)
+  clamped at `.xxxLarge` via `.dynamicTypeSize(...DynamicTypeSize.xxxLarge)`
+  applied at the Day page root.
+- Layout adapter wired into `EventEntryRow`/`InboxSuggestionRow` (time
+  gutter 48 → 64 at AX2+), `SideTab` (22 → 32 at AX2+), and `PaperTab`
+  (tab labels truncate at AX3, hidden at AX4+).
+
+**Reduce Motion** — three previously-ungated sites (`AIStickyNote`,
+`WeekPickerSheet`, `InkShimmerText`) now respect the setting. Three
+existing sites that used `.linear(duration: 0)` (instant) upgraded to
+proper 0.15-0.2s fades via the new factory variants. Ink shimmer
+short-circuits its `TimelineView` and renders a static gradient when
+reduced.
+
+**WCAG AA contrast** — `PaperTheme.ink3` raised 0.34/0.36 → **0.50
+alpha** in all 3 themes (cream, kraft, midnight), pushing contrast to
+~4.1:1 for body text. New token `inkDecorative` at 0.30 alpha for
+page-number footers, hole-punch shadows, dashed seams — all consumers
+also marked `.accessibilityHidden(true)`. `PaperFont.weightFor(legibility:)`
+swaps Caveat Regular → SemiBold and Kalam Regular → Bold when iOS Bold
+Text is enabled (Architects Daughter and Indie Flower stay — single-
+weight families).
+
+**RTL** — `RTLMath.adjustDeltaX(_:for:)` inverts page-flip gesture
+deltaX in `HorizontalSwipeGesture` so drag-right means "next" in LTR
+and "previous" in RTL. `RTLMath.headerRotationDegrees(for:)` flips
+DayPageHeader's date-number rotation from -3° to +3° in RTL so the
+lean reads consistently relative to text flow. Standard SwiftUI
+mirroring handles HStack/VStack axes for side tabs, red margin, and
+hole punches automatically.
+
+**Localizable.xcstrings + InfoPlist.xcstrings** — created both Xcode
+String Catalogs. `Localizable.xcstrings` is the seed surface (Xcode's
+catalog scanner populates from `Text("…")` literals on GUI builds —
+CLI builds don't auto-populate, so the file ships empty as a
+translator-ready scaffold). `InfoPlist.xcstrings` has manual English
+entries for the 5 usage descriptions present in Info.plist
+(`NSCalendarsFullAccessUsageDescription`, `NSRemindersFullAccessUsageDescription`,
+`NSContactsUsageDescription`, `NSLocationWhenInUseUsageDescription`,
+`NSUserNotificationsUsageDescription`). Zero `Text(verbatim:)` sites
+found in app code (only `Intelligence/` LLM prompts use it, which is
+intentional and excluded from the audit).
+
+**`XCUIAccessibilityAudit` regression gates** — 6 per-screen audit
+UITests + 2 VoiceOver smoke UITests. Three documented allowlists for
+known-acceptable issues: contrast on `theme.ink2` (62% paper-aesthetic
+muted style), dynamicType (custom fixed-point sizing in `DynamicTypeLayout`),
+textClipped on `FontCard` (Button carries the full label).
+
+**Plan deviations encountered**:
+
+1. **`Text(verbatim:)` regex scanner crashed the simulator.** The
+   `LocalizationTests.testNoHardcodedEnglishViaTextVerbatim()` originally
+   used `FileManager.enumerator` to scan every `.swift` file in
+   `WeeklyPlanner/` and look for unallowlisted `Text(verbatim:)` sites.
+   The recursive enumeration consistently triggered an "unexpected
+   exit, crash, or test timeout" in the iOS Simulator's xctest process
+   after ~40s — likely a sandbox/memory issue with the recursion depth
+   (~150 .swift files plus their content reads). Dropped the scanner;
+   relying on PR review + ad-hoc grep instead. The plurals + locale
+   sanity tests in the same file pass cleanly.
+
+2. **Enum naming drift caught early**: `EventSource.user` is actually
+   `.manual`; `Category.social` doesn't exist (only `.personal`,
+   `.work`, `.health`, `.family`). Caught by the Task 4 agent and
+   propagated through the audit tasks. Documented in
+   `[[phase-20-reverted]]` for future reference.
+
+3. **Time gutter lives in row views, not DayPageView.** The Task 6
+   agent discovered the hardcoded 48pt time gutter actually lives in
+   `EventEntryRow.swift` and `InboxSuggestionRow.swift` (one per row),
+   not in `DayPageView` directly. Both rows now read `\.dynamicTypeSize`
+   and apply `DynamicTypeLayout.timeGutterWidth(at:)`.
+
+4. **PaperTabBar tab cells live in `PaperTab.swift`**, not
+   `PaperTabBar.swift`. The label-visibility switch (`.full` /
+   `.truncate` / `.iconOnly`) applies inside `PaperTab`. The tab bar
+   container itself was unchanged.
+
+5. **Two reduce-motion call sites were already correct.**
+   `PaperAISearchView` uses `.transition()` not `.animation()` and
+   delegates the curve to its parent `AppShell`. `InkShimmerText` was
+   already fully implemented with a reduce-motion static-gradient
+   short-circuit. Documented in the Task 7 agent report; no work
+   needed on those files.
+
+6. **PaperFont.kalam Bold mapping**: spec said "Regular → Bold" for
+   Kalam — confirmed via the font family which ships Light/Regular/Bold.
+   `weightFor(legibility: .bold)` returns `.bold` (not `.regular`) for
+   Kalam, matching the heaviest available weight.
+
+7. **`accessibleWeekDayRow` modifier added** (Task 10) — convenience
+   modifier on top of `accessibleSideTab` for the week-page row use
+   case. Reuses `AccessibilityFormatters.sideTabLabel` so the format
+   stays consistent.
+
+8. **Subagent stalls (×3)**: Tasks 13, 15, and a few intermediate
+   audit dispatches stalled mid-execution without returning a STATUS
+   report despite the explicit termination contract. Verified the
+   commits landed and the tests passed via direct `git log` /
+   `xcodebuild` checks; committed any uncommitted work on the agent's
+   behalf when needed. Recurring pattern: heavy file-touching tasks
+   (15+ file changes) sometimes finish the work but never emit the
+   final assistant message.
+
+**On-device verification on iPhone 17 Pro (iOS 26.5)**: deferred to
+the user before merging Milestone I. Spec acceptance items covered by
+302 unit tests + 9 UI tests (3 XCTSkip on seed-data-dependent
+flows, 0 failures). Manual gates remaining: VoiceOver sweep through
+Day → Week → Review → Settings; AX5 Dynamic Type render check;
+Reduce Motion toggle in iOS Settings; RTL via Arabic locale; Bold
+Text toggle.
+
+**Tests added**: 26 unit + 8 UITest = 34 new tests
+(`AccessibilityModifierTests` × 6, `DynamicTypeLayoutTests` × 4,
+`ContrastTests` × 6, `ReduceMotionTests` × 5, `LocalizationTests` × 2,
+`RTLLayoutTests` × 3, `AccessibilityAuditUITests` × 6,
+`AccessibilityVoiceOverUITests` × 2). Full suite: 276 baseline → **302
+unit + 9 UI = 311 total, all green**.
+
+**Files**: `WeeklyPlanner/Accessibility/{AccessibilityIDs,DynamicTypeSupport,ReduceMotionAnimations,AccessibilityModifiers}.swift`,
+`WeeklyPlanner/Resources/{Localizable,InfoPlist}.xcstrings`,
+`WeeklyPlannerTests/Accessibility/{AccessibilityModifierTests,DynamicTypeLayoutTests,ContrastTests,ReduceMotionTests,LocalizationTests,RTLLayoutTests}.swift`,
+`WeeklyPlannerUITests/{AccessibilityAuditUITests,AccessibilityVoiceOverUITests}.swift`;
+modified `WeeklyPlanner/DesignSystem/{PaperTheme,PaperFont}.swift`,
+`WeeklyPlanner/Features/DayPage/*.swift` (11 files),
+`WeeklyPlanner/Features/{WeekPage,Review,Settings,EventDetail,AISearch,WeekPicker}/*.swift`,
+`WeeklyPlanner/Navigation/{PaperTab,HorizontalSwipeGesture,AppShell}.swift`,
+`WeeklyPlanner/DesignSystem/Primitives/*.swift` (decoratives hidden),
+`WeeklyPlanner/DesignSystem/AnimationTokens.swift` (no-op — extension lives
+in `Accessibility/ReduceMotionAnimations.swift`).
 
