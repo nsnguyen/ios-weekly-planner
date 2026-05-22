@@ -54,17 +54,17 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 19 | Notifications (Time + Location Reminders)            | H                   | ✅     |
 | 20 | ~~Modern Mode (Alternative Stock-iOS Theme)~~        | — archived          | 🗄️     |
 | 21 | Accessibility, Dynamic Type, Localization, RTL       | I — Polish          | ✅     |
-| 22 | Manual Event CRUD                                    | J — Completeness    | ⏳     |
+| 22 | Manual Event CRUD                                    | J — Completeness    | ✅     |
 | 23 | Manual Task CRUD                                     | J                   | ⏳     |
 | 24 | AI Sticky v2 — Live & Actionable                     | J                   | ⏳     |
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
 
-**Current state:** Milestones A–I shipped on `main`. Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 302 unit tests + 9 UI tests (3 XCTSkip), all green.
+**Current state:** Milestones A–I shipped on `main`; Phase 22 (Manual Event CRUD) shipped on `milestone-j-completeness`. Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 302 baseline + 23 Phase-22 = ~325 unit tests + 10 UI tests, all green.
 
-**Milestone J — Completeness** is the next milestone. Three phases close the read-only functional gaps (manual event creation/editing, manual task add/edit/delete, and the AI sticky note v2 that surfaces real travel / weather / keyword / inbox insights instead of one frozen encouraging line). Branch: `milestone-j-completeness`. Spec: `docs/superpowers/specs/2026-05-22-functional-completeness-design.md`.
+**Milestone J — Completeness** is in progress: Phase 22 ✅, Phase 23 (Manual Task CRUD) and Phase 24 (AI Sticky v2) pending. Spec: `docs/superpowers/specs/2026-05-22-functional-completeness-design.md`.
 
-Next up: Phase 22 — Manual Event CRUD.
+Next up: Phase 23 — Manual Task CRUD.
 
 ## Reading a Phase Doc
 
@@ -652,4 +652,52 @@ modified `WeeklyPlanner/DesignSystem/{PaperTheme,PaperFont}.swift`,
 `WeeklyPlanner/DesignSystem/Primitives/*.swift` (decoratives hidden),
 `WeeklyPlanner/DesignSystem/AnimationTokens.swift` (no-op — extension lives
 in `Accessibility/ReduceMotionAnimations.swift`).
+
+### Phase 22 — Manual Event CRUD
+
+Shipped the editable event composer on `milestone-j-completeness`. Floating ink "+" FAB at the AppShell level opens an empty `PaperEventSheet` in `.create` mode; long-pressing an existing event row opens the sheet in `.edit` mode. Same sheet now supports editing title, start/end (paper-styled `DatePicker`), category (4-color ink swatches), and location. Save round-trips through `EventKitMirroringEventStore` so changes land in real iOS Calendar; notifications reschedule for free via the Phase 19 observer.
+
+**Architecture:**
+- `EventComposerState` (`@Observable`) — draft state with `empty(at:calendar:)` / `from(_:)` / `canSave` / `isDirty(against:)` / `build(id:)`. Preserves `.onArrive` reminder payloads internally so an edit-save round-trip via the sheet doesn't erase a geofence (caught by code review during Task 1).
+- Five new editable atoms in `EditableFields/`: `InkTextField` (with optional `FocusState.Binding` for parent-driven focus + reduce-motion underline fallback), `PaperDateTimeRow`, `CategorySwatchRow`, `LocationField`, plus an inline ink "+" `PlusGlyph` shape inside `FloatingInkButton`.
+- `PaperEventSheet.SheetMode { .view(UUID), .edit(UUID), .create(at: Date) }` — the existing torn-paper sheet dispatches between read-only rows and the new `EditableEventContent` subview. Discard-confirm alert fires when the user taps Cancel with a dirty composer.
+- `FloatingInkButton` mounted at `AppShell` level; hidden when `\.isAnySheetOpen` env is true. The `EventCreationRequest` `@Observable` env router carries the FAB's tap from `AppShell` (which knows the focused day) to `DayPageContent` (which owns the sheet rendering). `nonisolated init()` is required on `EventCreationRequest` because the env key's `defaultValue: EventCreationRequest = .init()` evaluates in nonisolated context.
+
+**Plan deviations encountered:**
+
+1. **`WavyUnderline` is a `ViewModifier`, not a `View`.** The plan's literal `WavyUnderline(color:)` constructor wouldn't compile. Substituted the existing `.wavyUnderline(color:amplitude:wavelength:)` View extension on a zero-height `Color.clear` host (Task 2). Doc deviation only — visual result is identical.
+
+2. **EventComposerState dropped `.onArrive` reminders.** Phase 22's plan didn't anticipate that `EventComposerState.from(_:).build(_:)` would erase non-composer-managed reminders on save. Added a `private preservedReminders` field that round-trips `.onArrive` payloads and secondary `.timeBefore` alarms unchanged; filters out preserved `.onArrive` when the user explicitly toggles `locationAlertOn` off (Task 1 fix).
+
+3. **`InkTextField` reduce-motion underline silently disappeared.** `WavyUnderline`'s reduce-motion fallback calls `.underline()` on the host, which is `Color.clear` — no text to underline. Added a `reduceMotion` branch that draws a 1pt `Rectangle` instead (Task 2 fix).
+
+4. **`testIsDirty_detectsTitleChange` plan code was buggy.** Passing an already-on-the-hour `Date` to `EventComposerState.empty(at:)` advances by an hour, so the plan's setup didn't produce two identical composers. Fixed inline (Task 1).
+
+5. **Day + Week pages didn't auto-refresh on `.eventStoreDidChange`.** `SwiftDataEventStore.upsert` posts the notification (Phase 19 wired the rescheduling observer), but no view-side listener triggered `viewModel.refresh()`. Saving an event left it invisible until the next remount or pull-to-refresh — violating Phase 22's acceptance criterion. Uncovered by the create-flow UITest (Task 9), which needed a manual swipe to make the assertion pass. Fixed: both `DayPageContent` and `WeekPageContent` now `.onReceive` the notification and refresh.
+
+6. **UITest needed three timing/discovery adjustments** beyond the plan code (Task 9): wait for the keyboard before typing into the title field; dismiss the keyboard before tapping Save (the on-screen keyboard hides the Save button at the simulator's reachability point); use `descendants(matching: .any)` instead of `staticTexts` for the assertion because `accessibleEvent(_:)` wraps the row in `.isButton` trait + combined-children grouping.
+
+7. **`@MainActor @Observable` + `nonisolated init()` pattern** required for environment-key default values (Task 8). Without it, `static let defaultValue: EventCreationRequest = .init()` fails with "Main actor-isolated default value in a nonisolated context."
+
+**Tests added:** 23 unit (`EventComposerStateTests` × 14, `EventDetailViewModelTests` × 2 new, `PaperEventSheetEditTests` × 3, plus the 2 + 7 + 5 from EventComposerState's two-stage commits) + 1 UI test (`EventCreateFlowUITests`). Full suite: **325 unit tests + 10 UI tests, all green**.
+
+**Tracked follow-ups (deferred, not blocking):**
+- The 34pt category swatch tap target is smaller than the 44pt HIG minimum; spacing constraint, not pre-emptively fixed.
+- VM-level tests for `cancelEditing()`, `composerIsDirty` true/false, `save()` no-op on `!canSave`, and `eventKitIdentifier` preservation across edit-save. The contract is verified end-to-end by the UITest and indirectly by the sheet tests, but explicit unit assertions would catch regressions earlier.
+- `isAnySheetOpen` env doesn't account for the create-sheet itself being open (the FAB sits under the dark backdrop for the lifetime of the create sheet — visually invisible but architecturally messy). Cleanest fix: hoist `creatingEventAt` / `editingEventID` to `AppShell` so the env can include them.
+- The `FloatingInkButton` long-press menu (`New event` / `New task`) lands in Phase 23 when the task composer is built.
+- `InkTextField` `prompt: Text(...).font(...)` rendering on iOS 26 hasn't been visually verified — only the focused-state behavior. Worth a manual check before App Store submission.
+
+**Files added/modified:**
+- New: `WeeklyPlanner/Features/EventDetail/EventComposerState.swift`
+- New: `WeeklyPlanner/Features/EventDetail/PaperEventSheet+Edit.swift`
+- New: `WeeklyPlanner/Features/EventDetail/EditableFields/{InkTextField,PaperDateTimeRow,CategorySwatchRow,LocationField}.swift`
+- New: `WeeklyPlanner/Features/DayPage/FloatingInkButton.swift`
+- New: `WeeklyPlannerTests/EventDetail/{EventComposerStateTests,PaperEventSheetEditTests}.swift`
+- New: `WeeklyPlannerUITests/EventCreateFlowUITests.swift`
+- Modified: `WeeklyPlanner/Features/EventDetail/{PaperEventSheet,EventDetailViewModel}.swift`
+- Modified: `WeeklyPlanner/Features/DayPage/{DayPageView,EventEntryList}.swift`
+- Modified: `WeeklyPlanner/Features/WeekPage/WeekPageView.swift`
+- Modified: `WeeklyPlanner/Navigation/AppShell.swift`
+- Modified: `WeeklyPlannerTests/EventDetail/EventDetailViewModelTests.swift`
 

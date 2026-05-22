@@ -15,9 +15,18 @@ struct EventEntryList: View {
     /// to a no-op so previews and tests can omit it.
     var onTap: (Event) -> Void
 
-    init(events: [Event], onTap: @escaping (Event) -> Void = { _ in }) {
+    /// Optional long-press → edit handler. When supplied, each row exposes
+    /// a context menu with an "Edit" action. Left `nil` from previews / tests
+    /// that don't need the edit affordance.
+    var onEdit: ((Event) -> Void)?
+
+    init(events: [Event],
+         onTap: @escaping (Event) -> Void = { _ in },
+         onEdit: ((Event) -> Void)? = nil)
+    {
         self.events = events
         self.onTap = onTap
+        self.onEdit = onEdit
     }
 
     var body: some View {
@@ -26,6 +35,15 @@ struct EventEntryList: View {
                 EventEntryRow(event: event) { onTap(event) }
                     .accessibleEvent(event)
                     .accessibilityIdentifier(AccessibilityIDs.daypageEventRow(event.id))
+                    .contextMenu {
+                        if let onEdit {
+                            Button {
+                                onEdit(event)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                        }
+                    }
             }
         }
     }

@@ -99,6 +99,12 @@ struct DayPageContent: View {
 
     @State private var creatingEventAt: Date?
 
+    /// Identifier of the event currently open for editing via long-press →
+    /// Edit. `nil` when no edit sheet is presented. Distinct from
+    /// `openEventID` so a tap-to-view and a long-press-to-edit don't fight
+    /// over the same binding.
+    @State private var editingEventID: UUID?
+
     var body: some View {
         let now = Date()
         let days = WeekMath.weekDays(forOffset: weekOffset, today: now)
@@ -149,6 +155,11 @@ struct DayPageContent: View {
                 PaperEventSheet(mode: .create(at: anchor),
                                 isOpen: Binding(get: { creatingEventAt != nil },
                                                 set: { if !$0 { creatingEventAt = nil } }))
+            }
+            if let id = editingEventID {
+                PaperEventSheet(mode: .edit(id),
+                                isOpen: Binding(get: { editingEventID != nil },
+                                                set: { if !$0 { editingEventID = nil } }))
             }
         }
         .task {
@@ -218,9 +229,9 @@ struct DayPageContent: View {
                 let hasTasks = !viewModel.tasks.isEmpty
 
                 if hasEvents {
-                    EventEntryList(events: viewModel.events, onTap: { event in
-                        openEventID = event.id
-                    })
+                    EventEntryList(events: viewModel.events,
+                                   onTap: { event in openEventID = event.id },
+                                   onEdit: { event in editingEventID = event.id })
                 }
 
                 if hasInbox {
