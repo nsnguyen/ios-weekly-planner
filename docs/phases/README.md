@@ -54,11 +54,17 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 19 | Notifications (Time + Location Reminders)            | H                   | ✅     |
 | 20 | ~~Modern Mode (Alternative Stock-iOS Theme)~~        | — archived          | 🗄️     |
 | 21 | Accessibility, Dynamic Type, Localization, RTL       | I — Polish          | ✅     |
-| 22 | Final Polish, App Icon, Launch Screen, Privacy       | J — Ship            | ⏳     |
-| 23 | App Store Submission & TestFlight                    | J                   | ⏳     |
+| 22 | Manual Event CRUD                                    | J — Completeness    | ⏳     |
+| 23 | Manual Task CRUD                                     | J                   | ⏳     |
+| 24 | AI Sticky v2 — Live & Actionable                     | J                   | ⏳     |
+| 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
+| 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
 
-**Current state:** Milestones A–I shipped on `milestone-i-polish` (ready to merge to main). Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 302 unit tests + 9 UI tests (3 XCTSkip), all green.
-Next up: Phase 22 — Final Polish, App Icon, Launch Screen, Privacy.
+**Current state:** Milestones A–I shipped on `main`. Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 302 unit tests + 9 UI tests (3 XCTSkip), all green.
+
+**Milestone J — Completeness** is the next milestone. Three phases close the read-only functional gaps (manual event creation/editing, manual task add/edit/delete, and the AI sticky note v2 that surfaces real travel / weather / keyword / inbox insights instead of one frozen encouraging line). Branch: `milestone-j-completeness`. Spec: `docs/superpowers/specs/2026-05-22-functional-completeness-design.md`.
+
+Next up: Phase 22 — Manual Event CRUD.
 
 ## Reading a Phase Doc
 

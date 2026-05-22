@@ -33,16 +33,33 @@ all green.
 | G — Settings           | 16–17 | ✅ done |
 | H — Integrations       | 18–19 | ✅ done |
 | I — Polish             | 21    | ✅ done (Phase 20 archived) |
-| J — Ship               | 22–23 | ⏳ pending |
+| J — Completeness       | 22–24 | ⏳ pending (Manual Event CRUD, Manual Task CRUD, AI Sticky v2) |
+| K — Ship               | 25–26 | ⏳ pending (Polish/Icon/Privacy, App Store Submission) |
 
-See `docs/phases/README.md` for the full 23-phase plan and per-phase
+See `docs/phases/README.md` for the full 26-phase plan and per-phase
 retrospectives.
 
 ## Action items before App Store submission
 
-Phase 22 (Final Polish, App Icon, Launch Screen, Privacy) and Phase 23
-(App Store Submission & TestFlight) still need to ship. Plus these
-manual checks should happen in TestFlight before public release:
+Three functional gaps still need to ship before App Store review:
+
+- **Phase 22 — Manual Event CRUD.** Currently events come only from
+  EventKit sync + Gmail inbox suggestions; users can't create their own.
+  Adds a floating ink "+" FAB and an editable `PaperEventSheet`.
+- **Phase 23 — Manual Task CRUD.** `TodoBlock` is toggle-only today.
+  Adds inline "+ add a task" row, swipe-to-delete, and a mini paper
+  popover for priority + due-date editing.
+- **Phase 24 — AI Sticky v2 (Live & Actionable).** The current sticky
+  generates one encouraging line per day and never refreshes. v2 runs
+  four signal sources (travel-time ETA via MapKit, weather via
+  WeatherKit, calendar-keyword detection via Foundation Models, and
+  inbox-flagged items) and cascades up to 3 actionable stickies that
+  refresh on day-page open + pull-to-refresh.
+
+Then **Phase 25** (Final Polish, App Icon, Launch Screen, Privacy
+Manifest) and **Phase 26** (App Store Submission & TestFlight) close
+out the ship milestone. Plus these manual checks should happen in
+TestFlight before public release:
 
 - [ ] **VoiceOver sweep** across Day → Week → Review → Settings → AI search
       overlay → Event sheet on a real device. Automated

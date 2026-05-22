@@ -1,4 +1,4 @@
-# Phase 23 — App Store Submission & TestFlight
+# Phase 26 — App Store Submission & TestFlight
 
 ## Goal
 Ship v1.0 to TestFlight, run a one-week beta, address feedback, and submit to the App Store for review. Includes signing, App Store Connect setup, distribution profile, build automation, and release management.
@@ -34,7 +34,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 - [ ] SKU: `WEEKLY-PLANNER-2026`.
 - [ ] Primary language: English (U.S.).
 - [ ] Pricing & Availability: Free (in 175 countries) — confirm tax forms signed.
-- [ ] App Privacy: complete based on the privacy manifest from Phase 22.
+- [ ] App Privacy: complete based on the privacy manifest from Phase 25.
 - [ ] App Information: subtitle, primary category Productivity, secondary Lifestyle.
 - [ ] User Access: assign QA testers as Internal users in TestFlight.
 
@@ -74,7 +74,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 - [ ] Categories selected.
 - [ ] Age rating completed.
 - [ ] Export compliance declared (`ITSAppUsesNonExemptEncryption = NO`).
-- [ ] Reviewer notes attached (Phase 22 `REVIEWER_NOTES.md`).
+- [ ] Reviewer notes attached (Phase 25 `REVIEWER_NOTES.md`).
 - [ ] Test account credentials provided (a Gmail test account with sample event emails).
 - [ ] In-app purchase: none.
 - [ ] Sign in with Apple: not used; not required.
@@ -82,7 +82,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 - [ ] Crash logs from internal testing: zero unresolved.
 
 ### TestFlight beta plan
-- [ ] Internal testers: dev team + ~5 close friends. Recruit during Phase 22.
+- [ ] Internal testers: dev team + ~5 close friends. Recruit during Phase 25.
 - [ ] External testers (TestFlight public): 100 users via invitation link, sourced via Twitter/X + Anthropic community.
 - [ ] Beta window: 7 days.
 - [ ] Feedback channel: TestFlight built-in screenshot+note feature.
@@ -109,7 +109,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 No new unit tests. Verification via:
 - [ ] TestFlight build succeeds.
 - [ ] Apple's automated validation passes.
-- [ ] Internal testers complete the Phase 22 acceptance flow end-to-end.
+- [ ] Internal testers complete the Phase 25 acceptance flow end-to-end.
 
 ## Acceptance Criteria
 - A signed `.ipa` builds and uploads to TestFlight without manual Xcode intervention.
