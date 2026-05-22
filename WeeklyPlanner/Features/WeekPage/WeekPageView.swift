@@ -69,7 +69,7 @@ struct WeekPageView: View {
             }
 
             if let id = openEventID {
-                PaperEventSheet(eventID: id,
+                PaperEventSheet(mode: .view(id),
                                 isOpen: Binding(get: { openEventID != nil },
                                                 set: { if !$0 { openEventID = nil } }))
             }
