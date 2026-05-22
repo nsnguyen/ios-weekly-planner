@@ -94,6 +94,7 @@ struct WeekDayRow: View {
                 }
                 ForEach(tasks, id: \.id) { task in
                     WeekTaskEntry(task: task) { onToggleTask(task.id) }
+                        .accessibilityIdentifier(AccessibilityIDs.weekpageTodoRow(task.id))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -111,6 +111,16 @@ struct WeekPageView: View {
                                    onTapEvent: { id in
                                        openEventID = id
                                    })
+                            .accessibleWeekDayRow(weekdayFull: day.weekdayLong, dayN: offset + 1)
+                            .accessibilityIdentifier(AccessibilityIDs.weekpageDayRow(day.idx))
+                    }
+                }
+                .accessibilityRotor("Days") {
+                    ForEach(Array(days.enumerated()), id: \.element.idx) { offset, day in
+                        AccessibilityRotorEntry(
+                            AccessibilityFormatters.sideTabLabel(weekdayFull: day.weekdayLong, dayN: offset + 1),
+                            id: day.idx
+                        )
                     }
                 }
             }

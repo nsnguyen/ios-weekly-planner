@@ -99,6 +99,16 @@ extension View {
             .accessibilityAddTraits(.isButton)
     }
 
+    /// Day row on the week page — announces weekday name and position in the
+    /// 7-row spread; also marks it as a button since tapping flips to that day.
+    func accessibleWeekDayRow(weekdayFull: String, dayN: Int) -> some View {
+        self
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(AccessibilityFormatters.sideTabLabel(weekdayFull: weekdayFull, dayN: dayN))
+            .accessibilityHint("Double tap to flip to this day.")
+            .accessibilityAddTraits(.isButton)
+    }
+
     /// Week-picker row — announces date range and week number.
     func accessibleWeekRow(range: String, weekNumber: Int) -> some View {
         self

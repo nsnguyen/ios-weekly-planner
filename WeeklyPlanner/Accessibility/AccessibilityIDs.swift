@@ -14,6 +14,10 @@ enum AccessibilityIDs {
     // Side tabs
     static func sideTab(_ dayIdx: Int) -> String { "daypage.sidetab.\(dayIdx)" }
 
+    // Week page
+    static func weekpageDayRow(_ dayIdx: Int) -> String { "weekpage.day.row.\(dayIdx)" }
+    static func weekpageTodoRow(_ id: UUID) -> String { "weekpage.todo.row.\(id)" }
+
     // Week picker
     static func weekpickerWeekRow(_ offset: Int) -> String { "weekpicker.weekrow.\(offset)" }
 

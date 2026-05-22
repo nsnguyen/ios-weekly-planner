@@ -32,8 +32,7 @@ struct WeekTaskEntry: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("\(task.title), \(task.done ? "completed" : "not completed")"))
-        .accessibilityAddTraits(.isButton)
+        .accessibleTask(task) { onToggle() }
     }
 
     // MARK: - Subviews
