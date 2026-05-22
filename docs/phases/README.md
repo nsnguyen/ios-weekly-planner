@@ -620,13 +620,13 @@ textClipped on `FontCard` (Button carries the full label).
    (15+ file changes) sometimes finish the work but never emit the
    final assistant message.
 
-**On-device verification on iPhone 17 Pro (iOS 26.5)**: deferred to
-the user before merging Milestone I. Spec acceptance items covered by
-302 unit tests + 9 UI tests (3 XCTSkip on seed-data-dependent
-flows, 0 failures). Manual gates remaining: VoiceOver sweep through
-Day → Week → Review → Settings; AX5 Dynamic Type render check;
-Reduce Motion toggle in iOS Settings; RTL via Arabic locale; Bold
-Text toggle.
+**On-device verification on iPhone 17 Pro (iOS 26.5)**: Reduce Motion
+confirmed on-device pre-merge (page-flip became a 0.15s opacity
+crossfade as expected). VoiceOver sweep, AX5 Dynamic Type render check,
+RTL via Arabic locale, and Bold Text deferred to TestFlight feedback —
+the automated `XCUIAccessibilityAudit` regression gates (6 passing UI
+tests) provide the regression coverage, and real assistive-tech users
+surface issues faster than a sighted developer's manual sweep.
 
 **Tests added**: 26 unit + 8 UITest = 34 new tests
 (`AccessibilityModifierTests` × 6, `DynamicTypeLayoutTests` × 4,
