@@ -31,15 +31,17 @@ struct HorizontalSwipeGesture: ViewModifier {
     /// to it without changing the gesture's public contract.
     @State private var dragOffset: CGFloat = 0
 
+    @Environment(\.layoutDirection) private var layoutDirection
+
     func body(content: Content) -> some View {
         content
             .simultaneousGesture(DragGesture(minimumDistance: 10)
                 .onChanged { value in
-                    dragOffset = value.translation.width
+                    dragOffset = RTLMath.adjustDeltaX(value.translation.width, for: layoutDirection)
                 }
                 .onEnded { value in
                     dragOffset = 0
-                    let dx = value.translation.width
+                    let dx = RTLMath.adjustDeltaX(value.translation.width, for: layoutDirection)
                     let dy = value.translation.height
                     // Vertical-dominant drags are ignored entirely so
                     // future vertical gestures stay clear.

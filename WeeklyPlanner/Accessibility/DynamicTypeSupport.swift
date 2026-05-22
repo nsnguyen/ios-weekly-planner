@@ -56,3 +56,29 @@ enum DynamicTypeLayout {
         }
     }
 }
+
+/// Pure math helpers for RTL-aware UI. Standard SwiftUI mirroring
+/// handles HStack/VStack axes automatically; these helpers cover the
+/// edge cases — custom gestures, asymmetric rotations.
+enum RTLMath {
+    /// Inverts deltaX sign when layoutDirection is .rightToLeft. Use
+    /// in custom drag gestures (page-flip, swipe-to-dismiss) where
+    /// the user's "next" direction differs between LTR and RTL.
+    static func adjustDeltaX(_ deltaX: CGFloat, for direction: LayoutDirection) -> CGFloat {
+        direction == .rightToLeft ? -deltaX : deltaX
+    }
+
+    /// DayPageHeader rotates the giant date number by -3° in LTR.
+    /// In RTL the rotation flips sign so the lean reads the same
+    /// visual direction relative to the mirrored text flow.
+    static func headerRotationDegrees(for direction: LayoutDirection) -> Double {
+        direction == .rightToLeft ? 3.0 : -3.0
+    }
+
+    /// Side tab rail alignment — leading in LTR, trailing in RTL.
+    /// Most call sites get this for free via standard HStack/VStack
+    /// mirroring, but explicit Alignment values need this helper.
+    static func sideTabAlignment(for direction: LayoutDirection) -> HorizontalAlignment {
+        direction == .rightToLeft ? .trailing : .leading
+    }
+}
