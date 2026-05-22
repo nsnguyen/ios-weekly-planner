@@ -27,5 +27,7 @@ struct ReviewSummaryBlock: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, 12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("AI summary: \(summaryBody)")
     }
 }

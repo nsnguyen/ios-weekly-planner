@@ -30,6 +30,8 @@ struct AINotesList: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.vertical, 3)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("AI note: \(bullet.text)")
             }
         }
         .padding(.top, 18)

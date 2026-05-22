@@ -45,5 +45,8 @@ struct ReviewHeader: View {
                 .offset(y: 8)
         }
         .padding(.bottom, 10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Review, \(Int((completionPercent * 100).rounded())) percent complete this week")
+        .accessibilityAddTraits(.isHeader)
     }
 }

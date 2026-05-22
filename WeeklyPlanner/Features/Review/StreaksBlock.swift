@@ -36,12 +36,15 @@ struct StreaksBlock: View {
                                     .frame(height: 5)
                             }
                         }
+                        .accessibilityHidden(true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     Text("🔥")
                         .font(.system(size: 18))
                 }
                 .padding(.vertical, 4)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(streak.name): \(streak.consecutiveWeeks)-week streak")
             }
         }
         .padding(.top, 18)
