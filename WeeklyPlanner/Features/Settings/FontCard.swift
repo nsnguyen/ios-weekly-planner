@@ -53,7 +53,9 @@ struct FontCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(sampleFont.displayName)
+        .accessibilityHint(isActive ? "Currently selected" : "Double tap to select")
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier(AccessibilityIDs.settingsFontCard(fontKey.rawValue))
     }
 }
 

@@ -31,6 +31,22 @@ struct ConnectionRow<Logo: View>: View {
         self.onTap = onTap
     }
 
+    /// Single label read by VoiceOver for the entire row.
+    private var combinedAccessibilityLabel: String {
+        if isOn {
+            return "\(label), connected, \(detail)"
+        } else if !isEnabled {
+            return "\(label), \(detail)"
+        } else {
+            return "\(label), not connected"
+        }
+    }
+
+    private var accessibilityHintText: String {
+        guard isEnabled else { return "" }
+        return isOn ? "Double tap to disconnect" : "Double tap to connect"
+    }
+
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack { logo }
@@ -55,6 +71,10 @@ struct ConnectionRow<Logo: View>: View {
         .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
         .contentShape(Rectangle())
         .onTapGesture { onTap?() }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(combinedAccessibilityLabel)
+        .accessibilityHint(accessibilityHintText)
+        .accessibilityAddTraits(isEnabled ? .isButton : [])
     }
 }
 

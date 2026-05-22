@@ -14,7 +14,8 @@ struct AppleBrandLogo: View {
             .scaledToFit()
             .frame(width: size.width, height: size.height)
             .foregroundStyle(theme.ink)
-            .accessibilityLabel("Apple logo")
+            .accessibilityLabel("Apple")
+            .accessibilityAddTraits(.isImage)
     }
 }
 

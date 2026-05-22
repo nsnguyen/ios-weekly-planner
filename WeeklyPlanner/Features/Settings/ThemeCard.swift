@@ -63,7 +63,9 @@ struct ThemeCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(cardTheme.displayName)
+        .accessibilityHint(isActive ? "Currently selected" : "Double tap to select")
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier(AccessibilityIDs.settingsThemeCard(themeKey.rawValue))
     }
 
     private var activeIndicator: some View {
