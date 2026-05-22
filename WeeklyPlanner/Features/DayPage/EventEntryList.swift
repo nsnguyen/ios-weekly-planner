@@ -24,6 +24,8 @@ struct EventEntryList: View {
         LazyVStack(alignment: .leading, spacing: 0) {
             ForEach(events, id: \.id) { event in
                 EventEntryRow(event: event) { onTap(event) }
+                    .accessibleEvent(event)
+                    .accessibilityIdentifier(AccessibilityIDs.daypageEventRow(event.id))
             }
         }
     }

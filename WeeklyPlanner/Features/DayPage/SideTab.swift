@@ -43,15 +43,19 @@ struct SideTab: View {
     var onTap: () -> Void
 
     @Environment(\.paperTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dtSize
 
     var body: some View {
+        let baseWidth = DynamicTypeLayout.sideTabWidth(at: dtSize)
+        let selectedWidth = baseWidth + (Spacing.sideTabSelectedWidth - Spacing.sideTabWidth)
         Button(action: onTap) {
             Self.tabShape
                 .fill(Self.pastel(forIdx: idx))
                 .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 .overlay {
                     SideTabLabel(text: weekdayShort.uppercased(),
-                                 layout: Self.labelLayout)
+                                 layout: Self.labelLayout,
+                                 baseWidth: baseWidth)
                 }
                 .overlay(alignment: .topLeading) {
                     if isToday {
@@ -62,14 +66,15 @@ struct SideTab: View {
                             .padding(.leading, 3)
                     }
                 }
-            .frame(width: isSelected ? Spacing.sideTabSelectedWidth : Spacing.sideTabWidth,
+            .frame(width: isSelected ? selectedWidth : baseWidth,
                    height: Spacing.sideTabHeight)
             .offset(x: isSelected ? Spacing.sideTabSelectedOffset : 0)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(weekdayLong)
-        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibleSideTab(weekdayFull: weekdayLong, dayN: idx + 1)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier(AccessibilityIDs.sideTab(idx))
         .animation(.smooth(duration: 0.18), value: isSelected)
     }
 
@@ -98,6 +103,10 @@ struct SideTabLabelLayout: Hashable {
 private struct SideTabLabel: View {
     let text: String
     let layout: SideTabLabelLayout
+    /// Current base width for the tab, resolved from `DynamicTypeLayout` by
+    /// the parent. Passed in rather than re-read here to avoid a second
+    /// `@Environment(\.dynamicTypeSize)` lookup on an already-tiny view.
+    let baseWidth: CGFloat
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
@@ -110,9 +119,9 @@ private struct SideTabLabel: View {
             .lineLimit(1)
             .minimumScaleFactor(layout.minimumScaleFactor)
             .allowsTightening(true)
-            .frame(width: layout.trackLength, height: layout.lineBoxHeight)
+            .frame(width: layout.trackLength, height: baseWidth)
             .rotationEffect(.degrees(-90))
-            .frame(width: Spacing.sideTabWidth, height: Spacing.sideTabHeight)
+            .frame(width: baseWidth, height: Spacing.sideTabHeight)
     }
 }
 

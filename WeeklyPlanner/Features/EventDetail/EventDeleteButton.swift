@@ -28,6 +28,8 @@ struct EventDeleteButton: View {
         .dashedBorder(color: theme.redInk, dash: [4, 3], lineWidth: 0.5, cornerRadius: 4)
         .accessibilityLabel("Delete event")
         .accessibilityHint("Double tap to confirm deletion")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier(AccessibilityIDs.eventSheetDelete)
     }
 }
 

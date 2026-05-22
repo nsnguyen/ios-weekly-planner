@@ -41,8 +41,6 @@ struct TodoRow: View {
             .contentShape(Rectangle().inset(by: -4))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("\(task.title), \(task.done ? "completed" : "not completed")"))
-        .accessibilityAddTraits(.isButton)
     }
 
     // MARK: - Subviews

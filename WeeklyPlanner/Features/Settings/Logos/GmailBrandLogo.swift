@@ -60,7 +60,8 @@ struct GmailBrandLogo: View {
             context.fill(flap, with: .color(.white))
         }
         .frame(width: size.width, height: size.height)
-        .accessibilityLabel("Gmail logo")
+        .accessibilityLabel("Gmail")
+        .accessibilityAddTraits(.isImage)
     }
 }
 

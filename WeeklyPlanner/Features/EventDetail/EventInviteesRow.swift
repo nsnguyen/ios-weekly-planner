@@ -45,7 +45,7 @@ struct EventInviteesRow: View {
                 .frame(height: 0.5)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Invitees, \(attendeesCount) people")
+        .accessibilityLabel("\(attendeesCount) invitee\(attendeesCount == 1 ? "" : "s")")
     }
 }
 

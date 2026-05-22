@@ -20,7 +20,8 @@ struct GoogleCalLogo: View {
                 .foregroundStyle(Color(red: 0.26, green: 0.52, blue: 0.96)) // Google blue
         }
         .frame(width: size.width, height: size.height)
-        .accessibilityLabel("Google Calendar logo")
+        .accessibilityLabel("Google Calendar")
+        .accessibilityAddTraits(.isImage)
     }
 }
 

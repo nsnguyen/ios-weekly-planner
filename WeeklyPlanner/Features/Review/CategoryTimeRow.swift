@@ -35,6 +35,7 @@ struct CategoryTimeRow: View {
                 }
             }
             .frame(height: 14)
+            .accessibilityHidden(true)
 
             Text(String(format: "%.1fh", hours))
                 .font(.custom("Cochin", size: 12))
@@ -43,6 +44,8 @@ struct CategoryTimeRow: View {
                 .frame(width: 30, alignment: .trailing)
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(category.reviewDisplayName): \(String(format: "%.1f", hours)) hours")
     }
 }
 

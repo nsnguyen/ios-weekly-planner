@@ -55,6 +55,7 @@ struct WavyUnderline: ViewModifier {
                         }
                         .frame(width: proxy.size.width, height: amplitude * 2 + Self.lineWidth)
                         .offset(y: proxy.size.height)
+                        .accessibilityHidden(true)
                     }
                     .frame(height: 0)
                 }

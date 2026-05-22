@@ -7,13 +7,20 @@ UserNotifications.
 
 ## Status
 
-**Milestones A–F + Phase 16 complete** — Phases 01–16 shipped to `main`. The
-app builds and runs end-to-end: leather book chrome, Day / Week pages with
-hobonichi layout, page-flip animations, week picker, event detail + AI
-search sheets, on-device Foundation Models integration, Review page with AI
-summary, the paper-bottom tab bar with right-edge binder-style day tabs, and
-a live-switching Settings page (3 themes × 4 handwriting fonts × 3 text
-sizes). 211 unit tests + UI smoke tests, all green.
+**Milestones A–I complete** — Phases 01–19 + 21 shipped. Phase 20 (Modern
+Mode) was implemented end-to-end then archived (preserved at git tag
+`phase-20-archive`); v1.0 ships Paper only. The app builds and runs
+end-to-end: leather book chrome, Day / Week pages with hobonichi layout,
+page-flip animations, week picker, event detail + AI search sheets,
+real on-device Foundation Models integration, Review page with AI
+summary, paper-bottom tab bar, live-switching Settings (3 themes × 4
+handwriting fonts × 3 text sizes), Gmail OAuth + inbox pipeline
+producing real iOS Calendar events, local notifications (time +
+arrival-based), and end-to-end accessibility (VoiceOver labels, custom
+rotors, Dynamic Type with handwriting clamp, Reduce Motion alternatives,
+WCAG AA contrast, Bold Text font weight swap, RTL gesture/rotation
+fixes, Localizable.xcstrings scaffolding). 302 unit tests + 9 UI tests,
+all green.
 
 | Milestone | Phases | Status |
 |-----------|--------|--------|
@@ -23,13 +30,52 @@ sizes). 211 unit tests + UI smoke tests, all green.
 | D — Sheets & AI        | 11–12 | ✅ done |
 | E — Intelligence       | 13    | ✅ done |
 | F — Other Screens      | 14–15 | ✅ done |
-| G — Settings           | 16–17 | 🟡 in progress (Phase 16 ✅) |
-| H — Integrations       | 18–19 | ⏳ pending |
-| I — Polish             | 20–21 | ⏳ pending |
+| G — Settings           | 16–17 | ✅ done |
+| H — Integrations       | 18–19 | ✅ done |
+| I — Polish             | 21    | ✅ done (Phase 20 archived) |
 | J — Ship               | 22–23 | ⏳ pending |
 
 See `docs/phases/README.md` for the full 23-phase plan and per-phase
 retrospectives.
+
+## Action items before App Store submission
+
+Phase 22 (Final Polish, App Icon, Launch Screen, Privacy) and Phase 23
+(App Store Submission & TestFlight) still need to ship. Plus these
+manual checks should happen in TestFlight before public release:
+
+- [ ] **VoiceOver sweep** across Day → Week → Review → Settings → AI search
+      overlay → Event sheet on a real device. Automated
+      `XCUIAccessibilityAudit` already catches structural issues; this
+      catches pronunciation, composite-row grouping edge cases, and
+      anything that reads awkwardly out loud.
+- [ ] **AX5 Dynamic Type** render check on Day page across all 4 handwriting
+      fonts (Caveat, Architects Daughter, Kalam, Indie Flower). Watch
+      for event-title clipping; the layout adapter widens time gutter +
+      side tabs at AX2+, but real text at AX5 is the proof.
+- [ ] **RTL** via Settings → General → Language → Arabic. Confirm side tabs
+      anchor to the right edge, page-flip drag direction inverts
+      (right-drag = previous day), and DayPageHeader date number leans
+      the opposite way (+3° instead of -3°).
+- [ ] **Bold Text** via Accessibility → Display & Text Size → Bold Text.
+      Confirm Caveat renders as SemiBold and Kalam renders as Bold
+      (heavier stroke).
+- [ ] **Apple Intelligence on-device** — the Foundation Models layer is
+      wired but worth one end-to-end pass on a device with Apple
+      Intelligence enabled (verify the AI sticky note, AI Search overlay
+      answers, and Review page AI summary all produce real model output,
+      not the fallback canned strings).
+- [ ] **Gmail pipeline on a real Gmail account** — verified during Phase
+      18 but re-confirm post-merge that pull-to-refresh + the 1-hour
+      `BGAppRefreshTask` still produce InboxSuggestion rows.
+- [ ] **Notifications on a physical device** — Phase 19 was verified on
+      simulator; re-confirm time-based and location-based reminders fire
+      on a real device, including `time-sensitive` interruption level
+      during Focus modes.
+
+These are not gates for the existing Milestone I merge to `main`;
+they're gates for hitting "Submit to App Store Review" in App Store
+Connect.
 
 ## Requirements
 

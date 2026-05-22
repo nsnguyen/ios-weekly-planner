@@ -26,6 +26,7 @@ struct PaperTheme: Equatable, Hashable {
     let ink: Color
     let ink2: Color
     let ink3: Color
+    let inkDecorative: Color   // 0.30 alpha — decorative-only uses (page numbers, hole-punch shadows, dashed seams)
     let blueInk: Color
     let redInk: Color
     let greenInk: Color
@@ -91,7 +92,8 @@ extension PaperTheme {
                                   redLine: .rgba(192, 72, 72, 0.55),
                                   ink: Color(hex: "#1A1A2A"),
                                   ink2: .rgba(26, 26, 42, 0.62),
-                                  ink3: .rgba(26, 26, 42, 0.34),
+                                  ink3: .rgba(26, 26, 42, 0.50),
+                                  inkDecorative: .rgba(26, 26, 42, 0.30),
                                   blueInk: Color(hex: "#1A3A7A"),
                                   redInk: Color(hex: "#9C2A2A"),
                                   greenInk: Color(hex: "#2C5A2C"),
@@ -119,7 +121,8 @@ extension PaperTheme {
                                   redLine: .rgba(160, 48, 32, 0.50),
                                   ink: Color(hex: "#3A2418"),
                                   ink2: .rgba(58, 36, 24, 0.62),
-                                  ink3: .rgba(58, 36, 24, 0.36),
+                                  ink3: .rgba(58, 36, 24, 0.50),
+                                  inkDecorative: .rgba(58, 36, 24, 0.30),
                                   blueInk: Color(hex: "#23467A"),
                                   redInk: Color(hex: "#A03020"),
                                   greenInk: Color(hex: "#3A5A20"),
@@ -147,7 +150,8 @@ extension PaperTheme {
                                      redLine: .rgba(240, 128, 128, 0.40),
                                      ink: Color(hex: "#EAE6D9"),
                                      ink2: .rgba(234, 230, 217, 0.65),
-                                     ink3: .rgba(234, 230, 217, 0.36),
+                                     ink3: .rgba(234, 230, 217, 0.50),
+                                     inkDecorative: .rgba(234, 230, 217, 0.30),
                                      blueInk: Color(hex: "#7DB0F2"),
                                      redInk: Color(hex: "#F08080"),
                                      greenInk: Color(hex: "#88D680"),

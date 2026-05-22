@@ -23,6 +23,7 @@ struct AIStickyNote: View {
 
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -37,7 +38,7 @@ struct AIStickyNote: View {
                 expandedBody
             }
         }
-        .animation(AnimationTokens.stickyPeel, value: folded)
+        .animation(AnimationTokens.stickyPeel(reduced: reduceMotion), value: folded)
     }
 
     // MARK: - Subviews
@@ -76,9 +77,10 @@ struct AIStickyNote: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("AI note: \(insight.text)")
-        .accessibilityHint("Double tap to fold")
+        .accessibilityLabel("AI insight: \(insight.text)")
+        .accessibilityHint("Double tap to fold or expand")
         .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier(AccessibilityIDs.daypageStickyNote)
     }
 
     /// "AI" eyebrow caption rendered in tiny system-font caps with a tracked

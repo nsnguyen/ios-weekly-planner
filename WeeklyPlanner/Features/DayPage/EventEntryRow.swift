@@ -22,6 +22,7 @@ struct EventEntryRow: View {
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
+    @Environment(\.dynamicTypeSize) private var dtSize
 
     init(event: Event, onTap: (() -> Void)? = nil) {
         self.event = event
@@ -44,12 +45,13 @@ struct EventEntryRow: View {
 
     // MARK: - Subviews
 
-    /// 48pt-wide leading column showing the start-time label in Cochin.
+    /// Leading column showing the start-time label in Cochin. Width widens
+    /// from 48pt to 64pt at AX2+ so larger numerals don't crowd events.
     private var timeGutter: some View {
         Text(Self.timeLabel(for: event.start))
             .font(.custom("Cochin", size: 13).weight(.semibold).monospacedDigit())
             .foregroundStyle(theme.ink2)
-            .frame(width: 48, alignment: .leading)
+            .frame(width: DynamicTypeLayout.timeGutterWidth(at: dtSize), alignment: .leading)
     }
 
     /// Right column: title row plus optional location subtitle below.

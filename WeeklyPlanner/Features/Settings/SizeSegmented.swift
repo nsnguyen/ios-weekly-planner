@@ -32,6 +32,8 @@ struct SizeSegmented: View {
                         .background(segmentBackground(active: size == selection))
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier(AccessibilityIDs.settingsSizeSegment(size.rawValue))
+                .accessibilityAddTraits(size == selection ? [.isButton, .isSelected] : .isButton)
             }
         }
         .padding(3)

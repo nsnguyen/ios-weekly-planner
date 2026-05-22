@@ -12,6 +12,7 @@ struct PaperTab: View {
     let action: () -> Void
 
     @Environment(\.paperTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dtSize
 
     var body: some View {
         Button(action: action) {
@@ -19,10 +20,22 @@ struct PaperTab: View {
                 Image(systemName: iconName)
                     .font(.system(size: 24))
                     .foregroundStyle(color)
-                Text(label)
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(0.2)
-                    .foregroundStyle(color)
+                switch DynamicTypeLayout.tabBarLabelStyle(at: dtSize) {
+                case .full:
+                    Text(label)
+                        .font(.system(size: 10, weight: .semibold))
+                        .tracking(0.2)
+                        .foregroundStyle(color)
+                case .truncate:
+                    Text(label)
+                        .font(.system(size: 10, weight: .semibold))
+                        .tracking(0.2)
+                        .foregroundStyle(color)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                case .iconOnly:
+                    EmptyView()
+                }
             }
             .padding(.top, 6)
             .padding(.bottom, 2)
@@ -32,6 +45,7 @@ struct PaperTab: View {
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier(AccessibilityIDs.tabBarTab(tab.rawValue))
     }
 
     private var color: Color {

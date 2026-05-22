@@ -49,6 +49,9 @@ struct DayPageHeader: View {
                 TodayChip()
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(weekDay.weekdayLong), \(weekDay.dayNumber) \(weekDay.monthShort), week \(weekMeta.weekNumber)")
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -68,6 +71,7 @@ struct DayPageDateNumber: View {
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
+    @Environment(\.layoutDirection) private var layoutDirection
 
     static func displayText(for dayNumber: Int) -> String {
         "\(dayNumber)\(DayPageDateNumberLayout.trailingGlyphGuard)"
@@ -80,7 +84,7 @@ struct DayPageDateNumber: View {
             .foregroundStyle(isToday ? theme.redInk : theme.ink)
             .opacity(DayPageDateNumberLayout.opacity)
             .tracking(DayPageDateNumberLayout.tracking)
-            .rotationEffect(.degrees(Typography.pageDateNumber.rotationDegrees),
+            .rotationEffect(.degrees(RTLMath.headerRotationDegrees(for: layoutDirection)),
                             anchor: .trailing)
             .fixedSize()
             .frame(width: DayPageDateNumberLayout.width, alignment: .trailing)

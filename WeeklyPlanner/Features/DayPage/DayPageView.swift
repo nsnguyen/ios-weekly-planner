@@ -27,6 +27,7 @@ struct DayPageView: View {
     let controller: PageFlipController
 
     @Environment(\.paperTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dtSize
 
     /// Construct a `DayPageView` over the supplied (shared) controller.
     init(controller: PageFlipController) {
@@ -53,6 +54,7 @@ struct DayPageView: View {
                      todayIdx: isCurrentWeek ? todayIdx : nil,
                      onSelect: { idx in controller.flipToDay(idx: idx) })
         }
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }
 
@@ -122,6 +124,11 @@ struct DayPageContent: View {
                         }
                         .refreshable {
                             await viewModel?.refresh(via: inboxSyncEngine)
+                        }
+                        .accessibilityRotor("Events") {
+                            ForEach(viewModel?.events ?? [], id: \.id) { event in
+                                AccessibilityRotorEntry(event.title, id: event.id)
+                            }
                         }
 
                         PageNumber(date: weekDay.date)

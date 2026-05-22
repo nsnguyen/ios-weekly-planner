@@ -57,7 +57,7 @@ struct PaperEventSheet: View {
             }
         }
         .ignoresSafeArea()
-        .animation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide,
+        .animation(AnimationTokens.sheetSlide(reduced: reduceMotion),
                    value: isOpen)
         .task(id: eventID) {
             if viewModel == nil || viewModel?.eventID != eventID {
@@ -240,7 +240,7 @@ struct PaperEventSheet: View {
                 if didDrag, willCoast {
                     isOpen = false
                 }
-                withAnimation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide) {
+                withAnimation(AnimationTokens.sheetSlide(reduced: reduceMotion)) {
                     dragOffset = 0
                 }
             }

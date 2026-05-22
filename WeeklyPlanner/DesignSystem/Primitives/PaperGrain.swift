@@ -58,6 +58,7 @@ struct PaperGrain: View {
         .opacity(0.35)
         .blendMode(.multiply)
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 

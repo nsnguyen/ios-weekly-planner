@@ -24,6 +24,9 @@ struct EventHeader: View {
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             leftColumn
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(AccessibilityFormatters.eventLabel(event))
+                .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             closeButton
         }

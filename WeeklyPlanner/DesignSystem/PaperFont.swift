@@ -54,6 +54,25 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
 
     // MARK: - Per-family weight mapping
 
+    /// Returns the appropriate font weight for the current `LegibilityWeight`
+    /// setting. When the user enables Bold Text in iOS Settings, this swaps to
+    /// a heavier weight where the font family supports it; otherwise returns
+    /// the regular weight.
+    ///
+    /// - Caveat: Regular → SemiBold
+    /// - Kalam: Regular → Bold (family ships Light / Regular / Bold)
+    /// - Architects Daughter: Regular (single-weight family; no change)
+    /// - Indie Flower: Regular (single-weight family; no change)
+    func weightFor(legibility: LegibilityWeight) -> Font.Weight {
+        guard legibility == .bold else { return .regular }
+        switch self {
+        case .caveat:     return .semibold
+        case .kalam:      return .bold
+        case .architects: return .regular
+        case .indie:      return .regular
+        }
+    }
+
     private func caveatName(for weight: Font.Weight) -> String {
         switch weight {
         case .medium: "Caveat-Medium"
