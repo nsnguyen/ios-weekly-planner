@@ -38,6 +38,7 @@ struct PageCurl: View {
                                                                  bottomTrailing: Self.cornerRadius,
                                                                  topTrailing: 0)))
             .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
 

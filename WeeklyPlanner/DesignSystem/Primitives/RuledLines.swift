@@ -34,6 +34,7 @@ struct RuledLines: View {
             }
         }
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 

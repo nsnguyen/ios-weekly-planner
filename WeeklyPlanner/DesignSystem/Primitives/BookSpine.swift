@@ -36,6 +36,7 @@ struct BookSpine: View {
                                                              bottomLeading: 4,
                                                              bottomTrailing: 14,
                                                              topTrailing: 14)))
+        .accessibilityHidden(true)
     }
 
     /// Heavy darkening on the leading edge — the bound side of the spine.

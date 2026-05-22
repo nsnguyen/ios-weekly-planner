@@ -33,6 +33,7 @@ struct HolePunches: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, Spacing.holePunchLeading)
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     /// A single hole-punch dot with an inner-shadow approximation.

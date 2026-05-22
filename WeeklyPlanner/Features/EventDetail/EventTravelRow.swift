@@ -37,7 +37,7 @@ struct EventTravelRow: View {
                 .frame(height: 0.5)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Travel time \(minutes) minutes")
+        .accessibilityLabel("Travel time: \(minutes) minutes")
     }
 }
 

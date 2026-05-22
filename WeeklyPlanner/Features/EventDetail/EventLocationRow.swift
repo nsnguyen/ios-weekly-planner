@@ -50,6 +50,7 @@ struct EventLocationRow: View {
                 .fill(theme.rule)
                 .frame(height: 0.5)
         }
+        .accessibilityElement(children: .combine)
         .accessibilityLabel("Location: \(location). Tap to open in Maps.")
     }
 }

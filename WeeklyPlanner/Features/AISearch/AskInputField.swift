@@ -68,6 +68,9 @@ struct AskInputField: View {
                     .submitLabel(.search)
                     .onSubmit(onSubmit)
                     .disabled(false)
+                    .accessibilityLabel("Ask Apple Intelligence")
+                    .accessibilityAddTraits(.isSearchField)
+                    .accessibilityIdentifier(AccessibilityIDs.aiSearchInput)
 
                 Spacer(minLength: 0)
 

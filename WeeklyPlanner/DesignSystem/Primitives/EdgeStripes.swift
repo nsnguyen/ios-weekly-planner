@@ -51,6 +51,7 @@ struct EdgeStripes: View {
                                                              bottomLeading: 0,
                                                              bottomTrailing: 6,
                                                              topTrailing: 6)))
+        .accessibilityHidden(true)
     }
 }
 

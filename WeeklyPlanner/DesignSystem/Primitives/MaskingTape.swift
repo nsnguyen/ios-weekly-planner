@@ -48,6 +48,7 @@ struct MaskingTape: View {
             .fill(Self.tapeColor)
             .frame(width: width.size.width, height: width.size.height)
             .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
 

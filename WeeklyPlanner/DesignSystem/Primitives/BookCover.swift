@@ -13,6 +13,7 @@ struct BookCover: View {
     var body: some View {
         theme.bookCover
             .ignoresSafeArea()
+            .accessibilityHidden(true)
     }
 }
 

@@ -36,7 +36,8 @@ struct AISearchTopBar: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Back to planner")
+            .accessibilityLabel("Close Apple Intelligence search")
+            .accessibilityIdentifier(AccessibilityIDs.aiSearchClose)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text("ASK THE PLANNER")
