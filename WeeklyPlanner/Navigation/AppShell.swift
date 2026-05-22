@@ -109,7 +109,7 @@ struct AppShell: View {
                 set: { selection.current = $0 }
             ))
         }
-        .animation(reduceMotion ? .linear(duration: 0) : AnimationTokens.sheetSlide,
+        .animation(AnimationTokens.aiOverlaySlide(reduced: reduceMotion),
                    value: isAISearchOpen)
         .environment(\.intelligenceService, makeIntelligenceService())
         .paperTheme(resolvedTheme)

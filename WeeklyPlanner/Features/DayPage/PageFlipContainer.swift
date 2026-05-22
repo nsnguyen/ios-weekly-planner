@@ -83,10 +83,7 @@ struct PageFlipContainer<Page: View>: View {
             let duration: Duration = reduceMotion
                 ? .milliseconds(150)
                 : .milliseconds(620)
-            withAnimation(reduceMotion
-                ? .linear(duration: 0.15)
-                : AnimationTokens.pageFlip)
-            {
+            withAnimation(AnimationTokens.pageFlip(reduced: reduceMotion)) {
                 progress = 1
                 controller.progress = 1
             }

@@ -33,6 +33,7 @@ struct WeekPickerSheet: View {
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Designated initializer. Constructs the view model eagerly so the
     /// sheet renders without a frame of empty content on first open.
@@ -57,7 +58,7 @@ struct WeekPickerSheet: View {
                                             removal: .opacity))
             }
         }
-        .animation(AnimationTokens.pickerDrop, value: isOpen)
+        .animation(AnimationTokens.pickerDrop(reduced: reduceMotion), value: isOpen)
     }
 
     // MARK: - Backdrop

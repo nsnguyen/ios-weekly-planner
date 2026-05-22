@@ -23,6 +23,7 @@ struct AIStickyNote: View {
 
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -37,7 +38,7 @@ struct AIStickyNote: View {
                 expandedBody
             }
         }
-        .animation(AnimationTokens.stickyPeel, value: folded)
+        .animation(AnimationTokens.stickyPeel(reduced: reduceMotion), value: folded)
     }
 
     // MARK: - Subviews
