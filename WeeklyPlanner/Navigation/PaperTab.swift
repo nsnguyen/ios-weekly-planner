@@ -45,6 +45,7 @@ struct PaperTab: View {
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier(AccessibilityIDs.tabBarTab(tab.rawValue))
     }
 
     private var color: Color {
