@@ -86,8 +86,21 @@ struct TodoAddRow: View {
     // MARK: - Composing state
 
     /// Inline `InkTextField` with a leading checkbox glyph so the field
-    /// aligns with the `TodoRow`s above. Pressing Return commits;
-    /// pressing Return with an empty title or blurring exits composing.
+    /// aligns with the `TodoRow`s above. Three commit/exit paths:
+    ///
+    /// - **Return / "Done" key**: commits via `commitAndContinue()` and
+    ///   re-focuses the field for chain-add.
+    /// - **Keyboard-toolbar "Done" button**: blurs the field, which
+    ///   trips the `.onChange(of: fieldFocused)` commit-or-exit handler.
+    ///   This is the discoverable affordance for users who don't realize
+    ///   Return commits.
+    /// - **Programmatic blur** (sheet open, day flip, etc.): same blur
+    ///   handler — commits if `canCommit`, otherwise `exit()`.
+    ///
+    /// Tap-outside-on-paper does NOT blur on iOS by default — SwiftUI
+    /// keeps `@FocusState` on the field until something else explicitly
+    /// takes focus. That's why we need the Done toolbar button: it's the
+    /// only zero-discovery-cost path to "I'm done typing, save it".
     private var composingRow: some View {
         HStack(spacing: 8) {
             checkboxGlyph
@@ -95,8 +108,20 @@ struct TodoAddRow: View {
                          text: $composer.title,
                          variant: .body,
                          focus: $fieldFocused)
+                .submitLabel(.done)
                 .onSubmit {
                     Task { await commitAndContinue() }
+                }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") {
+                            // Blur → onChange(of: fieldFocused) commits
+                            // if canCommit, exits otherwise.
+                            fieldFocused = false
+                        }
+                        .accessibilityIdentifier("daypage.todo.keyboardDone")
+                    }
                 }
             Spacer(minLength: 0)
         }

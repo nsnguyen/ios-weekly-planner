@@ -30,8 +30,10 @@ final class TaskCreateFlowUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap()
         field.typeText(String(title))
-        // Return commits.
-        app.keyboards.buttons["return"].tap()
+        // The TextField uses .submitLabel(.done), so the Return key is
+        // labeled "done" in the keyboard. Tapping it commits via the
+        // .onSubmit handler.
+        app.keyboards.buttons["done"].tap()
 
         // The new row carries the title in its accessibility label
         // (via `accessibleTask(...)` from Phase 21). Wait for it.
