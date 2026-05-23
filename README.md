@@ -33,7 +33,7 @@ all green.
 | G — Settings           | 16–17 | ✅ done |
 | H — Integrations       | 18–19 | ✅ done |
 | I — Polish             | 21    | ✅ done (Phase 20 archived) |
-| J — Completeness       | 22–24 | ⏳ in progress (Phases 22 + 23 ✅; 24 pending) |
+| J — Completeness       | 22–24 | ⏳ in progress (Phases 22 + 23 ✅ shipped on `main`; 24 pending) |
 | K — Ship               | 25–26 | ⏳ pending (Polish/Icon/Privacy, App Store Submission) |
 
 See `docs/phases/README.md` for the full 26-phase plan and per-phase
@@ -41,14 +41,20 @@ retrospectives.
 
 ## Action items before App Store submission
 
-Three functional gaps still need to ship before App Store review:
+One functional gap still ships before App Store review:
 
-- **Phase 22 — Manual Event CRUD.** Currently events come only from
-  EventKit sync + Gmail inbox suggestions; users can't create their own.
-  Adds a floating ink "+" FAB and an editable `PaperEventSheet`.
-- **Phase 23 — Manual Task CRUD.** `TodoBlock` is toggle-only today.
-  Adds inline "+ add a task" row, swipe-to-delete, and a mini paper
-  popover for priority + due-date editing.
+- ✅ **Phase 22 — Manual Event CRUD.** *(shipped on `main` in
+  [#5](https://github.com/nsnguyen/ios-weekly-planner/pull/5))* Tap
+  "+ add another" or "+ add your first event" to open an editable
+  `PaperEventSheet` with title / time / category / location / notes.
+  Long-press an event row for Edit / Delete. Tap "Edit" in the
+  view-mode header to promote the sheet to edit mode in place.
+- ✅ **Phase 23 — Manual Task CRUD.** *(shipped on `main` in
+  [#5](https://github.com/nsnguyen/ios-weekly-planner/pull/5))* The
+  always-visible dashed yellow to-do patch carries an inline
+  "+ add a to-do" composer with a dashed-circle commit checkbox.
+  Long-press a to-do for the mini popover (priority / due / delete).
+  Swipe-left to delete. Auto-refresh on `.taskStoreDidChange`.
 - **Phase 24 — AI Sticky v2 (Live & Actionable).** The current sticky
   generates one encouraging line per day and never refreshes. v2 runs
   four signal sources (travel-time ETA via MapKit, weather via

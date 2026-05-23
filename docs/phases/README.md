@@ -60,7 +60,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
 
-**Current state:** Milestones A–I shipped on `main`; Phases 22 + 23 shipped on `milestone-j-completeness`. Phase 20 (Modern Mode) archived at tag `phase-20-archive`.
+**Current state:** Milestones A–I shipped on `main`. Milestone J Phases 22 + 23 merged to `main` in [PR #5](https://github.com/nsnguyen/ios-weekly-planner/pull/5) (2026-05-23). Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 341 unit tests + 11 UI tests, all green.
 
 **Milestone J — Completeness** is in progress: Phase 22 ✅, Phase 23 ✅, Phase 24 (AI Sticky v2) pending. Spec: `docs/superpowers/specs/2026-05-22-functional-completeness-design.md`.
 
