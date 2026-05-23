@@ -41,9 +41,16 @@ struct PaperEventSheet: View {
         }
     }
 
-    /// Mode-driven entry. `existingEventID` returns the id for view/edit;
-    /// in create mode the sheet generates an id once the composer is built.
-    let mode: SheetMode
+    /// Initial mode for the sheet. Seeded into `currentMode` on appear
+    /// via the `.task(id:)` block. The view never reads `initialMode`
+    /// directly after seed — it reads `currentMode`, which can flip
+    /// (`.view` ↔ `.edit`) inside the same sheet via the Edit link.
+    let initialMode: SheetMode
+
+    /// Mutable mode the sheet actually renders. `nil` before the first
+    /// `.task(id:)` fires; the dispatcher treats `nil` as "default to
+    /// view-mode placeholder" so the sheet doesn't flash empty.
+    @State private var currentMode: SheetMode?
 
     /// Two-way binding to the sheet's open state. Set to `false` by the
     /// backdrop tap, the close button, drag-to-dismiss, and after a
@@ -74,8 +81,12 @@ struct PaperEventSheet: View {
         .ignoresSafeArea()
         .animation(AnimationTokens.sheetSlide(reduced: reduceMotion),
                    value: isOpen)
-        .task(id: mode) {
-            switch mode {
+        .task(id: initialMode) {
+            // Seed currentMode from the caller's initial intent. Re-seed
+            // whenever initialMode changes (e.g., a different event id
+            // arrives while the sheet is already on screen).
+            currentMode = initialMode
+            switch initialMode {
             case .view(let id), .edit(let id):
                 if viewModel == nil || viewModel?.eventID != id {
                     let generator = intelligenceService.map {
@@ -87,7 +98,7 @@ struct PaperEventSheet: View {
                 }
                 await viewModel?.load()
                 await viewModel?.refreshAISuggestion()
-                if case .edit = mode { viewModel?.beginEditing() }
+                if case .edit = initialMode { viewModel?.beginEditing() }
             case .create(let date):
                 if viewModel == nil {
                     viewModel = EventDetailViewModel(eventID: UUID(),
@@ -108,8 +119,13 @@ struct PaperEventSheet: View {
         }
         .alert("Discard changes?", isPresented: $showCancelConfirm) {
             Button("Discard", role: .destructive) {
-                viewModel?.cancelEditing()
-                isOpen = false
+                // Dirty cancel: .edit reverts to view; .create dismisses.
+                if case .edit = currentMode {
+                    revertToView()
+                } else {
+                    viewModel?.cancelEditing()
+                    isOpen = false
+                }
             }
             Button("Keep editing", role: .cancel) {}
         }
@@ -179,10 +195,11 @@ struct PaperEventSheet: View {
     /// leading inset that clears the red margin / hole-punch column.
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            switch mode {
-            case .view:
+            switch currentMode {
+            case .view, .none:
                 EventHeader(event: viewModel?.event ?? Self.placeholderEvent,
-                            onClose: { isOpen = false })
+                            onClose: { isOpen = false },
+                            onEdit: viewModel?.event == nil ? nil : { promoteToEdit() })
                 if let event = viewModel?.event, let viewModel {
                     bodyRows(event: event, viewModel: viewModel)
                         .padding(.horizontal, 18)
@@ -191,15 +208,33 @@ struct PaperEventSheet: View {
                 }
             case .edit, .create:
                 if let viewModel, let composer = viewModel.composer {
+                    let isCreate: Bool = { if case .create = currentMode { return true } else { return false } }()
+                    let isEdit: Bool = { if case .edit = currentMode { return true } else { return false } }()
                     EditableEventContent(composer: composer,
                                          canSave: composer.canSave,
-                                         isCreate: { if case .create = mode { true } else { false } }(),
-                                         showsDelete: { if case .edit = mode { true } else { false } }(),
-                                         onSave: { await viewModel.save(); if viewModel.composer == nil { isOpen = false } },
+                                         isCreate: isCreate,
+                                         showsDelete: isEdit,
+                                         onSave: {
+                                             await viewModel.save()
+                                             // After save: .edit reverts to view in
+                                             // place; .create dismisses (no view to
+                                             // revert to).
+                                             if isEdit {
+                                                 if let id = currentMode?.existingEventID {
+                                                     currentMode = .view(id)
+                                                 }
+                                             } else if viewModel.composer == nil {
+                                                 isOpen = false
+                                             }
+                                         },
                                          onCancel: {
                                              if viewModel.composerIsDirty {
                                                  showCancelConfirm = true
+                                             } else if isEdit {
+                                                 // Clean cancel from edit → revert.
+                                                 revertToView()
                                              } else {
+                                                 // Clean cancel from create → dismiss.
                                                  viewModel.cancelEditing()
                                                  isOpen = false
                                              }
@@ -282,6 +317,28 @@ struct PaperEventSheet: View {
         }
     }
 
+    // MARK: - Mode promotion
+
+    /// View → Edit promotion. Called from the view-mode header's Edit
+    /// link. Seeds the composer from the loaded event and flips
+    /// `currentMode` so `cardContent` dispatches to the editable variant.
+    /// No-op if not currently in `.view` (e.g., we're already editing).
+    private func promoteToEdit() {
+        guard case let .view(id) = currentMode else { return }
+        viewModel?.beginEditing()
+        currentMode = .edit(id)
+    }
+
+    /// Edit → View revert. Called from Save (after `viewModel.save()`
+    /// completes), from clean Cancel, and from the discard-confirmed
+    /// dirty Cancel. Clears any composer state and flips `currentMode`
+    /// back. No-op if not in `.edit`.
+    private func revertToView() {
+        guard case let .edit(id) = currentMode else { return }
+        viewModel?.cancelEditing()
+        currentMode = .view(id)
+    }
+
     // MARK: - Drag-to-dismiss
 
     /// Vertical drag gesture. Translation tracks the finger live so the
@@ -354,7 +411,7 @@ private struct PaperEventSheetPreviewHost: View {
     var body: some View {
         ZStack {
             BookCover()
-            PaperEventSheet(mode: .view(eventID), isOpen: $isOpen)
+            PaperEventSheet(initialMode: .view(eventID), isOpen: $isOpen)
         }
         .environment(\.eventStore, store)
     }

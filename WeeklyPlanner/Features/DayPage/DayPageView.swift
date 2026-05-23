@@ -146,17 +146,17 @@ struct DayPageContent: View {
             }
 
             if let id = openEventID {
-                PaperEventSheet(mode: .view(id),
+                PaperEventSheet(initialMode: .view(id),
                                 isOpen: Binding(get: { openEventID != nil },
                                                 set: { if !$0 { openEventID = nil } }))
             }
             if let anchor = creatingEventAt {
-                PaperEventSheet(mode: .create(at: anchor),
+                PaperEventSheet(initialMode: .create(at: anchor),
                                 isOpen: Binding(get: { creatingEventAt != nil },
                                                 set: { if !$0 { creatingEventAt = nil } }))
             }
             if let id = editingEventID {
-                PaperEventSheet(mode: .edit(id),
+                PaperEventSheet(initialMode: .edit(id),
                                 isOpen: Binding(get: { editingEventID != nil },
                                                 set: { if !$0 { editingEventID = nil } }))
             }
