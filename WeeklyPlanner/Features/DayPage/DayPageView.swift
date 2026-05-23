@@ -87,6 +87,7 @@ struct DayPageContent: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.deepLinkRouter) private var deepLinkRouter
+    @Environment(\.paperTheme) private var theme
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -141,7 +142,7 @@ struct DayPageContent: View {
                             }
                         }
                         .safeAreaInset(edge: .bottom, spacing: 0) {
-                            todoBlockBottom
+                            bottomAffordances(weekDay: weekDay)
                         }
 
                         PageNumber(date: weekDay.date)
@@ -236,33 +237,58 @@ struct DayPageContent: View {
     /// inside the paper. If no insight exists the overlay collapses to an
     /// `EmptyView` and the corner is left blank — the design treats absent
     /// stickies as "no note today", not "blank placeholder".
-    /// Always-visible `TodoBlock` pinned to the bottom of the visible
-    /// PaperSurface via `.safeAreaInset(edge: .bottom)` on the ScrollView
-    /// above. The patch is rendered with the page's leading/trailing
-    /// margins so the dashed yellow background lines up under the rest of
-    /// the content (44pt leading to clear the red margin + hole punches,
-    /// 18pt trailing). Bottom padding (24pt) keeps the patch above the
-    /// `PageNumber` footer overlay.
+    /// Notes-style "tap outside to lock in" — call from any interactive
+    /// tap target in the events / inbox / event-add area when the
+    /// to-do composer is active. Asks the composer to relinquish focus;
+    /// the TodoAddRow's existing `.onChange(of: composer.pendingBlurToken)`
+    /// handler then trips its commit-or-exit branch on the next runloop.
+    /// No-op when the composer isn't composing.
+    private func commitPendingTaskIfAny() {
+        guard viewModel?.taskComposer.isComposing == true else { return }
+        viewModel?.taskComposer.requestBlur()
+    }
+
+    /// Bottom-pinned affordance stack: `EventAddRow` directly above the
+    /// always-visible `TodoBlock`. Both anchor to the bottom of the
+    /// visible PaperSurface via `.safeAreaInset(edge: .bottom)` on the
+    /// ScrollView so they remain reachable even when the events list
+    /// overflows (the events scroll above this stack, not behind it).
+    /// Matches the paper-planner mock: "add another" line sits just above
+    /// the dashed yellow to-do patch, both with the same 44pt leading /
+    /// 18pt trailing page margin and 24pt bottom inset above the
+    /// `PageNumber` footer.
     @ViewBuilder
-    private var todoBlockBottom: some View {
+    private func bottomAffordances(weekDay: WeekDay) -> some View {
         if let viewModel {
-            TodoBlock(tasks: viewModel.tasks,
-                      composer: viewModel.taskComposer,
-                      onToggle: { id in
-                          Task { await viewModel.toggleTask(id: id) }
-                      },
-                      onAddTask: {
-                          await viewModel.addTask()
-                      },
-                      onDelete: { id in
-                          Task { await viewModel.deleteTask(id: id) }
-                      },
-                      onLongPress: { id in
-                          editingTaskID = id
-                      })
+            let hasEvents = !viewModel.events.isEmpty
+            let hasInbox = !viewModel.inbox.isEmpty
+            VStack(alignment: .leading, spacing: 8) {
+                EventAddRow(isFirstEntry: !hasEvents && !hasInbox) {
+                    commitPendingTaskIfAny()
+                    creatingEventAt = weekDay.date
+                }
                 .padding(.leading, 44)
                 .padding(.trailing, 18)
-                .padding(.bottom, 24)
+
+                TodoBlock(tasks: viewModel.tasks,
+                          composer: viewModel.taskComposer,
+                          onToggle: { id in
+                              Task { await viewModel.toggleTask(id: id) }
+                          },
+                          onAddTask: {
+                              await viewModel.addTask()
+                          },
+                          onDelete: { id in
+                              Task { await viewModel.deleteTask(id: id) }
+                          },
+                          onLongPress: { id in
+                              editingTaskID = id
+                          })
+                    .padding(.leading, 44)
+                    .padding(.trailing, 18)
+                    .padding(.bottom, 24)
+            }
+            .background(theme.cream)
         }
     }
 
@@ -296,24 +322,31 @@ struct DayPageContent: View {
 
                 if hasEvents {
                     EventEntryList(events: viewModel.events,
-                                   onTap: { event in openEventID = event.id },
-                                   onEdit: { event in editingEventID = event.id })
+                                   onTap: { event in
+                                       commitPendingTaskIfAny()
+                                       openEventID = event.id
+                                   },
+                                   onEdit: { event in
+                                       commitPendingTaskIfAny()
+                                       editingEventID = event.id
+                                   })
                 }
 
                 if hasInbox {
                     InboxBlock(suggestions: viewModel.inbox,
                                onAccept: { id in
+                                   commitPendingTaskIfAny()
                                    Task { await viewModel.accept(suggestionID: id) }
                                },
                                onDismiss: { id in
+                                   commitPendingTaskIfAny()
                                    Task { await viewModel.dismiss(suggestionID: id) }
                                })
                 }
 
-                EventAddRow(isFirstEntry: !hasEvents && !hasInbox) {
-                    creatingEventAt = weekDay.date
-                }
-                .padding(.top, hasEvents || hasInbox ? 8 : 0)
+                // EventAddRow is pinned at the bottom alongside TodoBlock
+                // (see `bottomAffordances`) — not inline here — so it
+                // stays visible when the events list overflows.
             }
         }
     }

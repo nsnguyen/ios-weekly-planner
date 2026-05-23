@@ -18,6 +18,15 @@ final class TaskCreateFlowUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
+        // TabSelection is persisted across launches via UserSettings —
+        // earlier ad-hoc dogfooding may have left the simulator on the
+        // Settings or Review tab. Explicitly navigate to Calendar so
+        // the rest of the test can find Day-page identifiers.
+        let calendarTab = app.buttons["tabbar.tab.calendar"]
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
+
         let addRow = app.buttons["daypage.todo.addRow"]
         XCTAssertTrue(addRow.waitForExistence(timeout: 5),
                       "TodoBlock add row should be reachable on the landing day")
@@ -30,10 +39,10 @@ final class TaskCreateFlowUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap()
         field.typeText(String(title))
-        // The TextField uses .submitLabel(.done), so the Return key is
-        // labeled "done" in the keyboard. Tapping it commits via the
-        // .onSubmit handler.
-        app.keyboards.buttons["done"].tap()
+        // Return commits via the .onSubmit handler. The user-preferred
+        // path is "tap outside to lock in" (Notes-style), but the
+        // keyboard's return key is the reliable UITest trigger.
+        app.keyboards.buttons["return"].tap()
 
         // The new row carries the title in its accessibility label
         // (via `accessibleTask(...)` from Phase 21). Wait for it.

@@ -17,8 +17,24 @@ final class TaskComposerState {
     var priority: Priority = .med
     var due: Date
 
+    /// Monotonic counter incremented every time external code calls
+    /// `requestBlur()`. `TodoAddRow` watches this via `.onChange` to
+    /// know when to relinquish focus on its inline TextField — the
+    /// SwiftUI-friendly way to plumb "force-blur" through `@Observable`
+    /// without exposing a `FocusState.Binding` up four layers.
+    private(set) var pendingBlurToken: Int = 0
+
     init(forDay date: Date) {
         self.due = date
+    }
+
+    /// Ask the inline-add row's TextField to relinquish focus. Called by
+    /// `DayPageContent` when a tap lands anywhere on the page outside the
+    /// to-do block while the composer is active — the Notes-style
+    /// "tap outside to lock in" affordance. The blur then trips the
+    /// existing commit-or-exit handler in `TodoAddRow`.
+    func requestBlur() {
+        pendingBlurToken &+= 1
     }
 
     var canCommit: Bool {

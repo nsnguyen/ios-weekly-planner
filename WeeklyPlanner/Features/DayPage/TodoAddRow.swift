@@ -88,19 +88,16 @@ struct TodoAddRow: View {
     /// Inline `InkTextField` with a leading checkbox glyph so the field
     /// aligns with the `TodoRow`s above. Three commit/exit paths:
     ///
-    /// - **Return / "Done" key**: commits via `commitAndContinue()` and
-    ///   re-focuses the field for chain-add.
-    /// - **Keyboard-toolbar "Done" button**: blurs the field, which
-    ///   trips the `.onChange(of: fieldFocused)` commit-or-exit handler.
-    ///   This is the discoverable affordance for users who don't realize
-    ///   Return commits.
-    /// - **Programmatic blur** (sheet open, day flip, etc.): same blur
-    ///   handler — commits if `canCommit`, otherwise `exit()`.
-    ///
-    /// Tap-outside-on-paper does NOT blur on iOS by default — SwiftUI
-    /// keeps `@FocusState` on the field until something else explicitly
-    /// takes focus. That's why we need the Done toolbar button: it's the
-    /// only zero-discovery-cost path to "I'm done typing, save it".
+    /// - **Return key**: commits via `commitAndContinue()` and re-focuses
+    ///   the field for chain-add (the user is still typing tasks).
+    /// - **Tap anywhere on the page outside the to-do block**: external
+    ///   code calls `composer.requestBlur()`, the
+    ///   `.onChange(of: composer.pendingBlurToken)` handler below fires
+    ///   `fieldFocused = false`, the `.onChange(of: fieldFocused)`
+    ///   handler then commits-or-exits based on `canCommit`. This is the
+    ///   Notes-style "tap outside to lock in" affordance.
+    /// - **Programmatic blur** (e.g., a sheet opens): same path via the
+    ///   blur handler.
     private var composingRow: some View {
         HStack(spacing: 8) {
             checkboxGlyph
@@ -108,20 +105,8 @@ struct TodoAddRow: View {
                          text: $composer.title,
                          variant: .body,
                          focus: $fieldFocused)
-                .submitLabel(.done)
                 .onSubmit {
                     Task { await commitAndContinue() }
-                }
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") {
-                            // Blur → onChange(of: fieldFocused) commits
-                            // if canCommit, exits otherwise.
-                            fieldFocused = false
-                        }
-                        .accessibilityIdentifier("daypage.todo.keyboardDone")
-                    }
                 }
             Spacer(minLength: 0)
         }
@@ -130,6 +115,12 @@ struct TodoAddRow: View {
             // Autofocus on first appearance. Re-fires on every entry into
             // composing because composingRow remounts (Group branch swap).
             fieldFocused = true
+        }
+        .onChange(of: composer.pendingBlurToken) {
+            // External "tap outside" request — relinquish focus, which
+            // trips the .onChange(of: fieldFocused) handler below into
+            // its commit-or-exit branch.
+            fieldFocused = false
         }
         .onChange(of: fieldFocused) { _, newValue in
             if newValue == false {

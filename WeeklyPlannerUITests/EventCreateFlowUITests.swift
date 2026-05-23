@@ -15,6 +15,13 @@ final class EventCreateFlowUITests: XCTestCase {
         app.launchArguments += ["-UITestSeedEmptyStore"]
         app.launch()
 
+        // TabSelection is persisted across launches — explicitly land
+        // on the Calendar tab before looking for Day-page identifiers.
+        let calendarTab = app.buttons["tabbar.tab.calendar"]
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
+
         // The "+ add another" / "+ add your first event" inline link
         // lives below the events + inbox list on the Day page — always
         // present regardless of empty-state.
