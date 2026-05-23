@@ -31,6 +31,11 @@ struct TodoAddRow: View {
 
     @FocusState private var fieldFocused: Bool
 
+    /// Brief green-fill flash on the trailing commit checkbox right
+    /// before the task is committed. Visual "saved!" confirmation that
+    /// rhymes with iOS's tap-success animations.
+    @State private var isCommittingFlash: Bool = false
+
     var body: some View {
         Group {
             if composer.isComposing {
@@ -109,7 +114,12 @@ struct TodoAddRow: View {
                     Task { await commitAndContinue() }
                 }
             Spacer(minLength: 0)
+            if composer.canCommit {
+                commitCheckbox
+                    .transition(.opacity.combined(with: .scale))
+            }
         }
+        .animation(.easeOut(duration: 0.15), value: composer.canCommit)
         .padding(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
         .task {
             // Autofocus on first appearance. Re-fires on every entry into
@@ -155,6 +165,58 @@ struct TodoAddRow: View {
             return
         }
         await onCommit()
+        fieldFocused = true
+    }
+
+    // MARK: - Trailing commit checkbox
+
+    /// 15×15 unfilled checkbox at the trailing edge of the composing
+    /// row, only visible while the user has typed something. Tap →
+    /// `commitWithFlash()` briefly fills the box with `theme.greenInk`
+    /// and overlays a white checkmark before committing the to-do.
+    /// Matches the size + corner radius of `TodoRow.checkbox` (the box
+    /// that'll appear once the row is committed), so the commit gesture
+    /// reads as "check this off into existence."
+    private var commitCheckbox: some View {
+        Button {
+            Task { await commitWithFlash() }
+        } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(isCommittingFlash ? theme.greenInk : Color.white)
+                RoundedRectangle(cornerRadius: 1)
+                    .strokeBorder(isCommittingFlash ? theme.greenInk : theme.ink,
+                                  lineWidth: 1.4)
+                if isCommittingFlash {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.white)
+                }
+            }
+            .frame(width: 15, height: 15)
+            .contentShape(Rectangle().inset(by: -8))
+            .animation(.easeOut(duration: 0.15), value: isCommittingFlash)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add to-do")
+        .accessibilityHint("Commits the typed to-do")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("daypage.todo.commitButton")
+    }
+
+    /// Tap-handler for `commitCheckbox`: animate the green fill, wait
+    /// for the animation to settle, then commit. After the commit
+    /// completes (`addTask()` clears the title but keeps composing),
+    /// re-focus the field so the user can immediately chain-add another
+    /// to-do — same UX as the Return-key path in `commitAndContinue()`.
+    private func commitWithFlash() async {
+        guard composer.canCommit else { return }
+        isCommittingFlash = true
+        // Let the fill animate before mutating the composer (which
+        // tears down the commitCheckbox via the canCommit gate).
+        try? await Task.sleep(for: .milliseconds(180))
+        await onCommit()
+        isCommittingFlash = false
         fieldFocused = true
     }
 }
