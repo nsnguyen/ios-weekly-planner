@@ -357,6 +357,10 @@ struct DayPageContent: View {
                                    onEdit: { event in
                                        commitPendingTaskIfAny()
                                        editingEventID = event.id
+                                   },
+                                   onDelete: { event in
+                                       commitPendingTaskIfAny()
+                                       Task { await viewModel.deleteEvent(id: event.id) }
                                    })
                 }
 

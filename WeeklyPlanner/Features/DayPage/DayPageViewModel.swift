@@ -248,6 +248,22 @@ final class DayPageViewModel {
         }
         await refresh()
     }
+
+    /// Delete the event by id. Routes through `EventStore.delete(id:)`
+    /// which mirrors the removal to EventKit (Phase 04 decorator) and
+    /// posts `.eventStoreDidChange` — the auto-refresh observer will
+    /// pick that up, but we also `await refresh()` explicitly so the
+    /// row disappears immediately without a publisher round-trip.
+    /// Errors surface via `loadError`, matching every other store
+    /// mutation in this VM.
+    func deleteEvent(id: UUID) async {
+        do {
+            try await eventStore.delete(id: id)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
 }
 
 private extension Date {
