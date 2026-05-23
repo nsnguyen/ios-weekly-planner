@@ -220,6 +220,9 @@ struct DayPageContent: View {
         .onReceive(NotificationCenter.default.publisher(for: .eventStoreDidChange)) { _ in
             Task { await viewModel?.refresh() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .taskStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
+        }
     }
 
     // MARK: - Subviews
@@ -293,8 +296,10 @@ struct DayPageContent: View {
                     .padding(.top, 12)
                 }
 
-                if !hasEvents, !hasInbox, !hasTasks {
-                    EmptyDayState()
+                if !hasEvents, !hasInbox, !hasTasks, !viewModel.taskComposer.isComposing {
+                    EmptyDayState(onAddTask: {
+                        viewModel.taskComposer.isComposing = true
+                    })
                 }
 
                 AddEventLink {
