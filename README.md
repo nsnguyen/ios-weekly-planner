@@ -33,7 +33,7 @@ all green.
 | G — Settings           | 16–17 | ✅ done |
 | H — Integrations       | 18–19 | ✅ done |
 | I — Polish             | 21    | ✅ done (Phase 20 archived) |
-| J — Completeness       | 22–24 | ⏳ in progress (Phase 22 ✅; 23 + 24 pending) |
+| J — Completeness       | 22–24 | ⏳ in progress (Phases 22 + 23 ✅; 24 pending) |
 | K — Ship               | 25–26 | ⏳ pending (Polish/Icon/Privacy, App Store Submission) |
 
 See `docs/phases/README.md` for the full 26-phase plan and per-phase
