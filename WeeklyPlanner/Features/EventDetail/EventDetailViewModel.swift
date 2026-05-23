@@ -45,6 +45,15 @@ final class EventDetailViewModel {
     /// that case so the sticky never renders empty.
     var liveSuggestion: String?
 
+    /// Active composer draft, or `nil` when the sheet is in `.view` mode.
+    /// Mutating `composer` mid-edit (e.g., user types in the title field)
+    /// triggers the surrounding `@Observable` propagation.
+    var composer: EventComposerState?
+
+    /// Snapshot of the composer at the time editing began. Used to detect
+    /// dirty state for the discard-confirm dialog.
+    private(set) var composerBaseline: EventComposerState?
+
     private let eventStore: any EventStoring
     private let geocoder: any AddressGeocoding
     private let suggestionGenerator: EventSuggestionGenerator?
@@ -143,6 +152,64 @@ final class EventDetailViewModel {
     /// also clears the system calendar copy.
     func delete() async {
         try? await eventStore.delete(id: eventID)
+    }
+
+    /// Switch into `.edit` mode by hydrating a composer from the loaded
+    /// event. No-op if the event hasn't loaded yet.
+    func beginEditing() {
+        guard let event else { return }
+        composer = EventComposerState.from(event)
+        composerBaseline = EventComposerState.from(event)
+    }
+
+    /// Switch into `.create` mode with an empty composer anchored at
+    /// `date` (the page's focused day).
+    func beginCreating(at date: Date, calendar: Calendar) {
+        composer = EventComposerState.empty(at: date, calendar: calendar)
+        composerBaseline = EventComposerState.empty(at: date, calendar: calendar)
+    }
+
+    /// `true` iff `composer` differs from `composerBaseline`. Drives the
+    /// discard-confirm dialog when the user taps Cancel.
+    var composerIsDirty: Bool {
+        guard let composer, let composerBaseline else { return false }
+        return composer.isDirty(against: composerBaseline)
+    }
+
+    /// Commit the composer draft. In `.edit` mode this updates the
+    /// existing event by id; in `.create` mode it inserts a new event.
+    /// Clears the composer on success so the sheet flips back to `.view`.
+    func save() async {
+        guard let composer, composer.canSave else { return }
+        let built = composer.build(id: event?.id ?? UUID())
+        // Preserve eventKitIdentifier on edit so the mirror updates the
+        // existing iOS calendar row instead of inserting a duplicate.
+        built.eventKitIdentifier = event?.eventKitIdentifier
+        do {
+            try await eventStore.upsert(built)
+            event = try await eventStore.event(id: built.id)
+            // Re-seed reminder mirrors from the saved event so the alert
+            // rows reflect what's on disk.
+            if let event {
+                alertOn = event.reminders.contains {
+                    if case .timeBefore = $0 { true } else { false }
+                }
+                locationAlertOn = event.reminders.contains {
+                    if case .onArrive = $0 { true } else { false }
+                }
+            }
+            self.composer = nil
+            composerBaseline = nil
+        } catch {
+            loadError = error.localizedDescription
+        }
+    }
+
+    /// Discard composer changes. Caller is responsible for the
+    /// confirmation prompt; this method just clears state.
+    func cancelEditing() {
+        composer = nil
+        composerBaseline = nil
     }
 
     /// Suggestion text rendered in the yellow sticky inside the sheet.

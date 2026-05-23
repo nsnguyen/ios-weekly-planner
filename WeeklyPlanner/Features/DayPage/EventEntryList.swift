@@ -15,9 +15,26 @@ struct EventEntryList: View {
     /// to a no-op so previews and tests can omit it.
     var onTap: (Event) -> Void
 
-    init(events: [Event], onTap: @escaping (Event) -> Void = { _ in }) {
+    /// Optional long-press → edit handler. When supplied, each row exposes
+    /// a context menu with an "Edit" action. Left `nil` from previews / tests
+    /// that don't need the edit affordance.
+    var onEdit: ((Event) -> Void)?
+
+    /// Optional long-press → delete handler. When supplied, the context
+    /// menu gains a destructive "Delete" action below Edit, mirroring
+    /// `TodoRow`'s context-menu shape. One-tap delete (no confirmation
+    /// alert); the in-sheet Delete button still confirms separately.
+    var onDelete: ((Event) -> Void)?
+
+    init(events: [Event],
+         onTap: @escaping (Event) -> Void = { _ in },
+         onEdit: ((Event) -> Void)? = nil,
+         onDelete: ((Event) -> Void)? = nil)
+    {
         self.events = events
         self.onTap = onTap
+        self.onEdit = onEdit
+        self.onDelete = onDelete
     }
 
     var body: some View {
@@ -26,6 +43,22 @@ struct EventEntryList: View {
                 EventEntryRow(event: event) { onTap(event) }
                     .accessibleEvent(event)
                     .accessibilityIdentifier(AccessibilityIDs.daypageEventRow(event.id))
+                    .contextMenu {
+                        if let onEdit {
+                            Button {
+                                onEdit(event)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                        }
+                        if let onDelete {
+                            Button(role: .destructive) {
+                                onDelete(event)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
             }
         }
     }

@@ -19,26 +19,41 @@ struct TodoBlock: View {
     /// priority desc then title; callers can pass any order.
     let tasks: [TaskItem]
 
-    /// Forwarded to each row's tap action, scoped to that row's task id.
-    /// The day-page view model wires this to `TaskStoring.toggle(id:)`.
+    /// Inline-add composer, owned by `DayPageViewModel`. The block reads
+    /// `composer.isComposing` to gate rendering (the patch appears when
+    /// either tasks exist OR the user has started composing on an empty
+    /// day) and binds the `TodoAddRow` at the bottom.
+    @Bindable var composer: TaskComposerState
+
+    /// Toggle a task's done flag.
     var onToggle: (UUID) -> Void
+
+    /// Commit the composer's current draft (Phase 23 add-task flow).
+    var onAddTask: () async -> Void
+
+    /// Delete the task with the given id.
+    var onDelete: (UUID) -> Void
+
+    /// Long-press a task row → caller opens the mini popover for that id.
+    var onLongPress: (UUID) -> Void
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
 
     var body: some View {
-        if tasks.isEmpty {
-            EmptyView()
-        } else {
-            content
-        }
+        // Always render the dashed yellow patch — even with zero tasks
+        // the header + `+ add your first to-do` affordance carry the
+        // empty state, per the mock.
+        content
     }
 
     // MARK: - Subviews
 
-    /// Composes header + sorted rows inside the yellow dashed patch. Split
-    /// out so the outer `body` only carries the empty-state gate.
+    /// Composes header + sorted rows inside the yellow dashed patch.
+    /// When `tasks` is empty the rows section collapses to just the
+    /// `TodoAddRow` placeholder (which shows the "add your first to-do"
+    /// copy via `hasExistingTasks: false`).
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -46,10 +61,17 @@ struct TodoBlock: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(sortedTasks, id: \.id) { task in
-                    TodoRow(task: task) { onToggle(task.id) }
+                    TodoRow(task: task,
+                            onToggle: { onToggle(task.id) },
+                            onDelete: { onDelete(task.id) },
+                            onLongPress: { onLongPress(task.id) })
                         .accessibleTask(task) { onToggle(task.id) }
                         .accessibilityIdentifier(AccessibilityIDs.daypageTodoRow(task.id))
                 }
+                TodoAddRow(composer: composer,
+                           hasExistingTasks: !sortedTasks.isEmpty,
+                           onCommit: onAddTask)
+                    .padding(.top, sortedTasks.isEmpty ? 0 : 4)
             }
         }
         .padding(EdgeInsets(top: 10, leading: 12, bottom: 8, trailing: 12))
@@ -110,11 +132,18 @@ struct TodoBlock: View {
                  category: .personal),
     ]
 
+    let composer = TaskComposerState(forDay: due)
+
     return ZStack {
         BookCover()
         BookPage {
             PaperSurface {
-                TodoBlock(tasks: tasks, onToggle: { _ in })
+                TodoBlock(tasks: tasks,
+                          composer: composer,
+                          onToggle: { _ in },
+                          onAddTask: {},
+                          onDelete: { _ in },
+                          onLongPress: { _ in })
                     .padding(.top, 40)
                     .padding(.leading, 44)
                     .padding(.trailing, 18)

@@ -171,4 +171,5 @@ struct AppShell: View {
         let fallback = StubIntelligenceService(eventStore: eventStore)
         return PlannerLanguageModel(registry: registry, fallback: fallback)
     }
+
 }

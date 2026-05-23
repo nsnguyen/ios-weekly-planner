@@ -1,4 +1,4 @@
-# Phase 22 — Final Polish, App Icon, Launch Screen, Privacy Manifest
+# Phase 25 — Final Polish, App Icon, Launch Screen, Privacy Manifest
 
 ## Goal
 Finalize the visual identity (app icon set, launch screen, marketing artwork), complete the privacy manifest, optimize performance, fix all warnings, prepare release notes, and harden the app for App Store review.

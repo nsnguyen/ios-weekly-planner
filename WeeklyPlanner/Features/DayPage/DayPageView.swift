@@ -87,6 +87,7 @@ struct DayPageContent: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.deepLinkRouter) private var deepLinkRouter
+    @Environment(\.paperTheme) private var theme
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -95,6 +96,16 @@ struct DayPageContent: View {
     /// Identifier of the event whose detail sheet is currently open. `nil`
     /// when no sheet is presented. Tapping any `EventEntryRow` sets this.
     @State private var openEventID: UUID?
+
+    @State private var creatingEventAt: Date?
+
+    /// Identifier of the event currently open for editing via long-press →
+    /// Edit. `nil` when no edit sheet is presented. Distinct from
+    /// `openEventID` so a tap-to-view and a long-press-to-edit don't fight
+    /// over the same binding.
+    @State private var editingEventID: UUID?
+
+    @State private var editingTaskID: UUID?
 
     var body: some View {
         let now = Date()
@@ -121,6 +132,17 @@ struct DayPageContent: View {
                                 .overlay(alignment: .topTrailing) {
                                     stickyNoteOverlay
                                 }
+                                // Tap on empty paper *between* events /
+                                // inbox rows commits the pending to-do.
+                                // SwiftUI only fires this when no child
+                                // (Button, TextField) claims the tap, so
+                                // the event-row Buttons still work
+                                // normally — those have their own
+                                // commitPendingTaskIfAny() calls.
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    commitPendingTaskIfAny()
+                                }
                         }
                         .refreshable {
                             await viewModel?.refresh(via: inboxSyncEngine)
@@ -130,6 +152,14 @@ struct DayPageContent: View {
                                 AccessibilityRotorEntry(event.title, id: event.id)
                             }
                         }
+                        // Drag-down on the page progressively dismisses
+                        // the keyboard, which trips the to-do composer's
+                        // blur handler. Standard iOS gesture; works the
+                        // same on simulator and device.
+                        .scrollDismissesKeyboard(.interactively)
+                        .safeAreaInset(edge: .bottom, spacing: 0) {
+                            bottomAffordances(weekDay: weekDay)
+                        }
 
                         PageNumber(date: weekDay.date)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -138,9 +168,53 @@ struct DayPageContent: View {
             }
 
             if let id = openEventID {
-                PaperEventSheet(eventID: id,
+                PaperEventSheet(initialMode: .view(id),
                                 isOpen: Binding(get: { openEventID != nil },
                                                 set: { if !$0 { openEventID = nil } }))
+            }
+            if let anchor = creatingEventAt {
+                PaperEventSheet(initialMode: .create(at: anchor),
+                                isOpen: Binding(get: { creatingEventAt != nil },
+                                                set: { if !$0 { creatingEventAt = nil } }))
+            }
+            if let id = editingEventID {
+                PaperEventSheet(initialMode: .edit(id),
+                                isOpen: Binding(get: { editingEventID != nil },
+                                                set: { if !$0 { editingEventID = nil } }))
+            }
+            if let id = editingTaskID,
+               let task = viewModel?.tasks.first(where: { $0.id == id })
+            {
+                Color.clear
+                    .frame(width: 0, height: 0)
+                    .popover(isPresented: Binding(get: { editingTaskID != nil },
+                                                  set: { if !$0 { editingTaskID = nil } }),
+                             attachmentAnchor: .point(.center),
+                             arrowEdge: .top)
+                    {
+                        TaskMiniPopover(task: task,
+                                        onPriorityChange: { newPriority in
+                                            Task {
+                                                await viewModel?.updateTask(id: id) {
+                                                    $0.priority = newPriority
+                                                }
+                                            }
+                                        },
+                                        onDueChange: { newDue in
+                                            Task {
+                                                await viewModel?.updateTask(id: id) {
+                                                    $0.due = newDue
+                                                }
+                                            }
+                                        },
+                                        onDelete: {
+                                            Task {
+                                                await viewModel?.deleteTask(id: id)
+                                                editingTaskID = nil
+                                            }
+                                        },
+                                        onDismiss: { editingTaskID = nil })
+                    }
             }
         }
         .task {
@@ -163,6 +237,12 @@ struct DayPageContent: View {
             openEventID = id
             deepLinkRouter.consume()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .eventStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .taskStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
+        }
     }
 
     // MARK: - Subviews
@@ -173,6 +253,73 @@ struct DayPageContent: View {
     /// inside the paper. If no insight exists the overlay collapses to an
     /// `EmptyView` and the corner is left blank — the design treats absent
     /// stickies as "no note today", not "blank placeholder".
+    /// Notes-style "tap outside to lock in" — call from any interactive
+    /// tap target in the events / inbox / event-add area when the
+    /// to-do composer is active. Asks the composer to relinquish focus;
+    /// the TodoAddRow's existing `.onChange(of: composer.pendingBlurToken)`
+    /// handler then trips its commit-or-exit branch on the next runloop.
+    /// No-op when the composer isn't composing.
+    private func commitPendingTaskIfAny() {
+        guard viewModel?.taskComposer.isComposing == true else { return }
+        viewModel?.taskComposer.requestBlur()
+    }
+
+    /// Bottom-pinned affordance stack: `EventAddRow` directly above the
+    /// always-visible `TodoBlock`. Both anchor to the bottom of the
+    /// visible PaperSurface via `.safeAreaInset(edge: .bottom)` on the
+    /// ScrollView so they remain reachable even when the events list
+    /// overflows (the events scroll above this stack, not behind it).
+    /// Matches the paper-planner mock: "add another" line sits just above
+    /// the dashed yellow to-do patch, both with the same 44pt leading /
+    /// 18pt trailing page margin and 24pt bottom inset above the
+    /// `PageNumber` footer.
+    @ViewBuilder
+    private func bottomAffordances(weekDay: WeekDay) -> some View {
+        if let viewModel {
+            let hasEvents = !viewModel.events.isEmpty
+            let hasInbox = !viewModel.inbox.isEmpty
+            VStack(alignment: .leading, spacing: 8) {
+                EventAddRow(isFirstEntry: !hasEvents && !hasInbox) {
+                    commitPendingTaskIfAny()
+                    creatingEventAt = weekDay.date
+                }
+                .padding(.leading, 44)
+                .padding(.trailing, 18)
+
+                TodoBlock(tasks: viewModel.tasks,
+                          composer: viewModel.taskComposer,
+                          onToggle: { id in
+                              Task { await viewModel.toggleTask(id: id) }
+                          },
+                          onAddTask: {
+                              await viewModel.addTask()
+                          },
+                          onDelete: { id in
+                              Task { await viewModel.deleteTask(id: id) }
+                          },
+                          onLongPress: { id in
+                              editingTaskID = id
+                          })
+                    .padding(.leading, 44)
+                    .padding(.trailing, 18)
+                    .padding(.bottom, 24)
+            }
+            .background(theme.cream)
+            // Tap-outside-to-commit also fires for the cream paper area
+            // INSIDE this bottom inset — specifically, the 44pt leading
+            // margin to the left of the to-do patch, the 18pt trailing
+            // margin to the right, and the gap between EventAddRow and
+            // TodoBlock. Buttons (EventAddRow, TodoRow, idle TodoAddRow)
+            // and the inline TextField (composing TodoAddRow) all
+            // consume their own taps before reaching this gesture, so it
+            // only catches dead-space taps.
+            .contentShape(Rectangle())
+            .onTapGesture {
+                commitPendingTaskIfAny()
+            }
+        }
+    }
+
     @ViewBuilder
     private var stickyNoteOverlay: some View {
         if let insight = StickyNoteGenerator.insight(forWeekOffset: weekOffset,
@@ -202,31 +349,36 @@ struct DayPageContent: View {
                 let hasTasks = !viewModel.tasks.isEmpty
 
                 if hasEvents {
-                    EventEntryList(events: viewModel.events, onTap: { event in
-                        openEventID = event.id
-                    })
+                    EventEntryList(events: viewModel.events,
+                                   onTap: { event in
+                                       commitPendingTaskIfAny()
+                                       openEventID = event.id
+                                   },
+                                   onEdit: { event in
+                                       commitPendingTaskIfAny()
+                                       editingEventID = event.id
+                                   },
+                                   onDelete: { event in
+                                       commitPendingTaskIfAny()
+                                       Task { await viewModel.deleteEvent(id: event.id) }
+                                   })
                 }
 
                 if hasInbox {
                     InboxBlock(suggestions: viewModel.inbox,
                                onAccept: { id in
+                                   commitPendingTaskIfAny()
                                    Task { await viewModel.accept(suggestionID: id) }
                                },
                                onDismiss: { id in
+                                   commitPendingTaskIfAny()
                                    Task { await viewModel.dismiss(suggestionID: id) }
                                })
                 }
 
-                if hasTasks {
-                    TodoBlock(tasks: viewModel.tasks) { id in
-                        Task { await viewModel.toggleTask(id: id) }
-                    }
-                    .padding(.top, 12)
-                }
-
-                if !hasEvents, !hasInbox, !hasTasks {
-                    EmptyDayState()
-                }
+                // EventAddRow is pinned at the bottom alongside TodoBlock
+                // (see `bottomAffordances`) — not inline here — so it
+                // stays visible when the events list overflows.
             }
         }
     }

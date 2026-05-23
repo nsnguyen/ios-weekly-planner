@@ -27,9 +27,30 @@ import SwiftUI
 /// trip through the view-model's `toggleAlert(_:)` / `toggleLocationAlert(_:)`
 /// methods so a flip both updates UI state and persists the reminder.
 struct PaperEventSheet: View {
-    /// Identifier of the event to display. Drives the `.task(id:)` so a
-    /// different event tapped while the sheet is open will refetch.
-    let eventID: UUID
+    /// What the sheet is showing/doing.
+    enum SheetMode: Equatable {
+        case view(UUID)
+        case edit(UUID)
+        case create(at: Date)
+
+        var existingEventID: UUID? {
+            switch self {
+            case let .view(id), let .edit(id): return id
+            case .create: return nil
+            }
+        }
+    }
+
+    /// Initial mode for the sheet. Seeded into `currentMode` on appear
+    /// via the `.task(id:)` block. The view never reads `initialMode`
+    /// directly after seed — it reads `currentMode`, which can flip
+    /// (`.view` ↔ `.edit`) inside the same sheet via the Edit link.
+    let initialMode: SheetMode
+
+    /// Mutable mode the sheet actually renders. `nil` before the first
+    /// `.task(id:)` fires; the dispatcher treats `nil` as "default to
+    /// view-mode placeholder" so the sheet doesn't flash empty.
+    @State private var currentMode: SheetMode?
 
     /// Two-way binding to the sheet's open state. Set to `false` by the
     /// backdrop tap, the close button, drag-to-dismiss, and after a
@@ -44,6 +65,7 @@ struct PaperEventSheet: View {
 
     @State private var viewModel: EventDetailViewModel?
     @State private var showDeleteConfirm = false
+    @State private var showCancelConfirm = false
     @State private var dragOffset: CGFloat = 0
 
     var body: some View {
@@ -59,17 +81,32 @@ struct PaperEventSheet: View {
         .ignoresSafeArea()
         .animation(AnimationTokens.sheetSlide(reduced: reduceMotion),
                    value: isOpen)
-        .task(id: eventID) {
-            if viewModel == nil || viewModel?.eventID != eventID {
-                let generator = intelligenceService.map {
-                    EventSuggestionGenerator(intelligence: $0)
+        .task(id: initialMode) {
+            // Seed currentMode from the caller's initial intent. Re-seed
+            // whenever initialMode changes (e.g., a different event id
+            // arrives while the sheet is already on screen).
+            currentMode = initialMode
+            switch initialMode {
+            case .view(let id), .edit(let id):
+                if viewModel == nil || viewModel?.eventID != id {
+                    let generator = intelligenceService.map {
+                        EventSuggestionGenerator(intelligence: $0)
+                    }
+                    viewModel = EventDetailViewModel(eventID: id,
+                                                     eventStore: eventStore,
+                                                     suggestionGenerator: generator)
                 }
-                viewModel = EventDetailViewModel(eventID: eventID,
-                                                  eventStore: eventStore,
-                                                  suggestionGenerator: generator)
+                await viewModel?.load()
+                await viewModel?.refreshAISuggestion()
+                if case .edit = initialMode { viewModel?.beginEditing() }
+            case .create(let date):
+                if viewModel == nil {
+                    viewModel = EventDetailViewModel(eventID: UUID(),
+                                                     eventStore: eventStore)
+                }
+                viewModel?.beginCreating(at: date,
+                                         calendar: WeekMath.mondayCalendar())
             }
-            await viewModel?.load()
-            await viewModel?.refreshAISuggestion()
         }
         .alert("Delete this event?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive) {
@@ -79,6 +116,18 @@ struct PaperEventSheet: View {
                 }
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .alert("Discard changes?", isPresented: $showCancelConfirm) {
+            Button("Discard", role: .destructive) {
+                // Dirty cancel: .edit reverts to view; .create dismisses.
+                if case .edit = currentMode {
+                    revertToView()
+                } else {
+                    viewModel?.cancelEditing()
+                    isOpen = false
+                }
+            }
+            Button("Keep editing", role: .cancel) {}
         }
     }
 
@@ -146,15 +195,54 @@ struct PaperEventSheet: View {
     /// leading inset that clears the red margin / hole-punch column.
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            EventHeader(event: viewModel?.event ?? Self.placeholderEvent,
-                        onClose: { isOpen = false })
-
-            if let event = viewModel?.event, let viewModel {
-                bodyRows(event: event, viewModel: viewModel)
-                    .padding(.horizontal, 18)
-            } else {
-                Spacer()
-                    .frame(height: 200)
+            switch currentMode {
+            case .view, .none:
+                EventHeader(event: viewModel?.event ?? Self.placeholderEvent,
+                            onClose: { isOpen = false },
+                            onEdit: viewModel?.event == nil ? nil : { promoteToEdit() })
+                if let event = viewModel?.event, let viewModel {
+                    bodyRows(event: event, viewModel: viewModel)
+                        .padding(.horizontal, 18)
+                } else {
+                    Spacer().frame(height: 200)
+                }
+            case .edit, .create:
+                if let viewModel, let composer = viewModel.composer {
+                    let isCreate: Bool = { if case .create = currentMode { return true } else { return false } }()
+                    let isEdit: Bool = { if case .edit = currentMode { return true } else { return false } }()
+                    EditableEventContent(composer: composer,
+                                         canSave: composer.canSave,
+                                         isCreate: isCreate,
+                                         showsDelete: isEdit,
+                                         onSave: {
+                                             await viewModel.save()
+                                             // After save: .edit reverts to view in
+                                             // place; .create dismisses (no view to
+                                             // revert to).
+                                             if isEdit {
+                                                 if let id = currentMode?.existingEventID {
+                                                     currentMode = .view(id)
+                                                 }
+                                             } else if viewModel.composer == nil {
+                                                 isOpen = false
+                                             }
+                                         },
+                                         onCancel: {
+                                             if viewModel.composerIsDirty {
+                                                 showCancelConfirm = true
+                                             } else if isEdit {
+                                                 // Clean cancel from edit → revert.
+                                                 revertToView()
+                                             } else {
+                                                 // Clean cancel from create → dismiss.
+                                                 viewModel.cancelEditing()
+                                                 isOpen = false
+                                             }
+                                         },
+                                         onDelete: { showDeleteConfirm = true })
+                } else {
+                    Spacer().frame(height: 200)
+                }
             }
         }
     }
@@ -183,6 +271,12 @@ struct PaperEventSheet: View {
 
             if event.attendeesCount > 1 {
                 EventInviteesRow(attendeesCount: event.attendeesCount)
+            }
+
+            if let notes = event.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !notes.isEmpty
+            {
+                EventNotesRow(notes: notes)
             }
 
             EventAISticky(suggestion: viewModel.aiSuggestion)
@@ -221,6 +315,28 @@ struct PaperEventSheet: View {
                     .frame(width: 10, height: 10)
             }
         }
+    }
+
+    // MARK: - Mode promotion
+
+    /// View → Edit promotion. Called from the view-mode header's Edit
+    /// link. Seeds the composer from the loaded event and flips
+    /// `currentMode` so `cardContent` dispatches to the editable variant.
+    /// No-op if not currently in `.view` (e.g., we're already editing).
+    private func promoteToEdit() {
+        guard case let .view(id) = currentMode else { return }
+        viewModel?.beginEditing()
+        currentMode = .edit(id)
+    }
+
+    /// Edit → View revert. Called from Save (after `viewModel.save()`
+    /// completes), from clean Cancel, and from the discard-confirmed
+    /// dirty Cancel. Clears any composer state and flips `currentMode`
+    /// back. No-op if not in `.edit`.
+    private func revertToView() {
+        guard case let .edit(id) = currentMode else { return }
+        viewModel?.cancelEditing()
+        currentMode = .view(id)
     }
 
     // MARK: - Drag-to-dismiss
@@ -295,7 +411,7 @@ private struct PaperEventSheetPreviewHost: View {
     var body: some View {
         ZStack {
             BookCover()
-            PaperEventSheet(eventID: eventID, isOpen: $isOpen)
+            PaperEventSheet(initialMode: .view(eventID), isOpen: $isOpen)
         }
         .environment(\.eventStore, store)
     }

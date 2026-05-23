@@ -39,13 +39,16 @@ enum EKEventMapping {
                         defaultCategory: Category = .personal,
                         existingID: UUID? = nil) -> Event
     {
-        let meta = decodeMeta(from: ekEvent.notes ?? "")
+        let rawNotes = ekEvent.notes ?? ""
+        let meta = decodeMeta(from: rawNotes)
+        let userText = userNotes(from: rawNotes)
         return Event(id: existingID ?? UUID(),
                      eventKitIdentifier: ekEvent.eventIdentifier,
                      title: ekEvent.title ?? "",
                      start: ekEvent.startDate,
                      end: ekEvent.endDate,
                      location: ekEvent.location,
+                     notes: userText.isEmpty ? nil : userText,
                      category: meta?.category ?? defaultCategory,
                      attendeesCount: ekEvent.attendees?.count ?? 0,
                      travelMinutes: nil,
@@ -81,11 +84,16 @@ enum EKEventMapping {
                         gmailMessageID: event.gmailMessageID,
                         gmailFrom: event.gmailFrom,
                         gmailSubject: event.gmailSubject)
+        let userBody = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard
             let data = try? JSONEncoder().encode(meta),
             let json = String(data: data, encoding: .utf8)
-        else { return "" }
-        return "\(metaMarker)\(json)\(metaEnd)"
+        else { return userBody }
+        let marker = "\(metaMarker)\(json)\(metaEnd)"
+        // Two newlines between the user's text and the meta marker so
+        // Apple Calendar's UI renders the marker on its own line at the
+        // tail of the notes pane.
+        return userBody.isEmpty ? marker : "\(userBody)\n\n\(marker)"
     }
 
     static func decodeMeta(from notes: String) -> (source: EventSource?,

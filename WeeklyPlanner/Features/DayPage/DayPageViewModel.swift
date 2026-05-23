@@ -34,6 +34,11 @@ final class DayPageViewModel {
     /// Cleared when a refresh succeeds.
     var loadError: String?
 
+    /// Inline-add composer for the to-do block. Re-anchored to this
+    /// day in `refresh()` so a flipped page hands the user a fresh row
+    /// pointing at the right date.
+    var taskComposer: TaskComposerState
+
     private let eventStore: any EventStoring
     private let inboxStore: any InboxStoring
     private let taskStore: any TaskStoring
@@ -74,6 +79,12 @@ final class DayPageViewModel {
         self.stickyGenerator = stickyGenerator
         self.modelContext = modelContext
         self.clock = clock
+        // Anchor the composer to this day-vm's date. Re-anchored in
+        // refresh() so the composer always points at the focused day
+        // even if the system date crosses midnight while the page is open.
+        let days = WeekMath.weekDays(forOffset: weekOffset, today: clock())
+        let anchor = days.indices.contains(dayIdx) ? days[dayIdx].date : clock()
+        self.taskComposer = TaskComposerState(forDay: anchor)
     }
 
     /// `true` iff this page represents the current calendar day. Drives the
@@ -137,6 +148,14 @@ final class DayPageViewModel {
         }
 
         await refreshStickyInsightIfNeeded(now: now)
+
+        // Re-anchor the composer in case the clock advanced past midnight
+        // while the page was visible. The composer's day matches this
+        // page's date, not "today".
+        let days = WeekMath.weekDays(forOffset: weekOffset, today: now)
+        if days.indices.contains(dayIdx) {
+            taskComposer.setDay(days[dayIdx].date)
+        }
     }
 
     /// Generate a fresh `AIInsight` for this day if one isn't already
@@ -185,6 +204,61 @@ final class DayPageViewModel {
     func toggleTask(id: UUID) async {
         do {
             try await taskStore.toggle(id: id)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
+
+    /// Commit the composer's current draft. No-op when `canCommit` is
+    /// false (empty title). On success, resets the composer's title (so
+    /// the user can chain adds) but keeps `isComposing == true`.
+    /// Surfaces errors via `loadError`.
+    func addTask() async {
+        guard taskComposer.canCommit else { return }
+        let task = taskComposer.build(category: .personal)
+        do {
+            try await taskStore.upsert(task)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        taskComposer.reset()
+        await refresh()
+    }
+
+    /// Fetch the task by id, apply the mutation, persist via upsert.
+    /// Used by the mini popover for priority / due-date / title edits.
+    func updateTask(id: UUID, mutation: (TaskItem) -> Void) async {
+        do {
+            guard let task = try await taskStore.task(id: id) else { return }
+            mutation(task)
+            try await taskStore.upsert(task)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
+
+    /// Delete the task and refresh.
+    func deleteTask(id: UUID) async {
+        do {
+            try await taskStore.delete(id: id)
+        } catch {
+            loadError = error.localizedDescription
+        }
+        await refresh()
+    }
+
+    /// Delete the event by id. Routes through `EventStore.delete(id:)`
+    /// which mirrors the removal to EventKit (Phase 04 decorator) and
+    /// posts `.eventStoreDidChange` — the auto-refresh observer will
+    /// pick that up, but we also `await refresh()` explicitly so the
+    /// row disappears immediately without a publisher round-trip.
+    /// Errors surface via `loadError`, matching every other store
+    /// mutation in this VM.
+    func deleteEvent(id: UUID) async {
+        do {
+            try await eventStore.delete(id: id)
         } catch {
             loadError = error.localizedDescription
         }

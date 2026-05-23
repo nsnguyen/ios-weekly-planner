@@ -18,6 +18,21 @@ struct EventHeader: View {
     /// uses this to set `isOpen = false`.
     var onClose: () -> Void
 
+    /// Optional callback for promoting the sheet from `.view` to `.edit`.
+    /// When non-nil, the header renders an "Edit" link in the trailing
+    /// edge left of the close `×`. Nil in `.edit`/`.create` modes and in
+    /// previews/tests that don't need the affordance.
+    var onEdit: (() -> Void)?
+
+    init(event: Event,
+         onClose: @escaping () -> Void,
+         onEdit: (() -> Void)? = nil)
+    {
+        self.event = event
+        self.onClose = onClose
+        self.onEdit = onEdit
+    }
+
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
 
@@ -28,6 +43,10 @@ struct EventHeader: View {
                 .accessibilityLabel(AccessibilityFormatters.eventLabel(event))
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
+            if let onEdit {
+                editButton(onEdit: onEdit)
+                    .padding(.trailing, 6)
+            }
             closeButton
         }
         .padding(EdgeInsets(top: 38, leading: 44, bottom: 14, trailing: 18))
@@ -89,6 +108,24 @@ struct EventHeader: View {
         .buttonStyle(.plain)
         .contentShape(Rectangle().inset(by: -8))
         .accessibilityLabel("Close")
+    }
+
+    /// "Edit" link rendered in the trailing edge of the header when
+    /// `onEdit` is supplied. Handwriting, bold, blue ink, underlined —
+    /// matches the design system's link affordance.
+    private func editButton(onEdit: @escaping () -> Void) -> some View {
+        Button(action: onEdit) {
+            Text("Edit")
+                .font(font.font(at: 15, weight: .bold))
+                .underline()
+                .foregroundStyle(theme.blueInk)
+        }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle().inset(by: -8))
+        .accessibilityLabel("Edit event")
+        .accessibilityHint("Switches the sheet to edit mode")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityIdentifier("paperEventSheet.edit")
     }
 
     // MARK: - Time formatting

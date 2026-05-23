@@ -69,7 +69,7 @@ struct WeekPageView: View {
             }
 
             if let id = openEventID {
-                PaperEventSheet(eventID: id,
+                PaperEventSheet(initialMode: .view(id),
                                 isOpen: Binding(get: { openEventID != nil },
                                                 set: { if !$0 { openEventID = nil } }))
             }
@@ -82,6 +82,12 @@ struct WeekPageView: View {
                                               inboxStore: inboxStore)
             }
             await viewModel?.refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .eventStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .taskStoreDidChange)) { _ in
+            Task { await viewModel?.refresh() }
         }
     }
 

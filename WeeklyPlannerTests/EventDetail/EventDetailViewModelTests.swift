@@ -126,6 +126,42 @@ final class EventDetailViewModelTests: XCTestCase {
         await vm.load()
         XCTAssertTrue(vm.aiSuggestion.contains("Uber") || vm.aiSuggestion.contains("Trick Dog"))
     }
+
+    func testSaveCommitsComposerDraft() async throws {
+        let event = Event(title: "Old title",
+                          start: Date(timeIntervalSince1970: 1_780_000_000),
+                          end: Date(timeIntervalSince1970: 1_780_003_600),
+                          category: .work)
+        try await eventStore.upsert(event)
+
+        let vm = EventDetailViewModel(eventID: event.id, eventStore: eventStore, geocoder: fakeGeocoder)
+        await vm.load()
+        vm.beginEditing()
+        XCTAssertNotNil(vm.composer)
+
+        vm.composer?.title = "New title"
+        vm.composer?.category = .health
+        await vm.save()
+
+        let reloaded = try await eventStore.event(id: event.id)
+        XCTAssertEqual(reloaded?.title, "New title")
+        XCTAssertEqual(reloaded?.category, .health)
+        XCTAssertNil(vm.composer, "composer should clear after a successful save")
+    }
+
+    func testSaveInCreateModeUpsertsBrandNewEvent() async throws {
+        let vm = EventDetailViewModel(eventID: UUID(),
+                                      eventStore: eventStore,
+                                      geocoder: fakeGeocoder)
+        vm.beginCreating(at: Date(timeIntervalSince1970: 1_780_000_000),
+                         calendar: WeekMath.mondayCalendar())
+        vm.composer?.title = "Lunch with Jamie"
+        await vm.save()
+
+        let all = try await eventStore.events(forWeekOffset: 0,
+                                              today: Date(timeIntervalSince1970: 1_780_000_000))
+        XCTAssertEqual(all.filter { $0.title == "Lunch with Jamie" }.count, 1)
+    }
 }
 
 /// Test-only geocoder that returns a canned coordinate or throws a canned

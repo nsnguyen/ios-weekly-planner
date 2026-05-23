@@ -55,6 +55,7 @@ final class SwiftDataEventStore: EventStoring {
             existing.start = event.start
             existing.end = event.end
             existing.location = event.location
+            existing.notes = event.notes
             existing.categoryRaw = event.categoryRaw
             existing.attendeesCount = event.attendeesCount
             existing.travelMinutes = event.travelMinutes
