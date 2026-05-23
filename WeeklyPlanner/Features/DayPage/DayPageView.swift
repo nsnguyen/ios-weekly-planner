@@ -162,6 +162,40 @@ struct DayPageContent: View {
                                 isOpen: Binding(get: { editingEventID != nil },
                                                 set: { if !$0 { editingEventID = nil } }))
             }
+            if let id = editingTaskID,
+               let task = viewModel?.tasks.first(where: { $0.id == id })
+            {
+                Color.clear
+                    .frame(width: 0, height: 0)
+                    .popover(isPresented: Binding(get: { editingTaskID != nil },
+                                                  set: { if !$0 { editingTaskID = nil } }),
+                             attachmentAnchor: .point(.center),
+                             arrowEdge: .top)
+                    {
+                        TaskMiniPopover(task: task,
+                                        onPriorityChange: { newPriority in
+                                            Task {
+                                                await viewModel?.updateTask(id: id) {
+                                                    $0.priority = newPriority
+                                                }
+                                            }
+                                        },
+                                        onDueChange: { newDue in
+                                            Task {
+                                                await viewModel?.updateTask(id: id) {
+                                                    $0.due = newDue
+                                                }
+                                            }
+                                        },
+                                        onDelete: {
+                                            Task {
+                                                await viewModel?.deleteTask(id: id)
+                                                editingTaskID = nil
+                                            }
+                                        },
+                                        onDismiss: { editingTaskID = nil })
+                    }
+            }
         }
         .task {
             if viewModel == nil {
