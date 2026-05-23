@@ -87,7 +87,6 @@ struct DayPageContent: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.deepLinkRouter) private var deepLinkRouter
-    @Environment(\.eventCreationRequest) private var creationRequest
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
     /// appear, at which point we create it and call `refresh()`.
@@ -177,11 +176,6 @@ struct DayPageContent: View {
             }
             await viewModel?.refresh()
         }
-        .onChange(of: creationRequest.anchorDate) { _, new in
-            guard let anchor = new else { return }
-            creatingEventAt = anchor
-            creationRequest.consume()
-        }
         .onChange(of: deepLinkRouter.pending) { _, new in
             guard case let .event(id) = new else { return }
             openEventID = id
@@ -253,6 +247,10 @@ struct DayPageContent: View {
 
                 if !hasEvents, !hasInbox, !hasTasks {
                     EmptyDayState()
+                }
+
+                AddEventLink {
+                    creatingEventAt = weekDay.date
                 }
             }
         }

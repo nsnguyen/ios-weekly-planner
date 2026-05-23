@@ -1,6 +1,7 @@
 import XCTest
 
-/// End-to-end create-event flow: launch app → tap FAB → fill title →
+/// End-to-end create-event flow: launch app → tap the inline
+/// "+ add an event" link at the bottom of the Day page → fill title →
 /// tap Save → verify a row labeled with that title appears on the Day
 /// page.
 final class EventCreateFlowUITests: XCTestCase {
@@ -14,9 +15,13 @@ final class EventCreateFlowUITests: XCTestCase {
         app.launchArguments += ["-UITestSeedEmptyStore"]
         app.launch()
 
-        let fab = app.buttons["appshell.fab.add"]
-        XCTAssertTrue(fab.waitForExistence(timeout: 5))
-        fab.tap()
+        // The "+ add an event" inline link lives at the bottom of the
+        // Day page's content; scrolling may be required to reach it on
+        // shorter simulators, but iPhone 17 Pro shows it without a scroll
+        // on a fresh page.
+        let addLink = app.buttons["daypage.addEvent"]
+        XCTAssertTrue(addLink.waitForExistence(timeout: 5))
+        addLink.tap()
 
         let title = "UITest Lunch \(UUID().uuidString.prefix(6))"
         let titleField = app.textFields.firstMatch

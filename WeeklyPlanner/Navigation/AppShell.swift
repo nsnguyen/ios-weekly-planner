@@ -34,7 +34,6 @@ struct AppShell: View {
     @State private var paperView: PaperView = .day
     @State private var isPickerOpen: Bool = false
     @State private var isAISearchOpen: Bool = false
-    @State private var creationRequest = EventCreationRequest()
 
     /// The current settings row, or a fresh default if SwiftData hasn't
     /// materialized one yet. `@Query` returns at most one element here
@@ -80,16 +79,6 @@ struct AppShell: View {
                 isPickerOpen = false
             }
 
-            FloatingInkButton {
-                creationRequest.request(at: focusedDayDate())
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity,
-                   alignment: .bottomTrailing)
-            .padding(.trailing, 24)
-            .padding(.bottom, Spacing.tabBarHeight + 20)
-            .allowsHitTesting(selection.current == .calendar)
-            .opacity(selection.current == .calendar ? 1 : 0)
-
             if isAISearchOpen {
                 PaperAISearchView(isOpen: $isAISearchOpen,
                                   eventStore: eventStore,
@@ -123,9 +112,6 @@ struct AppShell: View {
         .animation(AnimationTokens.aiOverlaySlide(reduced: reduceMotion),
                    value: isAISearchOpen)
         .environment(\.intelligenceService, makeIntelligenceService())
-        .environment(\.isAnySheetOpen,
-                     isPickerOpen || isAISearchOpen || creationRequest.anchorDate != nil)
-        .environment(\.eventCreationRequest, creationRequest)
         .paperTheme(resolvedTheme)
         .paperFont(resolvedFont)
         .paperSize(resolvedSize)
@@ -186,14 +172,4 @@ struct AppShell: View {
         return PlannerLanguageModel(registry: registry, fallback: fallback)
     }
 
-    /// Day currently visible in the Calendar tab. Used as the default
-    /// anchor when the user taps "+". Falls back to "now" if WeekMath
-    /// returns no days for the current offset (shouldn't happen).
-    private func focusedDayDate() -> Date {
-        let today = Date()
-        let days = WeekMath.weekDays(forOffset: controller.current.week,
-                                      today: today)
-        guard days.indices.contains(controller.current.day) else { return today }
-        return days[controller.current.day].date
-    }
 }
