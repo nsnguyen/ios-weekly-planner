@@ -24,9 +24,28 @@ struct TodoRow: View {
     /// `TaskStoring.toggle(id:)`.
     var onToggle: () -> Void
 
+    /// Optional. Invoked when the user picks "Delete" from the trailing swipe
+    /// action or the long-press context menu. `nil` hides both affordances.
+    var onDelete: (() -> Void)?
+
+    /// Optional. Invoked when the user picks "Edit" from the long-press
+    /// context menu. `nil` hides the Edit item.
+    var onLongPress: (() -> Void)?
+
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
+
+    init(task: TaskItem,
+         onToggle: @escaping () -> Void,
+         onDelete: (() -> Void)? = nil,
+         onLongPress: (() -> Void)? = nil)
+    {
+        self.task = task
+        self.onToggle = onToggle
+        self.onDelete = onDelete
+        self.onLongPress = onLongPress
+    }
 
     var body: some View {
         Button(action: onToggle) {
@@ -41,6 +60,31 @@ struct TodoRow: View {
             .contentShape(Rectangle().inset(by: -4))
         }
         .buttonStyle(.plain)
+        .swipeActions(edge: .trailing) {
+            if let onDelete {
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+        .contextMenu {
+            if let onLongPress {
+                Button {
+                    onLongPress()
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+            }
+            if let onDelete {
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
     }
 
     // MARK: - Subviews
