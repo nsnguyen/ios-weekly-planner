@@ -42,17 +42,18 @@ struct TodoBlock: View {
     @Environment(\.paperSize) private var size
 
     var body: some View {
-        if tasks.isEmpty && !composer.isComposing {
-            EmptyView()
-        } else {
-            content
-        }
+        // Always render the dashed yellow patch — even with zero tasks
+        // the header + `+ add your first to-do` affordance carry the
+        // empty state, per the mock.
+        content
     }
 
     // MARK: - Subviews
 
-    /// Composes header + sorted rows inside the yellow dashed patch. Split
-    /// out so the outer `body` only carries the empty-state gate.
+    /// Composes header + sorted rows inside the yellow dashed patch.
+    /// When `tasks` is empty the rows section collapses to just the
+    /// `TodoAddRow` placeholder (which shows the "add your first to-do"
+    /// copy via `hasExistingTasks: false`).
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -67,7 +68,9 @@ struct TodoBlock: View {
                         .accessibleTask(task) { onToggle(task.id) }
                         .accessibilityIdentifier(AccessibilityIDs.daypageTodoRow(task.id))
                 }
-                TodoAddRow(composer: composer, onCommit: onAddTask)
+                TodoAddRow(composer: composer,
+                           hasExistingTasks: !sortedTasks.isEmpty,
+                           onCommit: onAddTask)
                     .padding(.top, sortedTasks.isEmpty ? 0 : 4)
             }
         }

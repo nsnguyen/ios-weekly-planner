@@ -1,12 +1,13 @@
 import XCTest
 
-/// End-to-end inline add-task flow: launch app → find or open TodoBlock
-/// → tap "+ add a task" → type title → Return → verify the row appears.
+/// End-to-end inline add-task flow: launch app → tap the always-visible
+/// `+ add a to-do` / `+ add your first to-do` row inside the bottom-pinned
+/// `TodoBlock` → type title → Return → verify the row appears.
 ///
-/// Mirrors Phase 22's `EventCreateFlowUITests` discovery pattern; uses
-/// the `daypage.todo.addRow` identifier from `TodoAddRow` and falls back
-/// to `daypage.empty.addTask` from `EmptyDayState` when the day starts
-/// empty.
+/// The to-do patch is now always rendered (the `EmptyDayState` empty-day
+/// CTA was retired when the patch became persistent), so a single
+/// identifier lookup (`daypage.todo.addRow`) covers both empty and
+/// non-empty states.
 final class TaskCreateFlowUITests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -17,32 +18,10 @@ final class TaskCreateFlowUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        // Open the composer. The Day page may already render a TodoBlock
-        // (from seeded tasks) — if so, tap its add row directly. Otherwise
-        // tap the empty-state CTA.
         let addRow = app.buttons["daypage.todo.addRow"]
-        let emptyCTA = app.buttons["daypage.empty.addTask"]
-
-        // The simulator's SwiftData store persists across test runs, so the
-        // landing day (today) accumulates events from `EventCreateFlowUITests`
-        // and shows neither TodoBlock (no tasks) nor EmptyDayState (has
-        // events). Hop the sidetab carousel to find a day where one of the
-        // two CTAs is reachable. Sidetabs are stable identifiers
-        // `daypage.sidetab.{0..6}` set by Phase 06's DayPageView.
-        func findComposerEntry() -> Bool {
-            if addRow.waitForExistence(timeout: 2) { addRow.tap(); return true }
-            if emptyCTA.waitForExistence(timeout: 1) { emptyCTA.tap(); return true }
-            for idx in 0...6 {
-                let tab = app.buttons["daypage.sidetab.\(idx)"]
-                guard tab.exists else { continue }
-                tab.tap()
-                if addRow.waitForExistence(timeout: 1) { addRow.tap(); return true }
-                if emptyCTA.waitForExistence(timeout: 1) { emptyCTA.tap(); return true }
-            }
-            return false
-        }
-        let opened = findComposerEntry()
-        XCTAssertTrue(opened, "Either the TodoBlock add row or the empty-state CTA should be reachable on some weekday")
+        XCTAssertTrue(addRow.waitForExistence(timeout: 5),
+                      "TodoBlock add row should be reachable on the landing day")
+        addRow.tap()
 
         // Type a unique title so we can find the row deterministically.
         let title = "UITest Prep \(UUID().uuidString.prefix(6))"

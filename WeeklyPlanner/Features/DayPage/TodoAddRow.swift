@@ -15,6 +15,12 @@ import SwiftUI
 struct TodoAddRow: View {
     @Bindable var composer: TaskComposerState
 
+    /// Whether the surrounding `TodoBlock` already shows at least one
+    /// task. Drives the label copy: `"add your first to-do"` when the
+    /// patch is otherwise empty, `"add a to-do"` when it isn't. The flag
+    /// is read-only — the parent always knows the answer cheaply.
+    let hasExistingTasks: Bool
+
     /// Invoked when the user presses Return on the inline field with a
     /// non-empty title. Wired to `DayPageViewModel.addTask()`.
     let onCommit: () async -> Void
@@ -38,27 +44,43 @@ struct TodoAddRow: View {
 
     // MARK: - Idle state
 
-    /// Dashed-border row showing the faint "+ add a task" placeholder.
-    /// Whole row is a `Button` so VoiceOver advertises the affordance.
+    /// Faint "+ add a to-do" placeholder row. The leading glyph is a
+    /// small dashed-bordered square containing the `+` (matches the
+    /// mock — visually rhymes with the `TodoRow` checkbox while reading
+    /// as an empty add-affordance, not a completed item).
     private var idleRow: some View {
         Button {
             composer.isComposing = true
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "plus")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(theme.ink3)
-                Text("add a task")
+                dashedSquarePlus
+                Text(hasExistingTasks ? "add a to-do" : "add your first to-do")
                     .font(font.font(at: 17 * size.scale, weight: .regular).italic())
                     .foregroundStyle(theme.ink3)
                 Spacer(minLength: 0)
             }
-            .padding(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4))
+            .padding(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 4))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Add a task")
-        .accessibilityHint("Opens the inline task composer")
+        .accessibilityLabel(hasExistingTasks ? "Add a to-do" : "Add your first to-do")
+        .accessibilityHint("Opens the inline to-do composer")
+    }
+
+    /// 15×15 dashed-bordered rounded square with a centered `+`. The
+    /// dashed border matches the mock's "this is where you'd add one"
+    /// vocabulary; sizing matches `TodoRow.checkbox` (15×15) so the
+    /// glyph aligns with the column of real checkboxes above.
+    private var dashedSquarePlus: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 2)
+                .strokeBorder(theme.ink3,
+                              style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                .frame(width: 15, height: 15)
+            Image(systemName: "plus")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(theme.ink3)
+        }
     }
 
     // MARK: - Composing state
@@ -133,9 +155,10 @@ struct TodoAddRow: View {
         BookPage {
             PaperSurface {
                 VStack(alignment: .leading, spacing: 6) {
-                    TodoAddRow(composer: idle, onCommit: {})
+                    TodoAddRow(composer: idle, hasExistingTasks: false, onCommit: {})
+                    TodoAddRow(composer: idle, hasExistingTasks: true, onCommit: {})
                     Divider()
-                    TodoAddRow(composer: composing, onCommit: {})
+                    TodoAddRow(composer: composing, hasExistingTasks: true, onCommit: {})
                 }
                 .padding(.top, 40)
                 .padding(.leading, 44)

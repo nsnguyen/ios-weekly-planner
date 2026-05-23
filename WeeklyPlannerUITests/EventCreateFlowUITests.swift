@@ -15,11 +15,10 @@ final class EventCreateFlowUITests: XCTestCase {
         app.launchArguments += ["-UITestSeedEmptyStore"]
         app.launch()
 
-        // The "+ add an event" inline link lives at the bottom of the
-        // Day page's content; scrolling may be required to reach it on
-        // shorter simulators, but iPhone 17 Pro shows it without a scroll
-        // on a fresh page.
-        let addLink = app.buttons["daypage.addEvent"]
+        // The "+ add another" / "+ add your first event" inline link
+        // lives below the events + inbox list on the Day page — always
+        // present regardless of empty-state.
+        let addLink = app.buttons["daypage.events.addRow"]
         XCTAssertTrue(addLink.waitForExistence(timeout: 5))
         addLink.tap()
 

@@ -140,6 +140,9 @@ struct DayPageContent: View {
                                 AccessibilityRotorEntry(event.title, id: event.id)
                             }
                         }
+                        .safeAreaInset(edge: .bottom, spacing: 0) {
+                            todoBlockBottom
+                        }
 
                         PageNumber(date: weekDay.date)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
@@ -233,6 +236,36 @@ struct DayPageContent: View {
     /// inside the paper. If no insight exists the overlay collapses to an
     /// `EmptyView` and the corner is left blank — the design treats absent
     /// stickies as "no note today", not "blank placeholder".
+    /// Always-visible `TodoBlock` pinned to the bottom of the visible
+    /// PaperSurface via `.safeAreaInset(edge: .bottom)` on the ScrollView
+    /// above. The patch is rendered with the page's leading/trailing
+    /// margins so the dashed yellow background lines up under the rest of
+    /// the content (44pt leading to clear the red margin + hole punches,
+    /// 18pt trailing). Bottom padding (24pt) keeps the patch above the
+    /// `PageNumber` footer overlay.
+    @ViewBuilder
+    private var todoBlockBottom: some View {
+        if let viewModel {
+            TodoBlock(tasks: viewModel.tasks,
+                      composer: viewModel.taskComposer,
+                      onToggle: { id in
+                          Task { await viewModel.toggleTask(id: id) }
+                      },
+                      onAddTask: {
+                          await viewModel.addTask()
+                      },
+                      onDelete: { id in
+                          Task { await viewModel.deleteTask(id: id) }
+                      },
+                      onLongPress: { id in
+                          editingTaskID = id
+                      })
+                .padding(.leading, 44)
+                .padding(.trailing, 18)
+                .padding(.bottom, 24)
+        }
+    }
+
     @ViewBuilder
     private var stickyNoteOverlay: some View {
         if let insight = StickyNoteGenerator.insight(forWeekOffset: weekOffset,
@@ -277,34 +310,10 @@ struct DayPageContent: View {
                                })
                 }
 
-                let showsTodoBlock = hasTasks || viewModel.taskComposer.isComposing
-                if showsTodoBlock {
-                    TodoBlock(tasks: viewModel.tasks,
-                              composer: viewModel.taskComposer,
-                              onToggle: { id in
-                                  Task { await viewModel.toggleTask(id: id) }
-                              },
-                              onAddTask: {
-                                  await viewModel.addTask()
-                              },
-                              onDelete: { id in
-                                  Task { await viewModel.deleteTask(id: id) }
-                              },
-                              onLongPress: { id in
-                                  editingTaskID = id
-                              })
-                    .padding(.top, 12)
-                }
-
-                if !hasEvents, !hasInbox, !hasTasks, !viewModel.taskComposer.isComposing {
-                    EmptyDayState(onAddTask: {
-                        viewModel.taskComposer.isComposing = true
-                    })
-                }
-
-                AddEventLink {
+                EventAddRow(isFirstEntry: !hasEvents && !hasInbox) {
                     creatingEventAt = weekDay.date
                 }
+                .padding(.top, hasEvents || hasInbox ? 8 : 0)
             }
         }
     }
