@@ -104,6 +104,8 @@ struct DayPageContent: View {
     /// over the same binding.
     @State private var editingEventID: UUID?
 
+    @State private var editingTaskID: UUID?
+
     var body: some View {
         let now = Date()
         let days = WeekMath.weekDays(forOffset: weekOffset, today: now)
@@ -238,10 +240,22 @@ struct DayPageContent: View {
                                })
                 }
 
-                if hasTasks {
-                    TodoBlock(tasks: viewModel.tasks) { id in
-                        Task { await viewModel.toggleTask(id: id) }
-                    }
+                let showsTodoBlock = hasTasks || viewModel.taskComposer.isComposing
+                if showsTodoBlock {
+                    TodoBlock(tasks: viewModel.tasks,
+                              composer: viewModel.taskComposer,
+                              onToggle: { id in
+                                  Task { await viewModel.toggleTask(id: id) }
+                              },
+                              onAddTask: {
+                                  await viewModel.addTask()
+                              },
+                              onDelete: { id in
+                                  Task { await viewModel.deleteTask(id: id) }
+                              },
+                              onLongPress: { id in
+                                  editingTaskID = id
+                              })
                     .padding(.top, 12)
                 }
 
