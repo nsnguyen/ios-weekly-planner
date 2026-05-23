@@ -132,6 +132,17 @@ struct DayPageContent: View {
                                 .overlay(alignment: .topTrailing) {
                                     stickyNoteOverlay
                                 }
+                                // Tap on empty paper *between* events /
+                                // inbox rows commits the pending to-do.
+                                // SwiftUI only fires this when no child
+                                // (Button, TextField) claims the tap, so
+                                // the event-row Buttons still work
+                                // normally — those have their own
+                                // commitPendingTaskIfAny() calls.
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    commitPendingTaskIfAny()
+                                }
                         }
                         .refreshable {
                             await viewModel?.refresh(via: inboxSyncEngine)
@@ -141,6 +152,11 @@ struct DayPageContent: View {
                                 AccessibilityRotorEntry(event.title, id: event.id)
                             }
                         }
+                        // Drag-down on the page progressively dismisses
+                        // the keyboard, which trips the to-do composer's
+                        // blur handler. Standard iOS gesture; works the
+                        // same on simulator and device.
+                        .scrollDismissesKeyboard(.interactively)
                         .safeAreaInset(edge: .bottom, spacing: 0) {
                             bottomAffordances(weekDay: weekDay)
                         }
