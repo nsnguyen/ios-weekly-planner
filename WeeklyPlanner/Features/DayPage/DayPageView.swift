@@ -305,6 +305,18 @@ struct DayPageContent: View {
                     .padding(.bottom, 24)
             }
             .background(theme.cream)
+            // Tap-outside-to-commit also fires for the cream paper area
+            // INSIDE this bottom inset — specifically, the 44pt leading
+            // margin to the left of the to-do patch, the 18pt trailing
+            // margin to the right, and the gap between EventAddRow and
+            // TodoBlock. Buttons (EventAddRow, TodoRow, idle TodoAddRow)
+            // and the inline TextField (composing TodoAddRow) all
+            // consume their own taps before reaching this gesture, so it
+            // only catches dead-space taps.
+            .contentShape(Rectangle())
+            .onTapGesture {
+                commitPendingTaskIfAny()
+            }
         }
     }
 
