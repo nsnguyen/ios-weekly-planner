@@ -170,30 +170,43 @@ struct TodoAddRow: View {
 
     // MARK: - Trailing commit checkbox
 
-    /// 15×15 unfilled checkbox at the trailing edge of the composing
-    /// row, only visible while the user has typed something. Tap →
-    /// `commitWithFlash()` briefly fills the box with `theme.greenInk`
-    /// and overlays a white checkmark before committing the to-do.
-    /// Matches the size + corner radius of `TodoRow.checkbox` (the box
-    /// that'll appear once the row is committed), so the commit gesture
-    /// reads as "check this off into existence."
+    /// 18×18 dashed-bordered circle with a grey checkmark inside,
+    /// visually rhyming with `EventAddRow.dashedCirclePlus` (same
+    /// dashed-circle vocabulary; checkmark instead of plus). Only
+    /// visible while the user has typed something.
+    ///
+    /// On tap: the dashed border disappears and the circle fills with
+    /// `theme.greenInk` while the checkmark flips to white — a crisp
+    /// "saved!" pulse over ~180ms before `commitWithFlash()` lets the
+    /// composer reset.
     private var commitCheckbox: some View {
         Button {
             Task { await commitWithFlash() }
         } label: {
             ZStack {
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(isCommittingFlash ? theme.greenInk : Color.white)
-                RoundedRectangle(cornerRadius: 1)
-                    .strokeBorder(isCommittingFlash ? theme.greenInk : theme.ink,
-                                  lineWidth: 1.4)
-                if isCommittingFlash {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Color.white)
+                // Solid fill — clear in idle, greenInk while committing.
+                // The Color animation gives a smooth tint transition.
+                Circle()
+                    .fill(isCommittingFlash ? theme.greenInk : Color.clear)
+                    .frame(width: 18, height: 18)
+
+                // Dashed border in idle. Hidden during the green-flash
+                // so the dash pattern doesn't show on top of the fill.
+                if !isCommittingFlash {
+                    Circle()
+                        .strokeBorder(theme.ink3,
+                                      style: StrokeStyle(lineWidth: 1,
+                                                          dash: [2, 2]))
+                        .frame(width: 18, height: 18)
                 }
+
+                // Checkmark glyph — grey ink3 in idle, white during the
+                // green-flash. Same point size (9) and weight as the
+                // sibling EventAddRow.dashedCirclePlus icon.
+                Image(systemName: "checkmark")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(isCommittingFlash ? Color.white : theme.ink3)
             }
-            .frame(width: 15, height: 15)
             .contentShape(Rectangle().inset(by: -8))
             .animation(.easeOut(duration: 0.15), value: isCommittingFlash)
         }
