@@ -238,6 +238,12 @@ struct PaperEventSheet: View {
                 EventInviteesRow(attendeesCount: event.attendeesCount)
             }
 
+            if let notes = event.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !notes.isEmpty
+            {
+                EventNotesRow(notes: notes)
+            }
+
             EventAISticky(suggestion: viewModel.aiSuggestion)
                 .padding(.top, 14)
 

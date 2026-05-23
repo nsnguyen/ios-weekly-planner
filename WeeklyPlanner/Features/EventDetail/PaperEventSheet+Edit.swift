@@ -35,6 +35,7 @@ struct EditableEventContent: View {
                                  invalidHint: !composer.timesAreValid)
                 CategorySwatchRow(selection: $composer.category)
                 LocationField(text: $composer.location)
+                NotesField(text: $composer.notes)
 
                 if showsDelete {
                     Button(action: onDelete) {

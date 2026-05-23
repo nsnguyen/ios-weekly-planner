@@ -16,6 +16,7 @@ final class EventComposerState {
     var end: Date
     var category: Category
     var location: String
+    var notes: String
     var alertOn: Bool
     var alertMinutes: Int
     var locationAlertOn: Bool
@@ -31,6 +32,7 @@ final class EventComposerState {
          end: Date,
          category: Category,
          location: String,
+         notes: String,
          alertOn: Bool,
          alertMinutes: Int,
          locationAlertOn: Bool)
@@ -40,6 +42,7 @@ final class EventComposerState {
         self.end = end
         self.category = category
         self.location = location
+        self.notes = notes
         self.alertOn = alertOn
         self.alertMinutes = alertMinutes
         self.locationAlertOn = locationAlertOn
@@ -56,6 +59,7 @@ final class EventComposerState {
                                   end: nextHour.addingTimeInterval(3600),
                                   category: .personal,
                                   location: "",
+                                  notes: "",
                                   alertOn: false,
                                   alertMinutes: 15,
                                   locationAlertOn: false)
@@ -95,6 +99,7 @@ final class EventComposerState {
                                        end: event.end,
                                        category: event.category,
                                        location: event.location ?? "",
+                                       notes: event.notes ?? "",
                                        alertOn: alertOn,
                                        alertMinutes: alertMinutes,
                                        locationAlertOn: locationAlertOn)
@@ -120,6 +125,7 @@ final class EventComposerState {
             || end != other.end
             || category != other.category
             || location != other.location
+            || notes != other.notes
             || alertOn != other.alertOn
             || alertMinutes != other.alertMinutes
             || locationAlertOn != other.locationAlertOn
@@ -163,11 +169,13 @@ final class EventComposerState {
 
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         return Event(id: id,
                      title: trimmedTitle,
                      start: start,
                      end: end,
                      location: trimmedLocation.isEmpty ? nil : trimmedLocation,
+                     notes: trimmedNotes.isEmpty ? nil : trimmedNotes,
                      category: category,
                      source: .manual,
                      reminders: reminders)

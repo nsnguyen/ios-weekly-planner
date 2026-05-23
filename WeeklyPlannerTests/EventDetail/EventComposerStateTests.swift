@@ -4,6 +4,65 @@ import XCTest
 
 @MainActor
 final class EventComposerStateTests: XCTestCase {
+    // MARK: - notes round-trip (Phase 22 notes addition)
+
+    func testEmptyDefaults_notesIsEmptyString() {
+        let state = EventComposerState.empty(at: Date(), calendar: .current)
+        XCTAssertEqual(state.notes, "")
+    }
+
+    func testFromEvent_roundTripsNotes() {
+        let event = Event(title: "Standup",
+                          start: Date(),
+                          end: Date().addingTimeInterval(3600),
+                          location: nil,
+                          notes: "Agenda:\n- Demo\n- Q&A",
+                          category: .work)
+        let state = EventComposerState.from(event)
+        XCTAssertEqual(state.notes, "Agenda:\n- Demo\n- Q&A")
+    }
+
+    func testFromEvent_nilNotes_resolvesToEmptyString() {
+        let event = Event(title: "T",
+                          start: Date(),
+                          end: Date().addingTimeInterval(3600),
+                          category: .personal)
+        let state = EventComposerState.from(event)
+        XCTAssertEqual(state.notes, "")
+    }
+
+    func testBuild_emptyNotes_setsNilOnEvent() {
+        let state = EventComposerState.empty(at: Date(), calendar: .current)
+        state.title = "Lunch"
+        state.notes = "   "
+        let event = state.build()
+        XCTAssertNil(event.notes)
+    }
+
+    func testBuild_nonEmptyNotes_trimsAndPersists() {
+        let state = EventComposerState.empty(at: Date(), calendar: .current)
+        state.title = "Lunch"
+        state.notes = "  Plan the menu  "
+        let event = state.build()
+        XCTAssertEqual(event.notes, "Plan the menu")
+    }
+
+    func testIsDirty_detectsNotesChange() {
+        let baseline = EventComposerState.empty(at: Date(), calendar: .current)
+        baseline.title = "Lunch"
+        baseline.notes = "First draft"
+
+        let current = EventComposerState.empty(at: baseline.start, calendar: .current)
+        current.title = baseline.title
+        current.start = baseline.start
+        current.end = baseline.end
+        current.notes = baseline.notes
+        XCTAssertFalse(current.isDirty(against: baseline))
+
+        current.notes = "Second draft"
+        XCTAssertTrue(current.isDirty(against: baseline))
+    }
+
     func testEmptyDefaults_startNextHour_endPlusOne() {
         let now = Date(timeIntervalSince1970: 1_780_000_000) // 2026-06-04 19:13:20 UTC
         let calendar = WeekMath.mondayCalendar()

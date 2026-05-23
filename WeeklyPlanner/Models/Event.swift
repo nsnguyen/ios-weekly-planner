@@ -20,6 +20,12 @@ final class Event {
     var end: Date
     var location: String?
 
+    /// Free-form user-authored notes. Round-tripped to `EKEvent.notes`
+    /// alongside the planner-meta marker. `nil` when the user hasn't
+    /// written anything (so an empty edit doesn't fight an existing
+    /// third-party note).
+    var notes: String?
+
     /// Stored as String raw value so SwiftData predicates can filter on it
     /// directly (`#Predicate { $0.categoryRaw == "work" }`).
     var categoryRaw: String
@@ -51,6 +57,7 @@ final class Event {
          start: Date,
          end: Date,
          location: String? = nil,
+         notes: String? = nil,
          category: Category,
          attendeesCount: Int = 0,
          travelMinutes: Int? = nil,
@@ -68,6 +75,7 @@ final class Event {
         self.start = start
         self.end = end
         self.location = location
+        self.notes = notes
         categoryRaw = category.rawValue
         self.attendeesCount = attendeesCount
         self.travelMinutes = travelMinutes
