@@ -790,6 +790,24 @@ that flips the composer on.
 - UITest pollution: `EventCreateFlowUITests` + `TaskCreateFlowUITests`
   both write to the production SwiftData store. Honor the
   `-UITestSeedEmptyStore` launch arg OR add tearDown cleanup.
+- **`StubTaskStore.upsert/toggle/delete` are silent no-ops** — they
+  don't post `.taskStoreDidChange` (only `SwiftDataTaskStore` does).
+  Auto-refresh observers in `DayPageContent`/`WeekPageView` therefore
+  won't fire in previews/tests that use the stub. Real prod store
+  works correctly; flagged for future hardening.
+- **Acceptance criterion 4's "200ms strikethrough+fade" delete
+  animation is NOT implemented.** Swipe Delete currently just
+  re-fetches after `taskStore.delete` → the row disappears via the
+  default SwiftUI ForEach diff (no custom transition). Either ship
+  the fade or strike the wording from the criterion.
+- **Test debt** — the plan listed but didn't ship:
+  - `TaskStoreUpsertDeleteTests` (4 cases — `upsert_newTask`,
+    `upsert_existingTask_replacesFields`, `delete_removesAndPostsChange`,
+    `delete_unknownID_throwsNotFound`). Coverage is implicit via
+    `TodoBlockCRUDTests`.
+  - `TaskMiniPopover` interaction tests — Today/Tomorrow chip wiring,
+    priority swatch wiring, due picker callback. Zero coverage today.
+  - `TodoRow.swipeActions` + `.contextMenu` wiring tests.
 
 **Tests added:** 12 unit (6 in `TaskComposerStateTests`, 6 in
 `TodoBlockCRUDTests`) + 1 UI test (`TaskCreateFlowUITests`). Full
