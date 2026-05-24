@@ -56,15 +56,17 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 21 | Accessibility, Dynamic Type, Localization, RTL       | I — Polish          | ✅     |
 | 22 | Manual Event CRUD                                    | J — Completeness    | ✅     |
 | 23 | Manual Task CRUD                                     | J                   | ✅     |
-| 24 | AI Sticky v2 — Live & Actionable                     | J                   | ⏳     |
+| 24 | AI Sticky v2 — Live & Actionable                     | J                   | ✅     |
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
 
-**Current state:** Milestones A–I shipped on `main`. Milestone J Phases 22 + 23 merged to `main` in [PR #5](https://github.com/nsnguyen/ios-weekly-planner/pull/5) (2026-05-23). Phase 20 (Modern Mode) archived at tag `phase-20-archive`. 341 unit tests + 11 UI tests, all green.
+**Current state:** Milestones A–J shipped on `main`. Phase 20 (Modern
+Mode) archived at tag `phase-20-archive`. Phase 24 (AI Sticky v2)
+merged via PR #<TBD>.
 
-**Milestone J — Completeness** is in progress: Phase 22 ✅, Phase 23 ✅, Phase 24 (AI Sticky v2) pending. Spec: `docs/superpowers/specs/2026-05-22-functional-completeness-design.md`.
-
-Next up: Phase 24 — AI Sticky v2 (Live & Actionable).
+Next up: Milestone K — Phase 25 (Final Polish, App Icon, Launch
+Screen, Privacy Manifest) and Phase 26 (App Store Submission &
+TestFlight).
 
 ## Reading a Phase Doc
 
@@ -822,4 +824,144 @@ suite: **341 unit tests + 11 UI tests, all green**.
 - New: `WeeklyPlannerUITests/TaskCreateFlowUITests.swift`
 - Modified: `WeeklyPlanner/Features/DayPage/{TodoBlock,TodoRow,EmptyDayState,DayPageViewModel,DayPageView}.swift`
 - Modified: `WeeklyPlanner/Features/WeekPage/WeekPageView.swift`
+
+### Phase 24 — AI Sticky v2 (Live & Actionable)
+
+Shipped a cascading AI sticky-note system that runs four signal
+sources concurrently and persists up to 3 insights per day:
+
+- **TravelInsightGenerator** — `MKDirections` ETA + `CLGeocoder`
+  address resolution. Emits "Leave by HH:mm for <event>" when the
+  recommended departure falls in the next 60 minutes. Priority 0.
+- **WeatherInsightGenerator** — `WeatherService.shared` hourly
+  precipitation forecast. Emits "Bring an umbrella — rain at <h>pm"
+  when any hour overlapping an event has precip chance ≥ 0.4.
+  Priority 1.
+- **KeywordInsightGenerator** — Foundation Models prompt over the
+  day's event titles, returning a `KeywordInsightDraft` (text,
+  relatedEventID, confidence). Emits a deep-linkable nudge when
+  confidence ≥ 0.6. Priority 2.
+- **InboxInsightGenerator** — synchronous count of pending
+  `InboxSuggestion` rows; emits "<n> inbox suggestion(s) for today"
+  with a `weeklyplanner://inbox/<dayKey>` deep link. Priority 3.
+- **EncouragementInsightGenerator** — renamed from Phase 13's
+  `StickyInsightGenerator`. Runs only as the fallback when the four
+  primaries return nil. Priority 9.
+
+`StickyOrchestrator` runs the four primaries in `withTaskGroup`,
+sorts by priority, caps at 3 (`Self.cascadeCap`), persists via
+`(dayKey, kind)` replacement so re-runs don't duplicate, and caches
+runs per `(dayKey, eventsHash)` for 5 minutes to absorb rapid
+page-flips. Because `@Model` types can't be `Sendable`, the
+orchestrator passes a private `InsightDraft: Sendable` snapshot
+through the task group and reconstructs `AIInsight` rows on the
+MainActor consumer side.
+
+`AIStickyStack` renders the cascade at the top-right of the Day
+page. The top sticky is tappable (opens `actionURL`), long-pressable
+(context menu with Dismiss / Refresh / Show another / kind-specific
+action), and exposes a "↻" eyebrow refresh button. Behind stickies
+peek at z-1 / z-2 with (-4, 8) / (-8, 14) offsets and incrementally
+lower tilts.
+
+**Architecture deviations:**
+
+1. **`AIInsight.dayKey` uniqueness dropped.** Phase 03 ships with
+   `@Attribute(.unique) var dayKey`; Phase 24 needs multiple insights
+   per day (one per `kind`). Migration is lightweight — existing rows
+   default to `kind = .encouragement` / `priority: 9` via
+   property-level defaults.
+
+2. **`KeywordInsightModeling` seam wrapping `LanguageModelSession.respond(to:)` (un-typed path).**
+   Phase 18's `LiveEventExtractor` uses the typed `respond(to:generating:)` +
+   `@Generable` shape. Phase 24's keyword generator instead goes through a
+   smaller `KeywordInsightModeling` protocol whose `LiveKeywordInsightModel`
+   calls the un-typed `session.respond(to:)` (returns plain `String`) and
+   JSON-parses the result. Cleaner test seams via a Sendable
+   `KeywordInsightDraft`; future cleanup pass can migrate to `@Generable`.
+
+3. **WeatherKit live impl + entitlement.** Added
+   `com.apple.developer.weatherkit` to
+   `WeeklyPlanner/Supporting/WeeklyPlanner.entitlements`. The repo's
+   `project.yml` doesn't itemize capabilities (it just references
+   the entitlements file via `CODE_SIGN_ENTITLEMENTS`), so no
+   project.yml change was needed. Simulator builds with
+   `CODE_SIGN_IDENTITY=-` work without the Apple Developer Portal
+   step; real-device + TestFlight builds need WeatherKit enabled on
+   the App ID there.
+
+4. **`DeepLinkRouter.Destination.inbox(dayKey:)` case.** The router's
+   enum was already named `Destination` (the plan called it `Request`).
+   Added `.inbox(dayKey: String)`. `AppShell.onChange(of: pending)` is
+   case-agnostic — it routes any non-nil destination to the Calendar
+   tab — so no change there. Scroll-to-inbox-block from the deep link
+   is a follow-up.
+
+5. **AppShell eager-init to avoid cold-launch race.** Initial wiring
+   used `@State` + `.task` lazy-init for the orchestrator, but SwiftUI
+   doesn't guarantee parent-`.task` runs before child-view `.task`s.
+   On cold launch, `DayPageView.task` could construct `DayPageViewModel`
+   capturing a nil orchestrator → permanently-empty cascade until day-page
+   recreation. Fixed by hoisting orchestrator construction (and a stub-
+   store `IntelligenceService` for the encouragement fallback) into
+   `AppShell.init()` via `_stickyOrchestrator = State(initialValue: ...)`.
+   The env value is non-nil from the first render.
+
+6. **Swift 6 strict concurrency surprises.** Two adaptations: (a)
+   `InsightGenerator` protocol declared `: Sendable` and `DayContext`
+   marked `@unchecked Sendable` — `DayContext` carries `[Event]` /
+   `[InboxSuggestion]` `@Model` arrays which are read only on
+   MainActor; the contract is documented in the type's doc comment.
+   (b) The `withTaskGroup { addTask { @MainActor in ... } }` pattern
+   hit a region-isolation-checker analyzer limitation; hoisted the
+   MainActor hop into a `private static func generateDraft(gen:day:)`
+   helper to sidestep it.
+
+**Tests added:** 25 unit (across `KeywordInsightGeneratorTests`,
+`TravelInsightGeneratorTests`, `WeatherInsightGeneratorTests`,
+`StickyOrchestratorTests`, `AIStickyStackTests`,
+`DayPageViewModelTests` additions) + 1 UI test
+(`AIStickyStackUITests`). Full suite at branch tip: **376 unit + 10 UI
+= 386 total**. Three pre-existing UI failures (`AccessibilityAuditUITests.test{AISearchOverlay,DayPage,EventSheet}PassesAudit`) are Phase 21 baseline noise, not Phase 24 regressions.
+
+**Tracked follow-ups (deferred):**
+
+- Scroll-to-inbox-block from `.inbox` deep link (currently just lands
+  on Calendar tab).
+- Fresh `CLLocation` request via `CLLocationManagerDelegate` callback.
+  Current `LiveTravelProvider.currentLocation()` reads cached
+  `manager.location` synchronously; if nil, the travel generator
+  skips. Production should kick off a one-shot location request with
+  timeout.
+- `LiveKeywordInsightModel` uses JSON-over-`respond(to:)` rather than
+  `@Generable`. The Phase 18 pattern is preferred long-term.
+- `WeatherInsightGenerator.precipThreshold` is `0.4` — should be
+  configurable per user preference (or at least tuned with real-world
+  data) before the App Store cut.
+- `WeatherKit` request quota: Apple throttles ~50 reqs/min/device.
+  `WeatherInsightGenerator` doesn't cache its forecast locally;
+  rapid page-flips across many days could hit the limit. Add a
+  per-location forecast cache in a future polish pass.
+- Tilt-function duplication: `static func tilt(weekOffset:dayIdx:)`
+  is duplicated across 4 generators. Extract to a shared helper
+  during the next refactor.
+
+**Files added/modified:**
+
+New: `WeeklyPlanner/Intelligence/{InsightGenerator,StickyOrchestrator}.swift`,
+`WeeklyPlanner/Intelligence/Tasks/{Travel,Weather,Keyword,Inbox}InsightGenerator.swift`,
+`WeeklyPlanner/Features/DayPage/AIStickyStack.swift`,
+6 new test files under `WeeklyPlannerTests/{Intelligence,DayPage}/` and 1 UITest.
+
+Renamed: `Intelligence/Tasks/StickyInsightGenerator.swift` →
+`Intelligence/Tasks/EncouragementInsightGenerator.swift` (Phase 13's
+original encouragement generator demoted to fallback role).
+
+Modified: `WeeklyPlanner/Models/AIInsight.swift` (schema v2),
+`WeeklyPlanner/Features/DayPage/{AIStickyNote,StickyNoteGenerator,DayPageView,DayPageViewModel}.swift`,
+`WeeklyPlanner/Notifications/DeepLinkRouter.swift` (`.inbox` case),
+`WeeklyPlanner/Navigation/AppShell.swift` (orchestrator construction
++ deep-link routing), `WeeklyPlanner/Stores/Environment+Stores.swift`
+(`\.stickyOrchestrator` env key),
+`WeeklyPlanner/Supporting/WeeklyPlanner.entitlements` (+weatherkit).
 
