@@ -83,8 +83,14 @@ final class WeatherInsightGenerator: InsightGenerator {
 /// empty forecast → the generator emits nil.
 @MainActor
 final class LiveWeatherProvider: WeatherProviding {
+    private let manager: CLLocationManager
+
+    init() {
+        self.manager = CLLocationManager()
+    }
+
     func currentLocation() async -> CLLocation? {
-        CLLocationManager().location
+        manager.location
     }
 
     func hourlyPrecipitation(for location: CLLocation, day: Date) async -> [HourlyPrecipitation] {

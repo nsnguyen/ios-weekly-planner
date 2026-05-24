@@ -35,6 +35,12 @@ struct AppShell: View {
     @State private var isPickerOpen: Bool = false
     @State private var isAISearchOpen: Bool = false
 
+    /// Phase 24 — constructed once on first appearance so the orchestrator's
+    /// per-day TTL cache survives view re-renders. Computing a fresh
+    /// orchestrator in the env-injection chain would defeat the cache
+    /// (each render = new instance = empty cache).
+    @State private var stickyOrchestrator: StickyOrchestrator?
+
     /// The current settings row, or a fresh default if SwiftData hasn't
     /// materialized one yet. `@Query` returns at most one element here
     /// because `SwiftDataSettingsStore.current()` lazy-creates exactly one
@@ -112,6 +118,12 @@ struct AppShell: View {
         .animation(AnimationTokens.aiOverlaySlide(reduced: reduceMotion),
                    value: isAISearchOpen)
         .environment(\.intelligenceService, makeIntelligenceService())
+        .environment(\.stickyOrchestrator, stickyOrchestrator)
+        .task {
+            if stickyOrchestrator == nil {
+                stickyOrchestrator = makeStickyOrchestrator()
+            }
+        }
         .paperTheme(resolvedTheme)
         .paperFont(resolvedFont)
         .paperSize(resolvedSize)
@@ -170,6 +182,24 @@ struct AppShell: View {
         let registry = ToolRegistry(events: eventStore, tasks: taskStore, inbox: inboxStore)
         let fallback = StubIntelligenceService(eventStore: eventStore)
         return PlannerLanguageModel(registry: registry, fallback: fallback)
+    }
+
+    /// Phase 24 — builds the sticky cascade. The orchestrator owns its own
+    /// per-day TTL cache so it must be constructed once and reused. The
+    /// `EncouragementInsightGenerator` fallback guarantees the cascade
+    /// always emits at least one insight, matching the Phase 13 behaviour
+    /// the view layer was already designed around.
+    private func makeStickyOrchestrator() -> StickyOrchestrator {
+        let intelligence: any IntelligenceService = makeIntelligenceService()
+        let generators: [any InsightGenerator] = [
+            TravelInsightGenerator(provider: LiveTravelProvider()),
+            WeatherInsightGenerator(provider: LiveWeatherProvider()),
+            KeywordInsightGenerator(model: LiveKeywordInsightModel()),
+            InboxInsightGenerator(),
+        ]
+        return StickyOrchestrator(
+            generators: generators,
+            fallback: EncouragementInsightGenerator(intelligence: intelligence))
     }
 
 }
