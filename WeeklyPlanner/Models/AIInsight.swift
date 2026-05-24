@@ -96,8 +96,3 @@ extension AIInsight {
         set { kindRaw = newValue.rawValue }
     }
 }
-
-// TEMP: moved to Intelligence/InsightGenerator.swift in Task 2
-enum InsightKind: String, CaseIterable, Codable, Sendable {
-    case travel, weather, keyword, inbox, encouragement
-}
