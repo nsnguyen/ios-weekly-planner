@@ -4,7 +4,7 @@ import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
-final class StickyInsightGeneratorTests: XCTestCase {
+final class EncouragementInsightGeneratorTests: XCTestCase {
     private var container: ModelContainer!
     private var eventStore: SwiftDataEventStore!
 
@@ -27,7 +27,7 @@ final class StickyInsightGeneratorTests: XCTestCase {
             Event(title: "Lunch with Mei", start: start.addingTimeInterval(7200),
                   end: start.addingTimeInterval(9000), category: .personal),
         ]
-        let prompt = StickyInsightGenerator.prompt(weekOffset: 0, dayIdx: 0, events: events)
+        let prompt = EncouragementInsightGenerator.prompt(weekOffset: 0, dayIdx: 0, events: events)
         XCTAssertTrue(prompt.contains("Monday"))
         XCTAssertTrue(prompt.contains("Standup"))
         XCTAssertTrue(prompt.contains("Lunch with Mei"))
@@ -35,16 +35,16 @@ final class StickyInsightGeneratorTests: XCTestCase {
     }
 
     func testEmptyEventsListProducesEmptyDayPrompt() {
-        let prompt = StickyInsightGenerator.prompt(weekOffset: 0, dayIdx: 5, events: [])
+        let prompt = EncouragementInsightGenerator.prompt(weekOffset: 0, dayIdx: 5, events: [])
         XCTAssertTrue(prompt.contains("Saturday"))
         XCTAssertTrue(prompt.contains("no events scheduled"))
     }
 
     func testColorAndTiltAreStableForSameKey() {
-        let color1 = StickyInsightGenerator.color(weekOffset: 0, dayIdx: 3)
-        let color2 = StickyInsightGenerator.color(weekOffset: 0, dayIdx: 3)
-        let tilt1 = StickyInsightGenerator.tilt(weekOffset: 0, dayIdx: 3)
-        let tilt2 = StickyInsightGenerator.tilt(weekOffset: 0, dayIdx: 3)
+        let color1 = EncouragementInsightGenerator.color(weekOffset: 0, dayIdx: 3)
+        let color2 = EncouragementInsightGenerator.color(weekOffset: 0, dayIdx: 3)
+        let tilt1 = EncouragementInsightGenerator.tilt(weekOffset: 0, dayIdx: 3)
+        let tilt2 = EncouragementInsightGenerator.tilt(weekOffset: 0, dayIdx: 3)
         XCTAssertEqual(color1, color2)
         XCTAssertEqual(tilt1, tilt2)
         XCTAssertTrue(["#FFE680", "#C9F0E0", "#FFCCC9"].contains(color1))
@@ -53,11 +53,14 @@ final class StickyInsightGeneratorTests: XCTestCase {
 
     func testGenerateReturnsInsightOnSuccess() async {
         let service = StubIntelligenceService(eventStore: eventStore)
-        let generator = StickyInsightGenerator(intelligence: service)
-        let insight = await generator.generate(weekOffset: 0,
-                                                dayIdx: 0,
-                                                events: [],
-                                                now: Date())
+        let generator = EncouragementInsightGenerator(intelligence: service)
+        let ctx = DayContext(weekOffset: 0,
+                             dayIdx: 0,
+                             events: [],
+                             inbox: [],
+                             now: Date(),
+                             appleIntelligenceEnabled: true)
+        let insight = await generator.generate(for: ctx)
         XCTAssertNotNil(insight)
         XCTAssertEqual(insight?.dayKey, "0:0")
         XCTAssertFalse(insight?.text.isEmpty ?? true)
@@ -65,12 +68,15 @@ final class StickyInsightGeneratorTests: XCTestCase {
 
     func testGenerateReturnsNilWhenAIDisabled() async {
         let service = StubIntelligenceService(eventStore: eventStore)
-        let generator = StickyInsightGenerator(intelligence: service,
-                                                settings: { false })
-        let insight = await generator.generate(weekOffset: 0,
-                                                dayIdx: 0,
-                                                events: [],
-                                                now: Date())
+        let generator = EncouragementInsightGenerator(intelligence: service,
+                                                       settings: { false })
+        let ctx = DayContext(weekOffset: 0,
+                             dayIdx: 0,
+                             events: [],
+                             inbox: [],
+                             now: Date(),
+                             appleIntelligenceEnabled: false)
+        let insight = await generator.generate(for: ctx)
         XCTAssertNil(insight)
     }
 }

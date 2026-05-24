@@ -42,7 +42,7 @@ final class DayPageViewModel {
     private let eventStore: any EventStoring
     private let inboxStore: any InboxStoring
     private let taskStore: any TaskStoring
-    private let stickyGenerator: StickyInsightGenerator?
+    private let encouragementGenerator: EncouragementInsightGenerator?
     private let modelContext: ModelContext?
     private let clock: () -> Date
 
@@ -54,12 +54,13 @@ final class DayPageViewModel {
     ///   - eventStore: Store for `Event` reads.
     ///   - inboxStore: Store for `InboxSuggestion` reads/mutations.
     ///   - taskStore: Store for `TaskItem` reads/mutations.
-    ///   - stickyGenerator: Optional Phase 13 generator that produces AI
-    ///     sticky notes on demand. `nil` in tests/previews; the view
-    ///     supplies a real one in production.
+    ///   - encouragementGenerator: Optional fallback generator that produces
+    ///     AI sticky notes on demand. `nil` in tests/previews; the view
+    ///     supplies a real one in production. Renamed from `stickyGenerator`
+    ///     in Phase 24 when the type became `EncouragementInsightGenerator`.
     ///   - modelContext: Optional SwiftData context the generator writes
-    ///     fresh `AIInsight` rows into. Required if `stickyGenerator` is
-    ///     non-nil; ignored otherwise.
+    ///     fresh `AIInsight` rows into. Required if `encouragementGenerator`
+    ///     is non-nil; ignored otherwise.
     ///   - clock: Injected "now" so tests can pin the date. Defaults to
     ///     `Date()` in production.
     init(weekOffset: Int,
@@ -67,7 +68,7 @@ final class DayPageViewModel {
          eventStore: any EventStoring,
          inboxStore: any InboxStoring,
          taskStore: any TaskStoring,
-         stickyGenerator: StickyInsightGenerator? = nil,
+         encouragementGenerator: EncouragementInsightGenerator? = nil,
          modelContext: ModelContext? = nil,
          clock: @escaping () -> Date = { .init() })
     {
@@ -76,7 +77,7 @@ final class DayPageViewModel {
         self.eventStore = eventStore
         self.inboxStore = inboxStore
         self.taskStore = taskStore
-        self.stickyGenerator = stickyGenerator
+        self.encouragementGenerator = encouragementGenerator
         self.modelContext = modelContext
         self.clock = clock
         // Anchor the composer to this day-vm's date. Re-anchored in
@@ -162,17 +163,20 @@ final class DayPageViewModel {
     /// cached. No-op when no generator or model context was injected
     /// (preview / test path), or when the model is unavailable.
     private func refreshStickyInsightIfNeeded(now: Date) async {
-        guard let stickyGenerator,
+        guard let encouragementGenerator,
               let modelContext,
               StickyNoteGenerator.insight(forWeekOffset: weekOffset,
                                           dayIdx: dayIdx,
                                           in: modelContext) == nil
         else { return }
 
-        guard let insight = await stickyGenerator.generate(weekOffset: weekOffset,
-                                                            dayIdx: dayIdx,
-                                                            events: events,
-                                                            now: now) else { return }
+        let ctx = DayContext(weekOffset: weekOffset,
+                             dayIdx: dayIdx,
+                             events: events,
+                             inbox: inbox,
+                             now: now,
+                             appleIntelligenceEnabled: true)
+        guard let insight = await encouragementGenerator.generate(for: ctx) else { return }
         modelContext.insert(insight)
         try? modelContext.save()
     }

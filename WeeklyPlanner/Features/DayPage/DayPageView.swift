@@ -220,14 +220,14 @@ struct DayPageContent: View {
         .task {
             if viewModel == nil {
                 let generator = intelligenceService.map {
-                    StickyInsightGenerator(intelligence: $0)
+                    EncouragementInsightGenerator(intelligence: $0)
                 }
                 viewModel = DayPageViewModel(weekOffset: weekOffset,
                                              dayIdx: dayIdx,
                                              eventStore: eventStore,
                                              inboxStore: inboxStore,
                                              taskStore: taskStore,
-                                             stickyGenerator: generator,
+                                             encouragementGenerator: generator,
                                              modelContext: modelContext)
             }
             await viewModel?.refresh()

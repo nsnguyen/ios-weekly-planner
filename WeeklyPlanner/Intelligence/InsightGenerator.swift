@@ -30,7 +30,7 @@ enum InsightKind: String, CaseIterable, Codable, Sendable {
     }
 
     /// Sticky paper color hex matching the existing palette in
-    /// `StickyInsightGenerator.palette`. Centralised here so the
+    /// `EncouragementInsightGenerator.palette`. Centralised here so the
     /// orchestrator picks the right color per kind without each
     /// generator hard-coding it.
     var colorHex: String {

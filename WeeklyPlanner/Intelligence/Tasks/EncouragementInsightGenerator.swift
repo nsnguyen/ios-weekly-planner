@@ -1,16 +1,18 @@
 import Foundation
-import SwiftData
 
-/// Produces the per-day handwritten sticky note that lives in the top-right
-/// of the Day page. Builds a tiny prompt summarising the day's events and
-/// asks the `IntelligenceService` for one short, encouraging line.
+/// Fallback "one short encouraging line" sticky generator. Renamed from
+/// Phase 13's `StickyInsightGenerator` and demoted to a fallback role
+/// in Phase 24's cascade — runs only when the orchestrator's four
+/// primary generators (travel / weather / keyword / inbox) all return
+/// `nil`. Same Foundation Models prompt as before; same color/tilt math.
 ///
-/// The generator does NOT persist the resulting `AIInsight` — callers (the
-/// `DayPageViewModel`) own the SwiftData insert so the model context stays
-/// inside the page's actor. Returns `nil` whenever the model is unavailable
-/// or refuses, so callers fall back to the seeded insight (if any).
+/// Conforms to the Phase 24 `InsightGenerator` protocol so the
+/// orchestrator can drive it identically to the others; the `kind` is
+/// always `.encouragement` and `priority` is `9` (the fallback floor).
 @MainActor
-final class StickyInsightGenerator {
+final class EncouragementInsightGenerator: InsightGenerator {
+    let kind: InsightKind = .encouragement
+
     private let intelligence: any IntelligenceService
     private let settings: () -> Bool
 
@@ -26,38 +28,35 @@ final class StickyInsightGenerator {
         self.settings = settings
     }
 
-    /// Builds an `AIInsight` for the given day. Returns `nil` if AI is
-    /// off, the model is unavailable, or the response is empty.
-    func generate(weekOffset: Int,
-                  dayIdx: Int,
-                  events: [Event],
-                  now: Date) async -> AIInsight?
-    {
+    func generate(for day: DayContext) async -> AIInsight? {
+        guard day.appleIntelligenceEnabled else { return nil }
+
         let context = PlannerContext(
-            now: now,
-            viewedWeekOffset: weekOffset,
+            now: day.now,
+            viewedWeekOffset: day.weekOffset,
             maxResponseTokens: 80,
-            appleIntelligenceEnabled: settings()
+            appleIntelligenceEnabled: day.appleIntelligenceEnabled
         )
         let availability = await intelligence.availability(context: context)
         guard availability.isAvailable else { return nil }
 
-        let prompt = Self.prompt(weekOffset: weekOffset, dayIdx: dayIdx, events: events)
+        let prompt = Self.prompt(weekOffset: day.weekOffset,
+                                  dayIdx: day.dayIdx,
+                                  events: day.events)
         do {
             let answer = try await intelligence.ask(query: prompt, context: context)
             let trimmed = answer.body.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return nil }
-            // Cap at 80 characters per spec. Truncates mid-word as a last
-            // resort; the system prompt asks the model to stay short.
             let clamped = trimmed.count <= 80 ? trimmed : String(trimmed.prefix(80))
-            let color = Self.color(weekOffset: weekOffset, dayIdx: dayIdx)
-            let tilt = Self.tilt(weekOffset: weekOffset, dayIdx: dayIdx)
             return AIInsight(
-                dayKey: AIInsight.key(weekOffset: weekOffset, dayIdx: dayIdx),
-                dateGenerated: now,
+                dayKey: day.dayKey,
+                dateGenerated: day.now,
                 text: clamped,
-                colorHex: color,
-                tiltDegrees: tilt
+                colorHex: Self.color(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                kind: .encouragement,
+                actionURL: nil,
+                priority: InsightKind.encouragement.defaultPriority
             )
         } catch {
             return nil
@@ -84,15 +83,11 @@ final class StickyInsightGenerator {
         return lines.joined(separator: "\n")
     }
 
-    /// Deterministic color selection so the same (weekOffset, dayIdx) is
-    /// always the same color across days even after the sticky regenerates.
     static func color(weekOffset: Int, dayIdx: Int) -> String {
         let hash = abs(weekOffset &* 7 &+ dayIdx)
         return palette[hash % palette.count]
     }
 
-    /// Deterministic tilt in [-5, 5] degrees. Same hashing scheme as the
-    /// color picker so a day's sticky has a stable look across regenerations.
     static func tilt(weekOffset: Int, dayIdx: Int) -> Double {
         let hash = abs(weekOffset &* 31 &+ dayIdx)
         return Double(hash % 11) - 5.0
