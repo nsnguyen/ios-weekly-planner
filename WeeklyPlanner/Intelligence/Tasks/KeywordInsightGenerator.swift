@@ -109,7 +109,7 @@ final class LiveKeywordInsightModel: KeywordInsightModeling {
             let session = LanguageModelSession()
             do {
                 let response = try await session.respond(to: prompt)
-                let text = String(describing: response.content)
+                let text = response.content
                 guard let data = text.data(using: .utf8) else { return nil }
                 let decoded = try JSONDecoder().decode(WireKeywordDraft.self, from: data)
                 return KeywordInsightDraft(text: decoded.text,
