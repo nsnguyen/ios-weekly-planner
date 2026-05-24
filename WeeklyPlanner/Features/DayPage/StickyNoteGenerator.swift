@@ -28,6 +28,21 @@ enum StickyNoteGenerator {
         return try? context.fetch(desc).first
     }
 
+    /// Returns up to 3 non-dismissed insights for the given day, sorted by
+    /// `priority` ascending. Phase 24 — replaces the single-insight pattern
+    /// with the cascade.
+    static func insights(forWeekOffset weekOffset: Int,
+                         dayIdx: Int,
+                         in context: ModelContext) -> [AIInsight]
+    {
+        let key = AIInsight.key(weekOffset: weekOffset, dayIdx: dayIdx)
+        let desc = FetchDescriptor<AIInsight>(
+            predicate: #Predicate { $0.dayKey == key && !$0.dismissed },
+            sortBy: [SortDescriptor(\.priority, order: .forward)])
+        let rows = (try? context.fetch(desc)) ?? []
+        return Array(rows.prefix(StickyOrchestrator.cascadeCap))
+    }
+
     /// Darkens a hex color by the given percent (0–100). Used to shade the
     /// folded-tab gradient so the back of the sticky reads as a slightly
     /// darker version of the paper color. `shade("#FFE680", percent: 20)` →

@@ -19,11 +19,26 @@ struct AIStickyNote: View {
     /// this single value.
     let insight: AIInsight
 
+    var onTap: (() -> Void)?
+    var onLongPress: (() -> Void)?
+    var onRefresh: (() -> Void)?
+
     @State private var folded: Bool = false
 
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(insight: AIInsight,
+         onTap: (() -> Void)? = nil,
+         onLongPress: (() -> Void)? = nil,
+         onRefresh: (() -> Void)? = nil)
+    {
+        self.insight = insight
+        self.onTap = onTap
+        self.onLongPress = onLongPress
+        self.onRefresh = onRefresh
+    }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -48,7 +63,11 @@ struct AIStickyNote: View {
     /// peel hint triangle. Whole view is tappable to fold.
     private var expandedBody: some View {
         Button {
-            folded = true
+            if let onTap {
+                onTap()
+            } else {
+                folded = true
+            }
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 eyebrow
@@ -77,6 +96,10 @@ struct AIStickyNote: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in onLongPress?() }
+        )
         .accessibilityLabel("AI insight: \(insight.text)")
         .accessibilityHint("Double tap to fold or expand")
         .accessibilityAddTraits(.isButton)
@@ -95,6 +118,17 @@ struct AIStickyNote: View {
                 .font(.system(size: 8, weight: .bold))
                 .tracking(1.2)
                 .foregroundStyle(Color.black.opacity(0.4))
+            if let onRefresh {
+                Spacer(minLength: 4)
+                Button(action: onRefresh) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 9))
+                        .foregroundStyle(Color.black.opacity(0.4))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Refresh insights")
+                .accessibilityIdentifier("daypage.sticky.refresh")
+            }
         }
     }
 }
