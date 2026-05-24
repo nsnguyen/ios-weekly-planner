@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The flip-aware Day page surface. Draws the side-tab column on the leading
 /// edge, attaches the horizontal-swipe gesture, and delegates the actual paper
@@ -319,13 +320,49 @@ struct DayPageContent: View {
 
     @ViewBuilder
     private var stickyNoteOverlay: some View {
-        if let insight = StickyNoteGenerator.insight(forWeekOffset: weekOffset,
-                                                     dayIdx: dayIdx,
-                                                     in: modelContext)
-        {
-            AIStickyNote(insight: insight)
+        if let insights = viewModel?.insights, !insights.isEmpty {
+            AIStickyStack(
+                insights: insights,
+                onTap: { insight in handleStickyTap(insight) },
+                onDismiss: { insight in
+                    Task { await viewModel?.dismissInsight(insight) }
+                },
+                onRefresh: {
+                    Task { await viewModel?.refreshInsights() }
+                },
+                onShowAnother: { promoteNextSticky() })
                 .padding(.top, 96)
                 .padding(.trailing, 16)
+        }
+    }
+
+    /// Phase 24 — when the user explicitly taps "Show another" in the
+    /// cascade context menu, we rotate the insights array so the second
+    /// becomes the top. SwiftData order doesn't change; this is purely a
+    /// view-state pop-and-push.
+    private func promoteNextSticky() {
+        guard let vm = viewModel, vm.insights.count > 1 else { return }
+        let first = vm.insights.removeFirst()
+        vm.insights.append(first)
+    }
+
+    /// Dispatch the sticky's `actionURL` to the right surface based on
+    /// `kind`. Internal schemes (`weeklyplanner://event/<uuid>`,
+    /// `weeklyplanner://inbox/<dayKey>`) go through `DeepLinkRouter`;
+    /// external schemes (`http://maps.apple.com/...`, `weather://`) open
+    /// via `UIApplication.shared.open(_:)`.
+    private func handleStickyTap(_ insight: AIInsight) {
+        guard let raw = insight.actionURL, let url = URL(string: raw) else { return }
+        if raw.hasPrefix("weeklyplanner://event/") {
+            let uuidString = raw.replacingOccurrences(of: "weeklyplanner://event/", with: "")
+            if let id = UUID(uuidString: uuidString) {
+                deepLinkRouter.request(.event(id))
+            }
+        } else if raw.hasPrefix("weeklyplanner://inbox/") {
+            let dayKey = raw.replacingOccurrences(of: "weeklyplanner://inbox/", with: "")
+            deepLinkRouter.request(.inbox(dayKey: dayKey))
+        } else {
+            UIApplication.shared.open(url)
         }
     }
 
