@@ -193,4 +193,83 @@ final class DayPageViewModelTests: XCTestCase {
         XCTAssertEqual(vm.inbox.count, 1)
         XCTAssertEqual(vm.inbox.first?.title, "Saturday brunch")
     }
+
+    // MARK: - Sticky orchestrator wiring (Phase 24, Task 10)
+
+    func testRefresh_runsOrchestratorAndPopulatesInsights() async throws {
+        let container = try SwiftDataStack.inMemoryContainer()
+        let eventStore = SwiftDataEventStore(context: container.mainContext)
+        let inboxStore = SwiftDataInboxStore(context: container.mainContext)
+        let taskStore = SwiftDataTaskStore(context: container.mainContext)
+        let today = Self.may16_2026(hour: 9)
+
+        let inboxOnly = StickyOrchestrator(
+            generators: [InboxInsightGenerator()],
+            fallback: FixedNilGenerator())
+        // Use the real `InboxSuggestion` initializer — the brief's
+        // condensed shape doesn't exist on the model.
+        let suggestion = InboxSuggestion(
+            gmailMessageID: "test-msg-1",
+            proposedStart: today,
+            title: "T",
+            fromName: "X",
+            fromEmail: "x@y.com",
+            category: .work,
+            subject: "Test")
+        try await inboxStore.upsert(suggestion)
+
+        let days = WeekMath.weekDays(forOffset: 0, today: today)
+        let dayIdx = WeekMath.todayIndex(in: days, for: today) ?? 0
+
+        let vm = DayPageViewModel(weekOffset: 0,
+                                  dayIdx: dayIdx,
+                                  eventStore: eventStore,
+                                  inboxStore: inboxStore,
+                                  taskStore: taskStore,
+                                  orchestrator: inboxOnly,
+                                  modelContext: container.mainContext,
+                                  clock: { today })
+        await vm.refresh()
+
+        XCTAssertEqual(vm.insights.count, 1)
+        XCTAssertEqual(vm.insights.first?.kind, .inbox)
+    }
+
+    func testDismissInsight_marksAndRefetches() async throws {
+        let container = try SwiftDataStack.inMemoryContainer()
+        let today = Self.may16_2026()
+        let stored = AIInsight(dayKey: AIInsight.key(weekOffset: 0, dayIdx: 5),
+                                text: "Hi",
+                                colorHex: "#FFE680",
+                                tiltDegrees: 0,
+                                kind: .keyword,
+                                priority: 2)
+        container.mainContext.insert(stored)
+        try container.mainContext.save()
+
+        let vm = DayPageViewModel(weekOffset: 0,
+                                  dayIdx: 5,
+                                  eventStore: SwiftDataEventStore(context: container.mainContext),
+                                  inboxStore: SwiftDataInboxStore(context: container.mainContext),
+                                  taskStore: SwiftDataTaskStore(context: container.mainContext),
+                                  orchestrator: nil,
+                                  modelContext: container.mainContext,
+                                  clock: { today })
+        vm.insights = [stored]
+        await vm.dismissInsight(stored)
+
+        XCTAssertTrue(stored.dismissed)
+        XCTAssertFalse(vm.insights.contains { $0.id == stored.id })
+    }
+}
+
+/// Always returns `nil` — used as the orchestrator's fallback in the
+/// VM tests above so the cascade collapses to whatever the primary
+/// generator produced (or nothing). Named distinctly from
+/// `FixedGenerator` in `StickyOrchestratorTests.swift` purely to avoid
+/// confusion when grepping; both are `private` so no symbol collision.
+@MainActor
+private final class FixedNilGenerator: InsightGenerator {
+    let kind: InsightKind = .encouragement
+    func generate(for _: DayContext) async -> AIInsight? { nil }
 }

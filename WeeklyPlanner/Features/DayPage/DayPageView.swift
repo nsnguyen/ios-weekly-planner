@@ -83,7 +83,7 @@ struct DayPageContent: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.taskStore) private var taskStore
-    @Environment(\.intelligenceService) private var intelligenceService
+    @Environment(\.stickyOrchestrator) private var stickyOrchestrator
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.deepLinkRouter) private var deepLinkRouter
@@ -219,15 +219,12 @@ struct DayPageContent: View {
         }
         .task {
             if viewModel == nil {
-                let generator = intelligenceService.map {
-                    EncouragementInsightGenerator(intelligence: $0)
-                }
                 viewModel = DayPageViewModel(weekOffset: weekOffset,
                                              dayIdx: dayIdx,
                                              eventStore: eventStore,
                                              inboxStore: inboxStore,
                                              taskStore: taskStore,
-                                             encouragementGenerator: generator,
+                                             orchestrator: stickyOrchestrator,
                                              modelContext: modelContext)
             }
             await viewModel?.refresh()

@@ -65,6 +65,11 @@ extension EnvironmentValues {
 
     /// Deep-link routing target for notification taps — Phase 19.
     @Entry var deepLinkRouter: DeepLinkRouter = DeepLinkRouter()
+
+    /// Phase 24 — the shared `StickyOrchestrator` constructed at app
+    /// init and injected into every DayPageContent so the cascade can
+    /// be cached + invalidated consistently across page flips.
+    @Entry var stickyOrchestrator: StickyOrchestrator? = nil
 }
 
 // MARK: - Stubs
