@@ -35,11 +35,19 @@ struct AppShell: View {
     @State private var isPickerOpen: Bool = false
     @State private var isAISearchOpen: Bool = false
 
-    /// Phase 24 — constructed once on first appearance so the orchestrator's
-    /// per-day TTL cache survives view re-renders. Computing a fresh
-    /// orchestrator in the env-injection chain would defeat the cache
-    /// (each render = new instance = empty cache).
-    @State private var stickyOrchestrator: StickyOrchestrator?
+    /// Phase 24 — constructed once at `init` so the orchestrator's per-day
+    /// TTL cache survives view re-renders. Computing a fresh orchestrator
+    /// in the env-injection chain would defeat the cache (each render =
+    /// new instance = empty cache).
+    ///
+    /// **Why eager-init in `init` instead of `.task`** — SwiftUI does not
+    /// guarantee parent/child `.task` ordering. With a `.task`-based lazy
+    /// init, `DayPageView.task` could fire before `AppShell.task`,
+    /// capturing a nil orchestrator that the VM never re-captures (the
+    /// VM's `private let orchestrator` is set once at init). Constructing
+    /// here in `init` makes the env value non-nil from the very first
+    /// render, eliminating the race.
+    @State private var stickyOrchestrator: StickyOrchestrator
 
     /// The current settings row, or a fresh default if SwiftData hasn't
     /// materialized one yet. `@Query` returns at most one element here
@@ -58,6 +66,7 @@ struct AppShell: View {
         _controller = State(initialValue: PageFlipController(current: PageCoordinate(week: 0,
                                                                                      day: todayIdx)))
         _selection = State(initialValue: TabSelection(settings: settingsStore))
+        _stickyOrchestrator = State(initialValue: AppShell.makeStickyOrchestrator())
     }
 
     var body: some View {
@@ -119,11 +128,6 @@ struct AppShell: View {
                    value: isAISearchOpen)
         .environment(\.intelligenceService, makeIntelligenceService())
         .environment(\.stickyOrchestrator, stickyOrchestrator)
-        .task {
-            if stickyOrchestrator == nil {
-                stickyOrchestrator = makeStickyOrchestrator()
-            }
-        }
         .paperTheme(resolvedTheme)
         .paperFont(resolvedFont)
         .paperSize(resolvedSize)
@@ -189,8 +193,24 @@ struct AppShell: View {
     /// `EncouragementInsightGenerator` fallback guarantees the cascade
     /// always emits at least one insight, matching the Phase 13 behaviour
     /// the view layer was already designed around.
-    private func makeStickyOrchestrator() -> StickyOrchestrator {
-        let intelligence: any IntelligenceService = makeIntelligenceService()
+    ///
+    /// **Static** because this is called from `init`, where `self` (and
+    /// therefore the `@Environment` stores) is not yet available. The
+    /// encouragement fallback's `IntelligenceService` is built from stub
+    /// stores — that's intentional and safe because the encouragement
+    /// prompt inlines today's events into the prompt string itself (see
+    /// `EncouragementInsightGenerator.prompt(weekOffset:dayIdx:events:)`)
+    /// rather than calling tools that would read the stores at run time.
+    /// The four *primary* generators (Travel / Weather / Keyword / Inbox)
+    /// don't depend on the SwiftData stores at all — they read everything
+    /// they need from the `DayContext` passed into `generate(for:)`.
+    private static func makeStickyOrchestrator() -> StickyOrchestrator {
+        let registry = ToolRegistry(events: StubEventStore(),
+                                    tasks: StubTaskStore(),
+                                    inbox: StubInboxStore())
+        let fallbackService = StubIntelligenceService(eventStore: StubEventStore())
+        let intelligence: any IntelligenceService = PlannerLanguageModel(
+            registry: registry, fallback: fallbackService)
         let generators: [any InsightGenerator] = [
             TravelInsightGenerator(provider: LiveTravelProvider()),
             WeatherInsightGenerator(provider: LiveWeatherProvider()),
