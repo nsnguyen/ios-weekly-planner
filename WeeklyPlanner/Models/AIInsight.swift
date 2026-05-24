@@ -39,7 +39,12 @@ final class AIInsight {
 
     /// `InsightKind` raw value. Stored as String so SwiftData predicates
     /// can filter on it directly without bridging the enum.
-    var kindRaw: String
+    ///
+    /// Property-level default of `"encouragement"` lets SwiftData's
+    /// lightweight migration assign existing V1 rows a value without
+    /// a custom `SchemaMigrationPlan`. The init still sets this from
+    /// the `kind:` parameter; the default exists purely for migration.
+    var kindRaw: String = "encouragement"
 
     /// Deep link or external URL the sticky body taps open. Examples:
     /// `"weeklyplanner://event/<uuid>"`, `"http://maps.apple.com/?daddr=…"`,
@@ -48,7 +53,11 @@ final class AIInsight {
 
     /// Cascade sort order. Lower = earlier in the stack. Defaults to 9
     /// (fallback `encouragement` priority).
-    var priority: Int
+    ///
+    /// Property-level default of `9` lets lightweight migration assign
+    /// existing V1 rows the fallback floor without a custom migration
+    /// plan; the init still sets this from the `priority:` parameter.
+    var priority: Int = 9
 
     init(id: UUID = UUID(),
          dayKey: String,
