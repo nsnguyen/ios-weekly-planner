@@ -51,8 +51,13 @@ enum InsightKind: String, CaseIterable, Codable, Sendable {
 /// `Event` and `InboxSuggestion` are SwiftData `@Model` classes (NOT
 /// `Sendable`), so we pass them as `[Event]` / `[InboxSuggestion]` only
 /// when the orchestrator can guarantee the captures stay on `@MainActor`
-/// — the generators that need them are `@MainActor`-isolated.
-struct DayContext {
+/// — the generators that need them are `@MainActor`-isolated. Marked
+/// `@unchecked Sendable` to honor that contract: every consumer
+/// (`StickyOrchestrator`, every generator) is `@MainActor`-bound, so
+/// the contained `@Model` arrays never actually leave the MainActor
+/// even when the value type itself nominally crosses an actor hop in
+/// a child task that immediately re-enters the MainActor.
+struct DayContext: @unchecked Sendable {
     let weekOffset: Int
     let dayIdx: Int
     let events: [Event]
@@ -68,8 +73,14 @@ struct DayContext {
 /// One signal source for the AI sticky-note cascade. Every generator
 /// returns at most one `AIInsight` per call — the orchestrator runs
 /// all five generators in parallel and assembles the cascade.
+///
+/// Refined to `Sendable` so existentials (`any InsightGenerator`) can
+/// be captured by the orchestrator's `withTaskGroup` child tasks under
+/// Swift 6 strict concurrency. Safe because the protocol is
+/// `@MainActor`-isolated end-to-end — generators only execute on the
+/// MainActor regardless of where the existential travels.
 @MainActor
-protocol InsightGenerator {
+protocol InsightGenerator: Sendable {
     /// What kind of insight this generator produces. Used by the
     /// orchestrator to enforce `(dayKey, kind)` uniqueness at persist
     /// time and to dispatch the right color / priority.
