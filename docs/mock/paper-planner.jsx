@@ -121,26 +121,16 @@ function PaperPlanner({ accent, focusedDay, setFocusedDay, weekOffset, setWeekOf
       />
 
       <div style={{ flex: 1, position: 'relative', margin: '0 18px 0 26px', display: 'flex' }}>
-        {/* Side index tabs — only for day view */}
-        {paperView === 'day' && (
-          <SideTabs focusedDay={focusedDay} setFocusedDay={(idx) => {
-            if (idx === focusedDay || flipping) return;
-            setNextTarget({ week: weekOffset, day: idx });
-            setFlipping(idx > focusedDay ? 'next' : 'prev');
-            setTimeout(() => { setFocusedDay(idx); setFlipping(null); setNextTarget(null); }, 620);
-          }} days={days} weekOffset={weekOffset} />
-        )}
-
         {/* Book pages */}
         <div style={{
           flex: 1, position: 'relative',
-          marginLeft: paperView === 'day' ? 4 : 0,
+          marginRight: paperView === 'day' ? 4 : 0,
           background: PAPER.bookSpine,
           borderRadius: '4px 14px 14px 4px',
           boxShadow: 'inset 8px 0 14px rgba(0,0,0,0.45), inset -4px 0 8px rgba(0,0,0,0.2)',
           overflow: 'hidden',
         }}>
-          {/* Page edge stripes */}
+          {/* Page edge stripes — stacked-paper edge on the free (right) side, behind binder tabs */}
           <div style={{
             position: 'absolute', right: 0, top: 6, bottom: 6, width: 6,
             background: PAPER.edgeStripe,
@@ -163,6 +153,7 @@ function PaperPlanner({ accent, focusedDay, setFocusedDay, weekOffset, setWeekOf
                 weekOffset={(flipping && nextTarget) ? nextTarget.week : weekOffset}
                 accent={accent}
                 onTapEvent={onTapEvent} onToggleTask={onToggleTask}
+                onAdd={onOpenSearch}
               />
             )}
           </div>
@@ -215,6 +206,16 @@ function PaperPlanner({ accent, focusedDay, setFocusedDay, weekOffset, setWeekOf
             pointerEvents: 'none', zIndex: 6,
           }} />
         </div>
+
+        {/* Side index tabs — binder labels on the outer (right) edge, day view only */}
+        {paperView === 'day' && (
+          <SideTabs focusedDay={focusedDay} setFocusedDay={(idx) => {
+            if (idx === focusedDay || flipping) return;
+            setNextTarget({ week: weekOffset, day: idx });
+            setFlipping(idx > focusedDay ? 'next' : 'prev');
+            setTimeout(() => { setFocusedDay(idx); setFlipping(null); setNextTarget(null); }, 620);
+          }} days={days} weekOffset={weekOffset} />
+        )}
       </div>
 
       {/* Bottom flip controls */}
@@ -585,7 +586,9 @@ function SideTabs({ focusedDay, setFocusedDay, days, weekOffset }) {
   return (
     <div style={{
       width: 22, display: 'flex', flexDirection: 'column',
+      alignItems: 'flex-start',
       justifyContent: 'flex-start', paddingTop: 30, gap: 4, zIndex: 2,
+      overflow: 'visible',
     }}>
       {days.map((d, i) => {
         const on = i === focusedDay;
@@ -594,10 +597,9 @@ function SideTabs({ focusedDay, setFocusedDay, days, weekOffset }) {
           <button key={d.key} onClick={() => setFocusedDay(i)} style={{
             width: on ? 28 : 22, height: 56,
             background: TAB_COLORS[i], border: 0,
-            borderRadius: '6px 0 0 6px',
-            marginLeft: on ? -6 : 0,
+            borderRadius: '0 6px 6px 0',
             cursor: 'pointer', position: 'relative',
-            boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.3)',
+            boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.12), 2px 1px 3px rgba(0,0,0,0.32)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.18s ease', padding: 0,
           }}>
@@ -608,7 +610,7 @@ function SideTabs({ focusedDay, setFocusedDay, days, weekOffset }) {
             }}>{d.long.toUpperCase()}</span>
             {isToday && (
               <span style={{
-                position: 'absolute', top: 4, right: 3,
+                position: 'absolute', top: 4, left: 3,
                 width: 5, height: 5, borderRadius: 3, background: PAPER.redInk,
               }} />
             )}
@@ -653,7 +655,7 @@ function BookBottomControls({ label, onPrev, onNext }) {
 // ─────────────────────────────────────────────────────────────
 // DayPage
 // ─────────────────────────────────────────────────────────────
-function DayPage({ day, weekOffset, accent, onTapEvent, onToggleTask }) {
+function DayPage({ day, weekOffset, accent, onTapEvent, onToggleTask, onAdd }) {
   const evs = eventsFor(weekOffset, day.idx);
   const tks = tasksFor(weekOffset, day.idx);
   const inbox = inboxFor(weekOffset, day.idx);
@@ -727,23 +729,30 @@ function DayPage({ day, weekOffset, accent, onTapEvent, onToggleTask }) {
           </div>
         )}
         {evs.length === 0 && inbox.length === 0 && (
-          <div style={{
-            fontFamily: PAPER.fontHand, fontSize: 20,
-            color: PAPER.ink3, fontStyle: 'italic', marginTop: 20,
-          }}>Nothing scheduled. A free page.</div>
+          <div style={{ marginTop: 14 }}>
+            <div style={{
+              fontFamily: PAPER.fontHand, fontSize: 19,
+              color: PAPER.ink3, fontStyle: 'italic', marginBottom: 10,
+            }}>Nothing scheduled. A free page.</div>
+            <AddLine label="jot down an event" onClick={onAdd} ink={PAPER.blueInk} />
+          </div>
+        )}
+        {(evs.length > 0 || inbox.length > 0) && (
+          <div style={{ marginTop: 6 }}>
+            <AddLine label="add another" onClick={onAdd} ink={PAPER.ink2} small />
+          </div>
         )}
       </div>
 
       <AIStickyNote dayIdx={day.idx} weekOffset={weekOffset} />
 
       {/* To-do */}
-      {tks.length > 0 && (
-        <div style={{
-          position: 'absolute', left: 44, right: 18, bottom: 18,
-          padding: '10px 12px 8px',
-          background: 'rgba(255,255,200,0.35)',
-          border: `0.5px dashed ${PAPER.ink3}`, borderRadius: 2,
-        }}>
+      <div style={{
+        position: 'absolute', left: 44, right: 18, bottom: 18,
+        padding: '10px 12px 8px',
+        background: 'rgba(255,255,200,0.35)',
+        border: `0.5px dashed ${PAPER.ink3}`, borderRadius: 2,
+      }}>
           <div style={{
             fontFamily: PAPER.fontHand, fontSize: 17, fontWeight: 700,
             color: PAPER.blueInk, marginBottom: 6,
@@ -774,11 +783,53 @@ function DayPage({ day, weekOffset, accent, onTapEvent, onToggleTask }) {
               )}
             </div>
           ))}
+          <div onClick={onAdd} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '2px 0', cursor: 'pointer', marginTop: tks.length ? 2 : 0,
+          }}>
+            <span style={{
+              width: 15, height: 15, border: `1.4px dashed ${PAPER.ink3}`,
+              borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent', flexShrink: 0,
+              color: PAPER.ink3, fontSize: 14, lineHeight: '11px', fontWeight: 600,
+            }}>+</span>
+            <span style={{
+              fontFamily: PAPER.fontHand, fontSize: 17,
+              color: PAPER.ink3, fontStyle: 'italic', flex: 1,
+            }}>{tks.length ? 'add a to-do' : 'add your first to-do'}</span>
+          </div>
         </div>
-      )}
 
       <PageNumber date={day.date} month={day.month} />
       <PageCurl />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// AddLine — handwritten "+ label" affordance for empty/append states
+// ─────────────────────────────────────────────────────────────
+function AddLine({ label, onClick, ink, small }) {
+  const color = ink || PAPER.blueInk;
+  return (
+    <div onClick={onClick} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      cursor: 'pointer', padding: '4px 2px',
+    }}>
+      <span style={{
+        width: small ? 16 : 20, height: small ? 16 : 20,
+        border: `1.2px dashed ${color}`,
+        borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: color, fontSize: small ? 13 : 15, lineHeight: 1, fontWeight: 600,
+        opacity: 0.85,
+      }}>+</span>
+      <span style={{
+        fontFamily: PAPER.fontHand, fontSize: small ? 17 : 20,
+        color: color, fontStyle: 'italic',
+        textDecoration: 'underline', textDecorationStyle: 'dotted',
+        textDecorationColor: 'rgba(0,0,0,0.18)',
+        textUnderlineOffset: 3,
+      }}>{label}</span>
     </div>
   );
 }

@@ -1,5 +1,22 @@
 # Handoff: iOS Weekly Planner — Paper Aesthetic
 
+## Recent Changes (v2)
+
+- **Day tabs moved to the right edge** of the page (binder-label style). Selected tab sticks out 6px further right. Geometry inverted from the previous left-spine position.
+- **Empty-state add affordances** added to the day page:
+  - "+ jot down an event" appears when there are no events or inbox suggestions for the day.
+  - "+ add another" appears below an existing event list.
+  - To-do block now renders unconditionally and shows a trailing "+ add a to-do" (or "+ add your first to-do" when empty) line.
+  - All add lines call a single `onAdd` handler currently routed to the Apple Intelligence search overlay.
+
+## Screenshots
+
+See `screenshots/`:
+- `paper-day-binder-tabs.png` — Day page with right-edge binder tabs and the "+ add" affordances visible.
+- `paper-week.png` — Hobonichi-style week page.
+- `paper-ai-search.png` — Apple Intelligence search overlay.
+- `paper-review.png` — Paper review screen with category bars.
+
 ## Overview
 
 A weekly planner iOS app with a **paper-planner aesthetic** — leather book binding, cream pages with hole punches, handwritten ink for events, AI sticky notes — sitting on top of a modern feature set: Apple Intelligence (RAG) search, multi-week navigation, Gmail-sourced events, time/location reminders, and an editable theme/font/size system.
@@ -34,7 +51,7 @@ If you implement in native iOS:
   - Row 2: Day/Week segmented toggle (62×24, rounded 7), and a "Today" pill that only appears when `weekOffset !== 0`.
 - Page surface inset `0 18px 0 26px` against a darker `PAPER.bookSpine` book-spine color. Border-radius `4px 14px 14px 4px` to suggest the bound left edge.
 - Page-edge stripes: 6px-wide vertical stripe pattern on the right side (`repeating-linear-gradient(180deg, #EFE5C9 0 2px, #E2D6B3 2px 4px)`) — suggests stacked paper edges.
-- Side tabs: 22px-wide column of day tabs (M / T / W / T / F / S / S), each 56px tall, rotated text, soft pastel backgrounds (`['#E8D9B7', '#D9C9E3', '#C8DDE6', '#E4D3C2', '#D9E4C6', '#E7C7C7', '#CFD4DC']`). Selected tab is 28px wide, offset `-6px` left.
+- Side tabs: 22px-wide column of day tabs (M / T / W / T / F / S / S) on the **right (outer) edge** of the page, like binder labels sticking out past the page's free edge. Each 56px tall, rotated text, soft pastel backgrounds (`['#E8D9B7', '#D9C9E3', '#C8DDE6', '#E4D3C2', '#D9E4C6', '#E7C7C7', '#CFD4DC']`). Border-radius `0 6px 6px 0` (attached on the left, rounded on the outer right). Selected tab is 28px wide (sticks out 6px further). The stacked-paper edge stripe sits behind the tabs along the right margin.
 - The page itself: cream paper background (`PAPER.cream` = `#FAF6E9` in default theme), with:
   - Soft red margin line at `left: 32, width: 1, top: 0, bottom: 0` (`rgba(192,72,72,0.55)`)
   - Three hole-punch dots on the left edge (12×12, `#E8E0CB`, inset shadow)
@@ -44,7 +61,12 @@ If you implement in native iOS:
 - "Today · 2:12 PM" dashed-border chip below header, when current day.
 - Events list: time gutter (Cochin 13px, tabular nums, 48px wide, ink2 color) followed by event title in Caveat 21px in category ink color, with location below in italic Cochin 12px.
 - Gmail-sourced events show a tiny Gmail icon (10×10 SVG) inline next to the title.
-- To-do block at bottom: dashed-border yellow patch (`rgba(255,255,200,0.35)`), wavy "To-do" underline, ink checkboxes (14×14, 1.4px black border, white fill, blue-ink check on done).
+- To-do block at bottom: dashed-border yellow patch (`rgba(255,255,200,0.35)`), wavy "To-do" underline, ink checkboxes (14×14, 1.4px black border, white fill, blue-ink check on done). **Always rendered** — even on days with zero tasks — with a trailing "+ add a to-do" (or "+ add your first to-do") line inside the patch.
+- **Empty-state add affordances** (paper-native, handwritten):
+  - When a day has no events and no inbox suggestions, the events area shows `"Nothing scheduled. A free page."` in italic ink, followed by an `AddLine` reading "+ jot down an event" — a 20×20 dashed circle with a `+` plus a Caveat 20px italic label with dotted underline, in `PAPER.blueInk`.
+  - When a day already has events, a smaller `AddLine` reading "+ add another" appears below the list (16×16 circle, 17px label, `PAPER.ink2`).
+  - The to-do patch always shows a trailing `+ add a to-do` line — dashed 15×15 square with `+`, italic Caveat 17px label in `PAPER.ink3`. Label switches to "+ add your first to-do" when the list is empty.
+  - All four add affordances call the same `onAdd` handler, currently wired to open the Apple Intelligence search overlay (natural-language quick-add). In a real implementation, replace with a proper event/task composer.
 - Bottom-right corner curl: 28×28 triangular gradient suggesting a curled page corner.
 
 **AI Sticky Note** (per-day, optional):
@@ -263,6 +285,8 @@ The HTML prototype consists of these files (all included in this handoff):
 - `paper-overlays.jsx` — Paper AI search overlay + paper event sheet.
 - `paper-settings.jsx` — Settings bottom sheet (theme/font/size/connections/preferences).
 - `app.jsx` — App root: state, routing, wiring.
+- `tweaks-panel.jsx` — Floating "Tweaks" panel for toggling style/theme/font/size live. Treat this as a development affordance only; it does not need to ship in the native app.
+- `ios-frame.jsx` — `IOSDevice` + `IOSStatusBar` wrapper that mimics an iPhone bezel & status bar around the app. Not needed natively — the OS provides this.
 
 ## Recommended Implementation Order (SwiftUI)
 

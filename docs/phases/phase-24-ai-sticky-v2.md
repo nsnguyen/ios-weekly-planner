@@ -58,9 +58,21 @@ WeeklyPlannerUITests/AIStickyStackUITests.swift                         # NEW
 - [ ] Body tap → `onTap` fires (drives `actionURL` opening at the stack level).
 - [ ] Long-press → context menu (see below).
 
-### Context menu
+### Swipe-to-navigate (primary navigation)
+- [ ] Horizontal `DragGesture` on the top sticky — left swipe advances to next, right swipe goes back.
+- [ ] Gesture scoped to the sticky's hit area to avoid conflict with day-page horizontal swipe.
+- [ ] Minimum horizontal threshold: 30pt; vertical movement must be < horizontal to distinguish from scroll.
+- [ ] Swipe animation: top sticky slides out in swipe direction (opacity 1→0 over 120pt), incoming sticky slides in from opposite edge (opacity 0→1). Total ~0.3s spring.
+- [ ] Reduce-motion variant: 0.18s crossfade, no slide.
+- [ ] Wraps around: swiping left on the last sticky shows the first; swiping right on the first shows the last.
+- [ ] Page indicator dots rendered below the sticky stack when `insights.count > 1`:
+  - [ ] Small circles (5pt), filled for current index, stroked for others.
+  - [ ] Color: `Color.black.opacity(0.3)`.
+  - [ ] Spacing: 4pt between dots.
+
+### Context menu (secondary navigation)
 Items adapt to `insight.kind`:
-- [ ] `"Show another"` — promotes the next sticky in cascade (if `insights.count > 1`).
+- [ ] `"Show another"` — promotes the next sticky in cascade (if `insights.count > 1`). Kept as fallback for discoverability.
 - [ ] `"Dismiss this insight"` — sets `dismissed = true` and refreshes.
 - [ ] `"Refresh"` — re-runs orchestrator.
 - [ ] Kind-specific:
@@ -68,11 +80,6 @@ Items adapt to `insight.kind`:
   - [ ] `.weather`: `"Open Weather"` — opens system Weather via `weather://`.
   - [ ] `.keyword`: `"Open event"` — opens event sheet via `DeepLinkRouter.request(.event)`.
   - [ ] `.inbox`: `"Open inbox"` — scrolls Day page to inbox block.
-
-### Promote animation (when user explicitly invokes "Show another")
-- [ ] Top sticky scales `1.0 → 0.92`, slides down 24pt with `stickyPeel` curve, fades to opacity 0.
-- [ ] Next sticky scales `0.96 → 1.0` in parallel, offsets up to top position.
-- [ ] Total duration ~0.32s; reduce-motion variant is a 0.18s crossfade.
 
 ### Tap action mapping
 - [ ] `.travel`: opens `actionURL` via `UIApplication.shared.open(URL)`.
@@ -247,6 +254,12 @@ Per-generator tests (all using fakes for MapKit / WeatherKit / IntelligenceServi
 - [ ] `testThreeInsightsRendersTwoPeeks`.
 - [ ] `testShowAnother_promotesNextSticky` (driven by context-menu action, NOT body tap).
 - [ ] `testShowAnother_fromLast_wrapsToFirst`.
+- [ ] `testSwipeLeft_promotesNextSticky`.
+- [ ] `testSwipeRight_promotesToPreviousSticky`.
+- [ ] `testSwipeLeft_fromLast_wrapsToFirst`.
+- [ ] `testSwipeRight_fromFirst_wrapsToLast`.
+- [ ] `testPageIndicator_showsCorrectCount`.
+- [ ] `testPageIndicator_hiddenForSingleInsight`.
 - [ ] `testBodyTap_invokesActionURL_doesNotPromote`.
 
 `AIInsightV2MigrationTests`
@@ -261,7 +274,7 @@ Per-generator tests (all using fakes for MapKit / WeatherKit / IntelligenceServi
 - Rainy hours overlap an event → weather sticky appears.
 - A day with the title "Sara's birthday" → keyword sticky surfaces a nudge referencing Sara.
 - A day with pending inbox suggestions → inbox sticky appears with the count.
-- Up to 3 stickies render in the cascade; context-menu "Show another" promotes the next sticky; "Show another" from the last sticky wraps back to the first. Body tap opens the `actionURL`, never promotes.
+- Up to 3 stickies render in the cascade; horizontal swipe left/right navigates between stickies with wrap-around; page indicator dots show position when count > 1. Context-menu "Show another" works as fallback. Body tap opens the `actionURL`, never promotes.
 - Pull-to-refresh and "↻" both trigger orchestrator re-runs.
 - Long-press → context menu with the right actions per `kind`.
 - All `XCUIAccessibilityAudit` UI tests still green; rotor "Insights" works in VoiceOver.
@@ -277,6 +290,6 @@ Per-generator tests (all using fakes for MapKit / WeatherKit / IntelligenceServi
 - **`MKDirections` request quota.** Apple throttles ~50 reqs/min/device. Cache geocodes + directions per `(eventID, dayHash)` for 1 hour.
 - **Foundation Models `@Generable` Optional gotcha.** Keep `relatedEventID: String` non-optional with empty-string sentinel (per Phase 18 retrospective).
 - **SwiftData v1 → v2 migration.** Use lightweight migration with default field values. Existing `AIInsight` rows from Phase 13b stay valid as `.encouragement` priority 9.
-- **Cascade gesture conflicts.** Tap-to-promote on the top sticky and body-tap-to-open-action both consume the tap. Resolution: tap = action; promote moves to the explicit "↻" or context-menu "Show another". This is a deliberate revision from the brainstorm where tap-to-cycle was considered ambiguous.
+- **Cascade gesture conflicts.** Horizontal swipe on the sticky must not conflict with the day-page horizontal swipe (page flip). Resolution: the `DragGesture` is scoped to the sticky's frame via `.highPriorityGesture`, and requires `abs(translation.width) > abs(translation.height)` plus a 30pt minimum threshold before committing to the swipe — this prevents accidental triggers during vertical scroll or diagonal drags. Context-menu "Show another" remains as a secondary path.
 - **Concurrent generator failures.** Each generator must `do/catch` internally and return `nil` on error (per Phase 18 per-iter try/catch deviation). One slow/failed generator must not block the others — `withTaskGroup` honors per-task isolation, but the timeout budget (~3s total) is enforced by a `Task.timeout(_:)` wrapper.
 - **`theme.ink2` (not `inkMuted`)** — per Phase 19 deviation.
