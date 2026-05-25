@@ -46,7 +46,9 @@ struct DayPageView: View {
             PageFlipContainer(controller: controller) { coord in
                 DayPageContent(weekOffset: coord.week, dayIdx: coord.day)
             }
+            .environment(controller)
             .horizontalSwipe { direction in
+                guard !controller.stickyDragActive else { return }
                 controller.flipDay(direction: direction)
             }
 

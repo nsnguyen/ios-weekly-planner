@@ -59,6 +59,10 @@ final class PageFlipController {
         target != nil
     }
 
+    /// Set by `AIStickyStack` during an active swipe gesture so the
+    /// page-level `HorizontalSwipeGesture` can yield to it.
+    var stickyDragActive = false
+
     /// Designated initializer.
     ///
     /// - Parameter current: The page the user starts on.

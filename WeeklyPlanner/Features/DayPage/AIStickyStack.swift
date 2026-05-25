@@ -10,6 +10,7 @@ struct AIStickyStack: View {
     @State var currentIndex: Int = 0
     @GestureState private var dragOffset: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(PageFlipController.self) private var flipController: PageFlipController?
 
     private var safeIndex: Int {
         guard !insights.isEmpty else { return 0 }
@@ -101,7 +102,11 @@ struct AIStickyStack: View {
                     state = dx
                 }
             }
+            .onChanged { _ in
+                flipController?.stickyDragActive = true
+            }
             .onEnded { value in
+                flipController?.stickyDragActive = false
                 let dx = value.translation.width
                 let dy = value.translation.height
                 guard abs(dx) > abs(dy), abs(dx) > 30 else { return }
