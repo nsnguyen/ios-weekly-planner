@@ -330,7 +330,7 @@ struct DayPageContent: View {
                 onRefresh: {
                     Task { await viewModel?.refreshInsights() }
                 },
-                onShowAnother: { promoteNextSticky() })
+                onNavigate: { _ in })
                 .padding(.top, 96)
                 .padding(.trailing, 16)
         }
