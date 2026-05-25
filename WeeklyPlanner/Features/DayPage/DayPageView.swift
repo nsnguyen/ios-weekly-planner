@@ -336,16 +336,6 @@ struct DayPageContent: View {
         }
     }
 
-    /// Phase 24 — when the user explicitly taps "Show another" in the
-    /// cascade context menu, we rotate the insights array so the second
-    /// becomes the top. SwiftData order doesn't change; this is purely a
-    /// view-state pop-and-push.
-    private func promoteNextSticky() {
-        guard let vm = viewModel, vm.insights.count > 1 else { return }
-        let first = vm.insights.removeFirst()
-        vm.insights.append(first)
-    }
-
     /// Dispatch the sticky's `actionURL` to the right surface based on
     /// `kind`. Internal schemes (`weeklyplanner://event/<uuid>`,
     /// `weeklyplanner://inbox/<dayKey>`) go through `DeepLinkRouter`;
