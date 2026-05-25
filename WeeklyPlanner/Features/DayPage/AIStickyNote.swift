@@ -62,40 +62,38 @@ struct AIStickyNote: View {
     /// the top edge, eyebrow row, handwriting body, and the bottom-right
     /// peel hint triangle. Whole view is tappable to fold.
     private var expandedBody: some View {
-        Button {
+        VStack(alignment: .leading, spacing: 0) {
+            eyebrow
+                .padding(.bottom, 3)
+
+            Text(insight.text)
+                .font(font.font(at: 13 * size.scale, weight: .semibold))
+                .foregroundStyle(Color(hex: "#3A2A1A"))
+                .lineSpacing(1.15)
+                .multilineTextAlignment(.leading)
+        }
+        .frame(width: 104, alignment: .leading)
+        .padding(EdgeInsets(top: 8, leading: 9, bottom: 10, trailing: 9))
+        .background(RoundedRectangle(cornerRadius: 1)
+            .fill(Color(hex: insight.colorHex)))
+        .overlay(alignment: .bottomTrailing) {
+            StickyPeelCorner()
+        }
+        .overlay(alignment: .top) {
+            MaskingTape(width: .compact)
+                .offset(y: -5)
+        }
+        .shadow(color: Color.black.opacity(0.22), radius: 4, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.12), radius: 1, x: 0, y: 1)
+        .rotationEffect(.degrees(insight.tiltDegrees), anchor: .topTrailing)
+        .contentShape(Rectangle())
+        .onTapGesture {
             if let onTap {
                 onTap()
             } else {
                 folded = true
             }
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                eyebrow
-                    .padding(.bottom, 3)
-
-                Text(insight.text)
-                    .font(font.font(at: 13 * size.scale, weight: .semibold))
-                    .foregroundStyle(Color(hex: "#3A2A1A"))
-                    .lineSpacing(1.15)
-                    .multilineTextAlignment(.leading)
-            }
-            .frame(width: 104, alignment: .leading)
-            .padding(EdgeInsets(top: 8, leading: 9, bottom: 10, trailing: 9))
-            .background(RoundedRectangle(cornerRadius: 1)
-                .fill(Color(hex: insight.colorHex)))
-            .overlay(alignment: .bottomTrailing) {
-                StickyPeelCorner()
-            }
-            .overlay(alignment: .top) {
-                MaskingTape(width: .compact)
-                    .offset(y: -5)
-            }
-            .shadow(color: Color.black.opacity(0.22), radius: 4, x: 0, y: 3)
-            .shadow(color: Color.black.opacity(0.12), radius: 1, x: 0, y: 1)
-            .rotationEffect(.degrees(insight.tiltDegrees), anchor: .topTrailing)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in onLongPress?() }
