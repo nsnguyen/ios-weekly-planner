@@ -16,6 +16,7 @@ final class SettingsViewModel {
     var weekStartsOnMonday: Bool
     var defaultReminderMinutes: Int?
     var appleIntelligenceEnabled: Bool
+    var aiStickyNotesEnabled: Bool
 
     init(store: any SettingsStoring) {
         self.store = store
@@ -26,6 +27,7 @@ final class SettingsViewModel {
         weekStartsOnMonday = settings.weekStartsOnMonday
         defaultReminderMinutes = settings.defaultReminderMinutes
         appleIntelligenceEnabled = settings.appleIntelligenceEnabled
+        aiStickyNotesEnabled = settings.aiStickyNotesEnabled
     }
 
     func setTheme(_ theme: PaperThemeKey) {
@@ -56,5 +58,10 @@ final class SettingsViewModel {
     func setAppleIntelligenceEnabled(_ value: Bool) {
         appleIntelligenceEnabled = value
         try? store.update { $0.appleIntelligenceEnabled = value }
+    }
+
+    func setAIStickyNotesEnabled(_ value: Bool) {
+        aiStickyNotesEnabled = value
+        try? store.update { $0.aiStickyNotesEnabled = value }
     }
 }

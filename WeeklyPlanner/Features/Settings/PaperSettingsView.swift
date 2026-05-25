@@ -88,6 +88,13 @@ struct PaperSettingsView: View {
                               get: { viewModel.appleIntelligenceEnabled },
                               set: { viewModel.setAppleIntelligenceEnabled($0) }
                           ))
+                PrefRowDivider()
+                ToggleRow(label: "AI Sticky Notes",
+                          detail: "Smart reminders on each day page",
+                          isOn: Binding(
+                              get: { viewModel.aiStickyNotesEnabled },
+                              set: { viewModel.setAIStickyNotesEnabled($0) }
+                          ))
             }
 
             AboutFooter()

@@ -25,6 +25,7 @@ final class UserSettings {
 
     /// AI
     var appleIntelligenceEnabled: Bool
+    var aiStickyNotesEnabled: Bool = true
 
     // Integrations
     var gmailConnected: Bool
@@ -55,6 +56,7 @@ final class UserSettings {
          weekStartsOnMonday: Bool = true,
          defaultReminderMinutes: Int? = 15,
          appleIntelligenceEnabled: Bool = true,
+         aiStickyNotesEnabled: Bool = true,
          gmailConnected: Bool = false,
          gmailAccountEmail: String? = nil,
          googleCalendarConnected: Bool = false,
@@ -74,6 +76,7 @@ final class UserSettings {
         self.weekStartsOnMonday = weekStartsOnMonday
         self.defaultReminderMinutes = defaultReminderMinutes
         self.appleIntelligenceEnabled = appleIntelligenceEnabled
+        self.aiStickyNotesEnabled = aiStickyNotesEnabled
         self.gmailConnected = gmailConnected
         self.gmailAccountEmail = gmailAccountEmail
         self.googleCalendarConnected = googleCalendarConnected

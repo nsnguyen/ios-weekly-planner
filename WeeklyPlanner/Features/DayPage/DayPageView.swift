@@ -90,6 +90,7 @@ struct DayPageContent: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
     @Environment(\.deepLinkRouter) private var deepLinkRouter
+    @Environment(\.settingsStore) private var settingsStore
     @Environment(\.paperTheme) private var theme
 
     /// Lazily-instantiated view model; nil until `.task` runs once on first
@@ -322,7 +323,9 @@ struct DayPageContent: View {
 
     @ViewBuilder
     private var stickyNoteOverlay: some View {
-        if let insights = viewModel?.insights, !insights.isEmpty {
+        if let insights = viewModel?.insights, !insights.isEmpty,
+           (try? settingsStore.current())?.aiStickyNotesEnabled != false
+        {
             AIStickyStack(
                 insights: insights,
                 onTap: { insight in handleStickyTap(insight) },
