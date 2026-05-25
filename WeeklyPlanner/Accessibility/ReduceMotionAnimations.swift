@@ -24,6 +24,10 @@ extension AnimationTokens {
         reduced ? .linear(duration: 0) : Self.stickyPeel
     }
 
+    static func stickySwipe(reduced: Bool) -> Animation {
+        reduced ? .easeOut(duration: 0.18) : Self.stickySwipe
+    }
+
     static func pickerDrop(reduced: Bool) -> Animation {
         reduced ? .easeOut(duration: 0.15) : Self.pickerDrop
     }

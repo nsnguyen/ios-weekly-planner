@@ -16,6 +16,9 @@ enum AnimationTokens {
     /// at the end — note "lifts off" the page.
     static let stickyPeel = Animation.timingCurve(0.20, 0.80, 0.20, 1.10, duration: 0.32)
 
+    /// AI sticky-note swipe-to-navigate transition.
+    static let stickySwipe = Animation.spring(duration: 0.3, bounce: 0.15)
+
     /// Week-picker drop-down from the top bar.
     static let pickerDrop = Animation.timingCurve(0.20, 0.80, 0.20, 1.00, duration: 0.32)
 
