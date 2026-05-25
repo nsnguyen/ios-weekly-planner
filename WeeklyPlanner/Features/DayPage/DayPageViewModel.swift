@@ -30,6 +30,12 @@ final class DayPageViewModel {
     /// then alphabetical by title for stability.
     var tasks: [TaskItem] = []
 
+    /// Cascade of AI sticky-note insights for this day, sorted by
+    /// `priority` ascending (lower = top of the stack). Populated by
+    /// `refresh()` from SwiftData after the `StickyOrchestrator` runs.
+    /// Phase 24 — replaces the single-insight read pattern.
+    var insights: [AIInsight] = []
+
     /// Localized description of the most recent fetch failure, if any.
     /// Cleared when a refresh succeeds.
     var loadError: String?
@@ -42,7 +48,7 @@ final class DayPageViewModel {
     private let eventStore: any EventStoring
     private let inboxStore: any InboxStoring
     private let taskStore: any TaskStoring
-    private let stickyGenerator: StickyInsightGenerator?
+    private let orchestrator: StickyOrchestrator?
     private let modelContext: ModelContext?
     private let clock: () -> Date
 
@@ -54,12 +60,14 @@ final class DayPageViewModel {
     ///   - eventStore: Store for `Event` reads.
     ///   - inboxStore: Store for `InboxSuggestion` reads/mutations.
     ///   - taskStore: Store for `TaskItem` reads/mutations.
-    ///   - stickyGenerator: Optional Phase 13 generator that produces AI
-    ///     sticky notes on demand. `nil` in tests/previews; the view
-    ///     supplies a real one in production.
-    ///   - modelContext: Optional SwiftData context the generator writes
-    ///     fresh `AIInsight` rows into. Required if `stickyGenerator` is
-    ///     non-nil; ignored otherwise.
+    ///   - orchestrator: Optional `StickyOrchestrator` that runs the
+    ///     5-generator cascade and persists up to 3 `AIInsight` rows
+    ///     per day. `nil` in tests/previews; the app supplies a real
+    ///     one in production via `\.stickyOrchestrator`. Phase 24 —
+    ///     replaces the per-VM `EncouragementInsightGenerator`.
+    ///   - modelContext: Optional SwiftData context the orchestrator
+    ///     writes fresh `AIInsight` rows into and the VM reads the
+    ///     cascade back from. Required if `orchestrator` is non-nil.
     ///   - clock: Injected "now" so tests can pin the date. Defaults to
     ///     `Date()` in production.
     init(weekOffset: Int,
@@ -67,7 +75,7 @@ final class DayPageViewModel {
          eventStore: any EventStoring,
          inboxStore: any InboxStoring,
          taskStore: any TaskStoring,
-         stickyGenerator: StickyInsightGenerator? = nil,
+         orchestrator: StickyOrchestrator? = nil,
          modelContext: ModelContext? = nil,
          clock: @escaping () -> Date = { .init() })
     {
@@ -76,7 +84,7 @@ final class DayPageViewModel {
         self.eventStore = eventStore
         self.inboxStore = inboxStore
         self.taskStore = taskStore
-        self.stickyGenerator = stickyGenerator
+        self.orchestrator = orchestrator
         self.modelContext = modelContext
         self.clock = clock
         // Anchor the composer to this day-vm's date. Re-anchored in
@@ -147,7 +155,18 @@ final class DayPageViewModel {
             loadError = error.localizedDescription
         }
 
-        await refreshStickyInsightIfNeeded(now: now)
+        if let orchestrator, let modelContext {
+            let ctx = DayContext(weekOffset: weekOffset,
+                                 dayIdx: dayIdx,
+                                 events: events,
+                                 inbox: inbox,
+                                 now: now,
+                                 appleIntelligenceEnabled: true)
+            await orchestrator.run(for: ctx, into: modelContext)
+            insights = StickyNoteGenerator.insights(forWeekOffset: weekOffset,
+                                                    dayIdx: dayIdx,
+                                                    in: modelContext)
+        }
 
         // Re-anchor the composer in case the clock advanced past midnight
         // while the page was visible. The composer's day matches this
@@ -158,23 +177,25 @@ final class DayPageViewModel {
         }
     }
 
-    /// Generate a fresh `AIInsight` for this day if one isn't already
-    /// cached. No-op when no generator or model context was injected
-    /// (preview / test path), or when the model is unavailable.
-    private func refreshStickyInsightIfNeeded(now: Date) async {
-        guard let stickyGenerator,
-              let modelContext,
-              StickyNoteGenerator.insight(forWeekOffset: weekOffset,
-                                          dayIdx: dayIdx,
-                                          in: modelContext) == nil
-        else { return }
+    /// Invalidate the orchestrator cache for this day and re-run. Wired to
+    /// the `AIStickyNote` eyebrow "↻" button so the user can force-refresh
+    /// the cascade without waiting for the TTL.
+    func refreshInsights() async {
+        guard let orchestrator, modelContext != nil else { return }
+        orchestrator.invalidate(dayKey: AIInsight.key(weekOffset: weekOffset, dayIdx: dayIdx))
+        await refresh()
+    }
 
-        guard let insight = await stickyGenerator.generate(weekOffset: weekOffset,
-                                                            dayIdx: dayIdx,
-                                                            events: events,
-                                                            now: now) else { return }
-        modelContext.insert(insight)
-        try? modelContext.save()
+    /// Mark the insight as dismissed (it stays in SwiftData so we don't
+    /// re-emit it next refresh) and remove it from the visible cascade.
+    func dismissInsight(_ insight: AIInsight) async {
+        insight.dismissed = true
+        try? modelContext?.save()
+        if let modelContext {
+            insights = StickyNoteGenerator.insights(forWeekOffset: weekOffset,
+                                                    dayIdx: dayIdx,
+                                                    in: modelContext)
+        }
     }
 
     /// Mark a suggestion as accepted and refresh the day's state. Errors are

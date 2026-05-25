@@ -10,6 +10,7 @@ final class DeepLinkRouter {
     enum Destination: Equatable {
         case event(UUID)
         case task(UUID)
+        case inbox(dayKey: String)
     }
 
     private(set) var pending: Destination?

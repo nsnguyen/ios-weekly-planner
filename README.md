@@ -19,8 +19,8 @@ producing real iOS Calendar events, local notifications (time +
 arrival-based), and end-to-end accessibility (VoiceOver labels, custom
 rotors, Dynamic Type with handwriting clamp, Reduce Motion alternatives,
 WCAG AA contrast, Bold Text font weight swap, RTL gesture/rotation
-fixes, Localizable.xcstrings scaffolding). 302 unit tests + 9 UI tests,
-all green.
+fixes, Localizable.xcstrings scaffolding). 376 unit tests + 10 UI
+tests (7 passing + 3 pre-existing Phase 21 baseline failures).
 
 | Milestone | Phases | Status |
 |-----------|--------|--------|
@@ -33,7 +33,7 @@ all green.
 | G — Settings           | 16–17 | ✅ done |
 | H — Integrations       | 18–19 | ✅ done |
 | I — Polish             | 21    | ✅ done (Phase 20 archived) |
-| J — Completeness       | 22–24 | ⏳ in progress (Phases 22 + 23 ✅ shipped on `main`; 24 pending) |
+| J — Completeness       | 22–24 | ✅ done |
 | K — Ship               | 25–26 | ⏳ pending (Polish/Icon/Privacy, App Store Submission) |
 
 See `docs/phases/README.md` for the full 26-phase plan and per-phase
@@ -41,7 +41,7 @@ retrospectives.
 
 ## Action items before App Store submission
 
-One functional gap still ships before App Store review:
+Milestone J shipped — all three Phase 22/23/24 functional gaps closed:
 
 - ✅ **Phase 22 — Manual Event CRUD.** *(shipped on `main` in
   [#5](https://github.com/nsnguyen/ios-weekly-planner/pull/5))* Tap
@@ -55,12 +55,12 @@ One functional gap still ships before App Store review:
   "+ add a to-do" composer with a dashed-circle commit checkbox.
   Long-press a to-do for the mini popover (priority / due / delete).
   Swipe-left to delete. Auto-refresh on `.taskStoreDidChange`.
-- **Phase 24 — AI Sticky v2 (Live & Actionable).** The current sticky
-  generates one encouraging line per day and never refreshes. v2 runs
-  four signal sources (travel-time ETA via MapKit, weather via
-  WeatherKit, calendar-keyword detection via Foundation Models, and
-  inbox-flagged items) and cascades up to 3 actionable stickies that
-  refresh on day-page open + pull-to-refresh.
+- ✅ **Phase 24 — AI Sticky v2 (Live & Actionable).** Five-source
+  cascade (Travel/Weather/Keyword/Inbox primary + Encouragement
+  fallback) running concurrently in `StickyOrchestrator`, persisting
+  up to 3 stickies per day. Long-press for context menu (Dismiss /
+  Refresh / Show another / kind-specific). Eyebrow ↻ for cache
+  invalidation.
 
 Then **Phase 25** (Final Polish, App Icon, Launch Screen, Privacy
 Manifest) and **Phase 26** (App Store Submission & TestFlight) close
