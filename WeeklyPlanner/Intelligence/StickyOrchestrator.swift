@@ -114,19 +114,19 @@ final class StickyOrchestrator {
 
     // MARK: - Persistence
 
-    /// Deletes existing non-dismissed rows for the same `(dayKey, kind)`
-    /// pairs covered by `insights`, then inserts the new ones. Saves
-    /// once at the end.
+    /// Replaces all non-dismissed insights for this day with the fresh
+    /// set. Deletes every existing non-dismissed row — not just kinds
+    /// with new results — so insights whose source event was deleted
+    /// don't persist as stale ghosts. Saves once at the end.
     private func persist(_ insights: [AIInsight],
                           day: DayContext,
                           into context: ModelContext)
     {
         let dayKey = day.dayKey
-        let kindsToReplace = Set(insights.map { $0.kindRaw })
         let descriptor = FetchDescriptor<AIInsight>(
             predicate: #Predicate { $0.dayKey == dayKey && !$0.dismissed })
         if let existing = try? context.fetch(descriptor) {
-            for row in existing where kindsToReplace.contains(row.kindRaw) {
+            for row in existing {
                 context.delete(row)
             }
         }

@@ -101,6 +101,23 @@ final class StickyOrchestratorTests: XCTestCase {
         XCTAssertEqual(travels.first?.text, "NEW")
     }
 
+    func testStaleInsightDeletedWhenGeneratorReturnsNil() async throws {
+        let existing = makeInsight(kind: .travel, text: "Leave by 9:35 for dentist")
+        container.mainContext.insert(existing)
+        try container.mainContext.save()
+
+        let orch = StickyOrchestrator(generators: [
+            FixedGenerator(kind: .travel, output: nil),
+            FixedGenerator(kind: .weather, output: makeInsight(kind: .weather, text: "Rain at 2pm"))
+        ], fallback: FixedGenerator(kind: .encouragement, output: nil))
+        await orch.run(for: ctx(), into: container.mainContext)
+
+        let all = try container.mainContext.fetch(
+            FetchDescriptor<AIInsight>(predicate: #Predicate { !$0.dismissed }))
+        XCTAssertEqual(all.count, 1, "Stale travel insight should be deleted")
+        XCTAssertEqual(all.first?.kind, .weather)
+    }
+
     func testDismissedInsightExcludedFromCount() async throws {
         let dismissed = makeInsight(kind: .keyword, text: "Old keyword")
         dismissed.dismissed = true
