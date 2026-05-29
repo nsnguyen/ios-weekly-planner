@@ -50,6 +50,10 @@ final class DayPageViewModel {
     private let taskStore: any TaskStoring
     private let orchestrator: StickyOrchestrator?
     private let modelContext: ModelContext?
+    /// Read fresh on each `refresh()` to gate sticky-insight *generation*
+    /// on `aiStickyNotesEnabled`. `nil` in tests/previews that don't care
+    /// about the toggle, where generation is left enabled.
+    private let settingsStore: (any SettingsStoring)?
     private let clock: () -> Date
 
     /// Designated initializer.
@@ -77,6 +81,7 @@ final class DayPageViewModel {
          taskStore: any TaskStoring,
          orchestrator: StickyOrchestrator? = nil,
          modelContext: ModelContext? = nil,
+         settingsStore: (any SettingsStoring)? = nil,
          clock: @escaping () -> Date = { .init() })
     {
         self.weekOffset = weekOffset
@@ -86,6 +91,7 @@ final class DayPageViewModel {
         self.taskStore = taskStore
         self.orchestrator = orchestrator
         self.modelContext = modelContext
+        self.settingsStore = settingsStore
         self.clock = clock
         // Anchor the composer to this day-vm's date. Re-anchored in
         // refresh() so the composer always points at the focused day
@@ -155,7 +161,18 @@ final class DayPageViewModel {
             loadError = error.localizedDescription
         }
 
-        if let orchestrator, let modelContext {
+        // Opt-in gate: AI sticky notes only *generate* when the user has
+        // enabled them. Read fresh each refresh so a Settings toggle takes
+        // effect on the next page refresh. A `nil` settingsStore (tests /
+        // previews that don't care about the toggle) leaves generation on.
+        let stickyEnabled: Bool
+        if let settingsStore {
+            stickyEnabled = (try? settingsStore.current())?.aiStickyNotesEnabled ?? false
+        } else {
+            stickyEnabled = true
+        }
+
+        if stickyEnabled, let orchestrator, let modelContext {
             let ctx = DayContext(weekOffset: weekOffset,
                                  dayIdx: dayIdx,
                                  events: events,
@@ -166,6 +183,8 @@ final class DayPageViewModel {
             insights = StickyNoteGenerator.insights(forWeekOffset: weekOffset,
                                                     dayIdx: dayIdx,
                                                     in: modelContext)
+        } else if !stickyEnabled {
+            insights = []
         }
 
         // Re-anchor the composer in case the clock advanced past midnight

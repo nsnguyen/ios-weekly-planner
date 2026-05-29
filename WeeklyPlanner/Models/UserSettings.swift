@@ -25,7 +25,10 @@ final class UserSettings {
 
     /// AI
     var appleIntelligenceEnabled: Bool
-    var aiStickyNotesEnabled: Bool = true
+    /// AI sticky notes are opt-in: off until the user enables them in
+    /// Settings → Preferences. Gates both display (DayPageView overlay)
+    /// and generation (DayPageViewModel orchestrator run).
+    var aiStickyNotesEnabled: Bool = false
 
     // Integrations
     var gmailConnected: Bool
@@ -56,7 +59,7 @@ final class UserSettings {
          weekStartsOnMonday: Bool = true,
          defaultReminderMinutes: Int? = 15,
          appleIntelligenceEnabled: Bool = true,
-         aiStickyNotesEnabled: Bool = true,
+         aiStickyNotesEnabled: Bool = false,
          gmailConnected: Bool = false,
          gmailAccountEmail: String? = nil,
          googleCalendarConnected: Bool = false,

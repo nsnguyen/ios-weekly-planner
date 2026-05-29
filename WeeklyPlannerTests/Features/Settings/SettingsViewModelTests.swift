@@ -28,6 +28,8 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(vm.weekStartsOnMonday)
         XCTAssertEqual(vm.defaultReminderMinutes, 15)
         XCTAssertTrue(vm.appleIntelligenceEnabled)
+        // AI Sticky Notes are opt-in: off until the user enables them.
+        XCTAssertFalse(vm.aiStickyNotesEnabled)
     }
 
     func testSelectingThemePersists() throws {

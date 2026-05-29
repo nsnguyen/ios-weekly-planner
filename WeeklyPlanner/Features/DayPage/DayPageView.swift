@@ -229,7 +229,8 @@ struct DayPageContent: View {
                                              inboxStore: inboxStore,
                                              taskStore: taskStore,
                                              orchestrator: stickyOrchestrator,
-                                             modelContext: modelContext)
+                                             modelContext: modelContext,
+                                             settingsStore: settingsStore)
             }
             await viewModel?.refresh()
         }

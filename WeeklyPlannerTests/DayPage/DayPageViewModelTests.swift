@@ -235,6 +235,97 @@ final class DayPageViewModelTests: XCTestCase {
         XCTAssertEqual(vm.insights.first?.kind, .inbox)
     }
 
+    /// When `aiStickyNotesEnabled` is off, `refresh()` must NOT run the
+    /// orchestrator at all — no insights surface and, crucially, no
+    /// `AIInsight` rows are persisted (proving the WeatherKit/MapKit/
+    /// FoundationModels cascade never fired). Opt-in gate, generation side.
+    func testRefresh_whenStickyNotesDisabled_skipsOrchestratorAndPersistsNothing() async throws {
+        let container = try SwiftDataStack.inMemoryContainer()
+        let eventStore = SwiftDataEventStore(context: container.mainContext)
+        let inboxStore = SwiftDataInboxStore(context: container.mainContext)
+        let taskStore = SwiftDataTaskStore(context: container.mainContext)
+        let today = Self.may16_2026(hour: 9)
+
+        let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
+        try settingsStore.update { $0.aiStickyNotesEnabled = false }
+
+        // InboxInsightGenerator WOULD emit an insight for a pending
+        // suggestion, so a persisted row proves the cascade ran.
+        let inboxOnly = StickyOrchestrator(
+            generators: [InboxInsightGenerator()],
+            fallback: FixedNilGenerator())
+        let suggestion = InboxSuggestion(
+            gmailMessageID: "test-msg-off",
+            proposedStart: today,
+            title: "T",
+            fromName: "X",
+            fromEmail: "x@y.com",
+            category: .work,
+            subject: "Test")
+        try await inboxStore.upsert(suggestion)
+
+        let days = WeekMath.weekDays(forOffset: 0, today: today)
+        let dayIdx = WeekMath.todayIndex(in: days, for: today) ?? 0
+
+        let vm = DayPageViewModel(weekOffset: 0,
+                                  dayIdx: dayIdx,
+                                  eventStore: eventStore,
+                                  inboxStore: inboxStore,
+                                  taskStore: taskStore,
+                                  orchestrator: inboxOnly,
+                                  modelContext: container.mainContext,
+                                  settingsStore: settingsStore,
+                                  clock: { today })
+        await vm.refresh()
+
+        XCTAssertTrue(vm.insights.isEmpty)
+        let rows = try container.mainContext.fetch(FetchDescriptor<AIInsight>())
+        XCTAssertEqual(rows.count, 0, "Generation must be skipped when the toggle is off")
+    }
+
+    /// With `aiStickyNotesEnabled` explicitly on, the cascade runs and
+    /// insights surface as before — the gate doesn't suppress when enabled.
+    func testRefresh_whenStickyNotesEnabled_runsOrchestrator() async throws {
+        let container = try SwiftDataStack.inMemoryContainer()
+        let eventStore = SwiftDataEventStore(context: container.mainContext)
+        let inboxStore = SwiftDataInboxStore(context: container.mainContext)
+        let taskStore = SwiftDataTaskStore(context: container.mainContext)
+        let today = Self.may16_2026(hour: 9)
+
+        let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
+        try settingsStore.update { $0.aiStickyNotesEnabled = true }
+
+        let inboxOnly = StickyOrchestrator(
+            generators: [InboxInsightGenerator()],
+            fallback: FixedNilGenerator())
+        let suggestion = InboxSuggestion(
+            gmailMessageID: "test-msg-on",
+            proposedStart: today,
+            title: "T",
+            fromName: "X",
+            fromEmail: "x@y.com",
+            category: .work,
+            subject: "Test")
+        try await inboxStore.upsert(suggestion)
+
+        let days = WeekMath.weekDays(forOffset: 0, today: today)
+        let dayIdx = WeekMath.todayIndex(in: days, for: today) ?? 0
+
+        let vm = DayPageViewModel(weekOffset: 0,
+                                  dayIdx: dayIdx,
+                                  eventStore: eventStore,
+                                  inboxStore: inboxStore,
+                                  taskStore: taskStore,
+                                  orchestrator: inboxOnly,
+                                  modelContext: container.mainContext,
+                                  settingsStore: settingsStore,
+                                  clock: { today })
+        await vm.refresh()
+
+        XCTAssertEqual(vm.insights.count, 1)
+        XCTAssertEqual(vm.insights.first?.kind, .inbox)
+    }
+
     func testDismissInsight_marksAndRefetches() async throws {
         let container = try SwiftDataStack.inMemoryContainer()
         let today = Self.may16_2026()
