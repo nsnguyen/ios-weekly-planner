@@ -59,14 +59,35 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 24 | AI Sticky v2 — Live & Actionable                     | J                   | ✅     |
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
+| 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| 📋     |
+| 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| 📋     |
+| 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | 📋     |
+| 30 | Week Page Polish                                     | L                   | 📋     |
+| 31 | Month Grid & Week-Picker Navigation                  | L                   | 📋     |
+| 32 | AI Surfaces & Review Cleanup                         | L                   | 📋     |
+| 33 | Notes Tab                                            | M — v1.1 Features   | 📋     |
+| 34 | Free-Text Annotations                                | M                   | 📋     |
+| 35 | Repeating Events                                     | M                   | 📋     |
+| 36 | Personalization Expansion                            | M                   | 📋     |
+| 37 | Google Calendar Sync                                 | M                   | 📋     |
+| 38 | Localization & Real Translations                     | N — Future          | 💤     |
+| 39 | Voice Memos                                          | N — Future          | 💤     |
+
+**Legend:** ✅ done · ⏳ in progress · 📋 scope doc written, not started · 💤 outline only · 🗄️ archived.
 
 **Current state:** Milestones A–J shipped on `main`. Phase 20 (Modern
 Mode) archived at tag `phase-20-archive`. Phase 24 (AI Sticky v2)
-merged via PR #<TBD>.
+merged via PR #<TBD>. v1.0.0 is in TestFlight; the first round of
+post-launch feedback (`docs/suggestions.md`) is triaged in
+`docs/superpowers/specs/2026-05-30-post-launch-feedback-roadmap-design.md`
+and decomposed into Phases 27–39.
 
-Next up: Milestone K — Phase 25 (Final Polish, App Icon, Launch
-Screen, Privacy Manifest) and Phase 26 (App Store Submission &
-TestFlight).
+**Next up (Milestone K — Ship):** Phases 27 (Week View Stability) and
+28 (Sticky Swipe-Lock) are submission **blockers** — fix them, finish
+Phase 25 (Polish), then ship Phase 26 (Submission). Phases 29–37 are
+v1.1 polish + features (post-submission); Phases 38–39 are outline-only
+future bets. AI Sticky Notes stay opt-in (only the swipe-lock is fixed —
+see `[[ai-sticky-notes-opt-in]]`).
 
 ## Reading a Phase Doc
 
