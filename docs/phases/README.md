@@ -59,7 +59,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 24 | AI Sticky v2 — Live & Actionable                     | J                   | ✅     |
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
-| 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| 📋     |
+| 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| ✅     |
 | 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| 📋     |
 | 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | 📋     |
 | 30 | Week Page Polish                                     | L                   | 📋     |
@@ -82,12 +82,15 @@ post-launch feedback (`docs/suggestions.md`) is triaged in
 `docs/superpowers/specs/2026-05-30-post-launch-feedback-roadmap-design.md`
 and decomposed into Phases 27–39.
 
-**Next up (Milestone K — Ship):** Phases 27 (Week View Stability) and
-28 (Sticky Swipe-Lock) are submission **blockers** — fix them, finish
-Phase 25 (Polish), then ship Phase 26 (Submission). Phases 29–37 are
-v1.1 polish + features (post-submission); Phases 38–39 are outline-only
-future bets. AI Sticky Notes stay opt-in (only the swipe-lock is fixed —
-see `[[ai-sticky-notes-opt-in]]`).
+**Next up (Milestone K — Ship):** Phase 27 (Week View Stability) is
+**done** — the navigation-freeze root cause (a stranded `isFlipping`) is
+fixed and unit-verified (387 tests green); on-device confirmation of the
+3-min repro is still recommended before submission. Phase 28 (Sticky
+Swipe-Lock) is the remaining submission **blocker** — fix it, finish Phase
+25 (Polish), then ship Phase 26 (Submission). Phases 29–37 are v1.1 polish
++ features (post-submission); Phases 38–39 are outline-only future bets. AI
+Sticky Notes stay opt-in (only the swipe-lock is fixed — see
+`[[ai-sticky-notes-opt-in]]`).
 
 ## Reading a Phase Doc
 
@@ -985,4 +988,49 @@ Modified: `WeeklyPlanner/Models/AIInsight.swift` (schema v2),
 + deep-link routing), `WeeklyPlanner/Stores/Environment+Stores.swift`
 (`\.stickyOrchestrator` env key),
 `WeeklyPlanner/Supporting/WeeklyPlanner.entitlements` (+weatherkit).
+
+### Phase 27 — Week View Stability & Cross-View Navigation
+
+Fixed the #1 TestFlight bug: the app froze after ~a minute on the Week view
+and **all** navigation (week and day) died until force-quit (suggestions
+21/23), and the week picker showed the previous week's events (22).
+
+**Root cause** (confirmed from the call graph, not hypothesized):
+`PageFlipController.commit()` was driven *only* by `PageFlipContainer`, which
+exists *only* in the Day view. The Week view's chevrons called `flipWeek()`,
+which set `target` (so `isFlipping == true`) with **no committer in the week
+path** — `target` stranded non-nil forever, and since every mutator guards on
+`!isFlipping`, the *shared* controller deadlocked every navigation path (week
+*and* day). Separately, `WeekPageView` cached its view model in `@State`
+(created once in `.task`, no `.task(id:)`), so jumping weeks via `setWeek`
+changed `current.week` but kept the view's identity and the old week's events.
+
+**Fix:** `PageFlipController` now owns a fallback `autoCommitDelay` (700ms) +
+`pendingCommit` task that force-commits any un-committed flip, so `isFlipping`
+can never strand regardless of which view (or no view) drives `commit()`;
+`commit()`/`cancel()` cancel it and `commit()` is idempotent so the Day view's
+animation-synced commit still wins. `init(current:)` kept its signature (added
+a separate `init(current:autoCommitDelay:)` test seam) so the symbol is stable
+and untouched callers don't need a relink. The Week chevrons now use the
+strand-proof `setWeek` in both views, and the Week page gets
+`.id(controller.current.week)` so its VM reloads events per offset (mirrors
+`DayPageContent`'s `.id(coord)`). `ConnectionRow` makes the disabled Google
+Calendar "Coming soon" row non-actionable (suggestion 5 stop-gap; real sync is
+Phase 37).
+
+**Tests:** full `WeeklyPlannerTests` suite green — **387 tests, 0 failures**
+(iPhone 17 sim, Xcode 26.5) — including new no-strand regression tests
+(`testAutoCommitResolvesStrandedFlip`, `testRapidFlipsNeverStrandIsFlipping`,
+`testSetWeekAppliesOffset`).
+
+**Deferred (do before the Phase 26 submission):** the
+`WeekNavigationStabilityUITests` XCUITest (needs a `TimelineSchedule`/clock
+seam for the one-minute tick) and the on-device 3-min idle/navigation
+confirmation — the freeze is a runtime/UX symptom the unit tests model but
+can't fully reproduce. Shipped on branch `phase-27-week-view-stability`.
+
+**Files:** `WeeklyPlanner/Features/DayPage/PageFlipController.swift`,
+`WeeklyPlanner/Navigation/AppShell.swift`,
+`WeeklyPlanner/Features/Settings/ConnectionRow.swift`,
+`WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`.
 
