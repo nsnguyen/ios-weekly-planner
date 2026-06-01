@@ -156,18 +156,16 @@ struct AppShell: View {
                           }
                       },
                       onPrevWeek: {
-                          if paperView == .day {
-                              controller.setWeek(controller.current.week - 1)
-                          } else {
-                              controller.flipWeek(direction: .prev)
-                          }
+                          // Both Day and Week views jump the week instantly via
+                          // setWeek. The Week view has no PageFlipContainer to
+                          // drive commit(), so the old `flipWeek` path set
+                          // `target` with no committer and permanently stranded
+                          // `isFlipping` — the Phase 27 freeze. setWeek mutates
+                          // `current` directly and can never strand.
+                          controller.setWeek(controller.current.week - 1)
                       },
                       onNextWeek: {
-                          if paperView == .day {
-                              controller.setWeek(controller.current.week + 1)
-                          } else {
-                              controller.flipWeek(direction: .next)
-                          }
+                          controller.setWeek(controller.current.week + 1)
                       },
                       onPrevDay: { controller.flipDay(direction: .prev) },
                       onNextDay: { controller.flipDay(direction: .next) },
@@ -177,6 +175,12 @@ struct AppShell: View {
                               DayPageView(controller: controller)
                           case .week:
                               WeekPageView(weekOffset: controller.current.week)
+                                  // Fresh identity per offset so the week's view
+                                  // model reloads its events when the user jumps
+                                  // weeks — otherwise the picker shows the prior
+                                  // week's events (Phase 27 / suggestion 22).
+                                  // Mirrors DayPageContent's `.id(coord)`.
+                                  .id(controller.current.week)
                           }
                       },
                       includesCover: false)

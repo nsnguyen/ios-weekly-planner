@@ -70,7 +70,10 @@ struct ConnectionRow<Logo: View>: View {
         }
         .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
         .contentShape(Rectangle())
-        .onTapGesture { onTap?() }
+        // Disabled rows (e.g. Google Calendar "Coming soon") must be
+        // non-actionable so testers stop filing them as broken (Phase 27 /
+        // suggestion 5). Real Google Calendar sync arrives in Phase 37.
+        .onTapGesture { if isEnabled { onTap?() } }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(combinedAccessibilityLabel)
         .accessibilityHint(accessibilityHintText)

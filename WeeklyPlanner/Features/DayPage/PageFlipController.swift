@@ -30,12 +30,12 @@ struct PageCoordinate: Equatable, Hashable {
 /// - `direction`: which way we're flipping; `nil` when idle.
 ///
 /// While `target != nil` the view is mid-flip and the controller refuses
-/// new flip requests. Callers call `commit()` after the animation duration
-/// to finalize the transition (or wait for the controller's own timer).
+/// new flip requests. The view layer calls `commit()` after the animation
+/// duration to finalize the transition; if it never does, the controller's
+/// own `autoCommitDelay` fallback finalizes it so a flip can never strand.
 ///
 /// This type is `@MainActor` because it's driven directly from SwiftUI view
-/// updates and gesture callbacks; it does not perform any animation timing
-/// itself — the view layer schedules the timed `commit()` call.
+/// updates and gesture callbacks.
 @MainActor
 @Observable
 final class PageFlipController {
@@ -63,11 +63,63 @@ final class PageFlipController {
     /// page-level `HorizontalSwipeGesture` can yield to it.
     var stickyDragActive = false
 
+    /// Maximum time a flip may stay un-committed before the controller
+    /// force-commits itself.
+    ///
+    /// This is the Phase 27 freeze fix. Before it, `commit()` was driven
+    /// *only* by `PageFlipContainer.onChange(of:)` — which exists only in the
+    /// Day view. A flip started anywhere without that container (e.g. the Week
+    /// view's `flipWeek`) set `target` with no committer, so `isFlipping`
+    /// (`target != nil`) stranded permanently and every subsequent
+    /// `flipDay`/`flipToDay`/`flipWeek`/`setWeek` no-oped — the app froze.
+    ///
+    /// The fallback guarantees `target` can never stay non-nil forever. It is
+    /// set just above the 620ms day-page flip animation so the view's own
+    /// `commit()` normally fires first; when it does, this fallback finds
+    /// `target == nil` and no-ops (`commit()` is idempotent).
+    private let autoCommitDelay: Duration
+
+    /// The in-flight fallback-commit task, if any. Cancelled by `commit()` and
+    /// `cancel()` so it can never double-fire or finalize a stale flip.
+    private var pendingCommit: Task<Void, Never>?
+
     /// Designated initializer.
+    ///
+    /// Kept as a single `current:` parameter (no defaulted second argument) so
+    /// its mangled symbol is unchanged — existing callers keep linking without
+    /// a full rebuild. The fallback delay defaults to 700ms (just above the
+    /// flip animation).
     ///
     /// - Parameter current: The page the user starts on.
     init(current: PageCoordinate) {
         self.current = current
+        self.autoCommitDelay = .milliseconds(700)
+    }
+
+    /// Test seam: inject a short fallback delay to exercise the auto-commit
+    /// path deterministically. Production always uses `init(current:)`.
+    ///
+    /// - Parameters:
+    ///   - current: The page the user starts on.
+    ///   - autoCommitDelay: Safety-net delay after which an un-committed flip
+    ///     force-commits.
+    init(current: PageCoordinate, autoCommitDelay: Duration) {
+        self.current = current
+        self.autoCommitDelay = autoCommitDelay
+    }
+
+    /// Schedule the fallback commit for the current flip, replacing any prior
+    /// pending one. The `Task.isCancelled` guard after the sleep means a
+    /// view-driven `commit()`/`cancel()` (which cancels this task) prevents a
+    /// double or stale commit; if nothing cancels it, the flip still resolves.
+    private func scheduleAutoCommit() {
+        pendingCommit?.cancel()
+        let delay = autoCommitDelay
+        pendingCommit = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled else { return }
+            self?.commit()
+        }
     }
 
     /// Start a flip in the given direction. No-op while already flipping.
@@ -98,6 +150,7 @@ final class PageFlipController {
         target = next
         self.direction = direction
         progress = 0
+        scheduleAutoCommit()
     }
 
     /// Flip directly to a specific day index in the *current* week.
@@ -115,11 +168,11 @@ final class PageFlipController {
         target = PageCoordinate(week: current.week, day: clamped)
         direction = clamped > current.day ? .next : .prev
         progress = 0
+        scheduleAutoCommit()
     }
 
     /// Advance the current coordinate by one whole week. Keeps the same day
-    /// index. Used by the top-bar week chevrons (in Week view) and by the
-    /// Week page's swipe gesture.
+    /// index.
     ///
     /// - Parameter direction: Direction to flip toward. `.next` advances the
     ///   week by 1, `.prev` rewinds by 1.
@@ -129,11 +182,14 @@ final class PageFlipController {
         target = PageCoordinate(week: nextWeek, day: current.day)
         self.direction = direction
         progress = 0
+        scheduleAutoCommit()
     }
 
-    /// Instantly set the week (no flip animation, no target). Used by the Day
-    /// view's chevrons per spec: "shifts weekOffset by ±1 without triggering
-    /// the page-flip animation".
+    /// Instantly set the week (no flip animation, no target). Used by the week
+    /// chevrons (Day *and* Week view) and the week picker: "shifts weekOffset
+    /// without triggering the page-flip animation". Because it mutates
+    /// `current` directly and never sets `target`, it can never strand
+    /// `isFlipping`.
     ///
     /// - Parameter week: New week offset (relative to today's week). The day
     ///   index is preserved.
@@ -143,9 +199,12 @@ final class PageFlipController {
     }
 
     /// Finalize the transition. Called by the view when the animation
-    /// completes. Sets `current = target`, clears `target` and `direction`,
-    /// and resets `progress` to 0. No-op when there is no in-flight flip.
+    /// completes (and by the `autoCommitDelay` fallback). Sets
+    /// `current = target`, clears `target`/`direction`, resets `progress`, and
+    /// cancels any pending fallback. No-op when there is no in-flight flip.
     func commit() {
+        pendingCommit?.cancel()
+        pendingCommit = nil
         guard let target else { return }
         current = target
         self.target = nil
@@ -155,8 +214,10 @@ final class PageFlipController {
 
     /// Cancel an in-progress flip (e.g., user lifted finger before the
     /// commit threshold). Resets `target`, `direction`, and `progress`
-    /// without moving `current`.
+    /// without moving `current`, and cancels any pending fallback.
     func cancel() {
+        pendingCommit?.cancel()
+        pendingCommit = nil
         target = nil
         direction = nil
         progress = 0
