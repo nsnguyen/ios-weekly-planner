@@ -57,6 +57,7 @@ struct WeekRowView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(AccessibilityIDs.weekpickerWeekRow(week.offset))
         .accessibilityLabel("Week \(week.weekNumber)")
         .accessibilityAddTraits(.isButton)
     }

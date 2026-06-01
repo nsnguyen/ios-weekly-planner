@@ -76,6 +76,7 @@ struct DateRangePill: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Jump to week")
         .accessibilityValue(rangeText)
+        .accessibilityIdentifier(AccessibilityIDs.dateRangePill)
     }
 }
 
