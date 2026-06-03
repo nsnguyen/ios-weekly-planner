@@ -40,33 +40,29 @@ struct BookBottomControls: View {
         .padding(EdgeInsets(top: 8, leading: 26, bottom: 14, trailing: 26))
     }
 
-    /// Leading-direction button: chevron-left glyph followed by `prevLabel`.
+    /// Leading-direction button: chevron-left glyph only. Phase 29 (10) drops
+    /// the spelled-out adjacent-page label; `prevLabel` is retained purely as
+    /// the VoiceOver label so assistive tech still announces "Last day"/"Last
+    /// week". A 10×8 hit-area inset keeps the tap target comfortable now that
+    /// the text no longer contributes width.
     private var prevButton: some View {
         Button(action: onPrev) {
-            HStack(spacing: 6) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 15))
-                Text(prevLabel)
-                    .font(.system(size: 12, weight: .medium))
-            }
-            .foregroundStyle(theme.chromeText)
-            .contentShape(Rectangle())
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(theme.chromeText)
+                .contentShape(Rectangle().inset(by: -10))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(prevLabel)
     }
 
-    /// Trailing-direction button: `nextLabel` followed by chevron-right.
+    /// Trailing-direction button: chevron-right glyph only. See `prevButton`.
     private var nextButton: some View {
         Button(action: onNext) {
-            HStack(spacing: 6) {
-                Text(nextLabel)
-                    .font(.system(size: 12, weight: .medium))
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 15))
-            }
-            .foregroundStyle(theme.chromeText)
-            .contentShape(Rectangle())
+            Image(systemName: "chevron.right")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(theme.chromeText)
+                .contentShape(Rectangle().inset(by: -10))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(nextLabel)
