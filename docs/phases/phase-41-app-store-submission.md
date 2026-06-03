@@ -1,4 +1,10 @@
-# Phase 26 — App Store Submission & TestFlight
+# Phase 41 — App Store Submission & TestFlight
+
+> **Renumbered 2026-06-02** from Phase 26 → 41 so submission is the final
+> phase of the plan — it now waits on every feature + fix phase (incl. the
+> post-launch feedback work 27–39) and the Phase 40 polish. Phase numbers are
+> stable creation-order IDs; the 25/26 IDs are retired. Git history preserved
+> via `git mv`. All `Phase 25` references below now mean Phase 40.
 
 ## Goal
 Ship v1.0 to TestFlight, run a one-week beta, address feedback, and submit to the App Store for review. Includes signing, App Store Connect setup, distribution profile, build automation, and release management.
@@ -7,7 +13,8 @@ Ship v1.0 to TestFlight, run a one-week beta, address feedback, and submit to th
 The product is only real once it's on devices in users' hands.
 
 ## Prerequisites
-- Phases 01–22 complete. All tests green. No outstanding warnings.
+- All feature + fix phases complete (01–24, 27–39; 20 archived) **and** Phase
+  40 (Final Polish). All tests green. No outstanding warnings.
 
 ## Files Created / Modified
 
@@ -34,7 +41,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 - [ ] SKU: `WEEKLY-PLANNER-2026`.
 - [ ] Primary language: English (U.S.).
 - [ ] Pricing & Availability: Free (in 175 countries) — confirm tax forms signed.
-- [ ] App Privacy: complete based on the privacy manifest from Phase 25.
+- [ ] App Privacy: complete based on the privacy manifest from Phase 40.
 - [ ] App Information: subtitle, primary category Productivity, secondary Lifestyle.
 - [ ] User Access: assign QA testers as Internal users in TestFlight.
 
@@ -74,7 +81,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 - [ ] Categories selected.
 - [ ] Age rating completed.
 - [ ] Export compliance declared (`ITSAppUsesNonExemptEncryption = NO`).
-- [ ] Reviewer notes attached (Phase 25 `REVIEWER_NOTES.md`).
+- [ ] Reviewer notes attached (Phase 40 `REVIEWER_NOTES.md`).
 - [ ] Test account credentials provided (a Gmail test account with sample event emails).
 - [ ] In-app purchase: none.
 - [ ] Sign in with Apple: not used; not required.
@@ -82,7 +89,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 - [ ] Crash logs from internal testing: zero unresolved.
 
 ### TestFlight beta plan
-- [ ] Internal testers: dev team + ~5 close friends. Recruit during Phase 25.
+- [ ] Internal testers: dev team + ~5 close friends. Recruit during Phase 40.
 - [ ] External testers (TestFlight public): 100 users via invitation link, sourced via Twitter/X + Anthropic community.
 - [ ] Beta window: 7 days.
 - [ ] Feedback channel: TestFlight built-in screenshot+note feature.
@@ -109,7 +116,7 @@ This phase has no in-app UI. Deliverables are process + artifacts.
 No new unit tests. Verification via:
 - [ ] TestFlight build succeeds.
 - [ ] Apple's automated validation passes.
-- [ ] Internal testers complete the Phase 25 acceptance flow end-to-end.
+- [ ] Internal testers complete the Phase 40 acceptance flow end-to-end.
 
 ## Acceptance Criteria
 - A signed `.ipa` builds and uploads to TestFlight without manual Xcode intervention.

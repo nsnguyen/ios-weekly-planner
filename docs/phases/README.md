@@ -57,10 +57,8 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 22 | Manual Event CRUD                                    | J — Completeness    | ✅     |
 | 23 | Manual Task CRUD                                     | J                   | ✅     |
 | 24 | AI Sticky v2 — Live & Actionable                     | J                   | ✅     |
-| 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
-| 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
-| 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| ✅     |
-| 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| ✅     |
+| 27 | Week View Stability & Cross-View Navigation          | K — Critical Fixes  | ✅     |
+| 28 | Sticky Note Swipe-Lock Fix                           | K — Critical Fixes  | ✅     |
 | 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | 📋     |
 | 30 | Week Page Polish                                     | L                   | 📋     |
 | 31 | Month Grid & Week-Picker Navigation                  | L                   | 📋     |
@@ -72,8 +70,17 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 37 | Google Calendar Sync                                 | M                   | 📋     |
 | 38 | Localization & Real Translations                     | N — Future          | 💤     |
 | 39 | Voice Memos                                          | N — Future          | 💤     |
+| 40 | Final Polish, App Icon, Launch Screen, Privacy       | O — Ship (final)    | ⏳     |
+| 41 | App Store Submission & TestFlight                    | O — Ship (final)    | ⏳     |
 
 **Legend:** ✅ done · ⏳ in progress · 📋 scope doc written, not started · 💤 outline only · 🗄️ archived.
+
+> **Numbering note:** Phase numbers are stable creation-order IDs, not
+> execution order. Phases 40–41 (Final Polish, Submission) were authored early
+> as 25/26; on 2026-06-02 they were renumbered to the end so that polish and
+> the public App Store submission are the **final two phases**, after all
+> post-launch feedback work (27–39). IDs 25/26 are retired — the gap is
+> intentional.
 
 **Current state:** Milestones A–J shipped on `main`. Phase 20 (Modern
 Mode) archived at tag `phase-20-archive`. Phase 24 (AI Sticky v2)
@@ -82,16 +89,17 @@ post-launch feedback (`docs/suggestions.md`) is triaged in
 `docs/superpowers/specs/2026-05-30-post-launch-feedback-roadmap-design.md`
 and decomposed into Phases 27–39.
 
-**Next up (Milestone K — Ship):** Both submission **blockers are done** —
-Phase 27 (Week View Stability; the navigation freeze, a stranded
-`isFlipping`) and Phase 28 (Sticky Swipe-Lock; a stranded
-`stickyDragActive`). Both are unit-verified (390 tests green) with new UI
-tests; **on-device confirmation of both is still recommended before
-submission** (each is a runtime/gesture symptom the unit tests model but
-can't fully reproduce). Remaining to ship: finish Phase 25 (Polish), then
-Phase 26 (Submission). Phases 29–37 are v1.1 polish + features
-(post-submission); Phases 38–39 are outline-only future bets. AI Sticky
-Notes stay opt-in (only the swipe-lock is fixed — see
+**Next up:** Milestone K — Critical Fixes is **done**: Phase 27 (Week View
+Stability; the navigation freeze, a stranded `isFlipping`) and Phase 28
+(Sticky Swipe-Lock; a stranded `stickyDragActive`), both unit-verified (390
+tests green) with new UI tests and merged to `main`. **On-device
+confirmation of both is still recommended before the public submission**
+(each is a runtime/gesture symptom the unit tests model but can't fully
+reproduce). The remaining roadmap runs **L → M → O**: Phases 29–32 (v1.1
+polish), 33–37 (v1.1 features), 38–39 (future bets), then the plan closes
+with **Phase 40 (Final Polish)** and **Phase 41 (App Store Submission)** as
+the literal final two phases — submission ships last, after all the feedback
+work. AI Sticky Notes stay opt-in (only the swipe-lock is fixed — see
 `[[ai-sticky-notes-opt-in]]`).
 
 ## Reading a Phase Doc
@@ -1033,7 +1041,7 @@ pass also built `WeekNavigationStabilityUITests` (the freeze regression, run
 at the real 65s idle window) and added the Day/Week toggle + chevron + picker
 automation hooks the a11y-audit test had been waiting on.
 
-**Deferred (do before the Phase 26 submission):** on-device 3-min
+**Deferred (do before the Phase 41 submission):** on-device 3-min
 idle/navigation confirmation — the freeze is a runtime/UX symptom the unit +
 UI tests model but can't fully reproduce on the host. Shipped on branch
 `phase-27-week-view-stability`.
@@ -1079,7 +1087,7 @@ no test-seed seam): baseline navigation with a sticky enabled, plus the
 aborted-drag-doesn't-lock-navigation regression. Existing `AIStickyStackTests`
 (9) stay green with the new gesture wiring.
 
-**Deferred (do before the Phase 26 submission):** on-device — enable the
+**Deferred (do before the Phase 41 submission):** on-device — enable the
 sticky, perform several partial/aborted drags, confirm navigation never locks.
 The reset itself is `@GestureState`-guaranteed, but the mid-drag-teardown
 interruption can't be deterministically reproduced in XCUITest on the host.

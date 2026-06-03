@@ -1,7 +1,8 @@
 # Phase 27 — Week View Stability & Cross-View Navigation
 
-> **Milestone K (Ship).** Submission blocker — Phase 26 must not go out until
-> this is green. Derived from `docs/suggestions.md` lines 21–23 and the
+> **Milestone K (Critical Fixes).** Submission blocker — Phase 41 (App Store
+> Submission) must not go out until this is green. Derived from
+> `docs/suggestions.md` lines 21–23 and the
 > roadmap `docs/superpowers/specs/2026-05-30-post-launch-feedback-roadmap-design.md`.
 
 ## Goal

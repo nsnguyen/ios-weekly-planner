@@ -61,7 +61,7 @@ WeeklyPlannerTests/AISearch/AISearchTopBarTests.swift       # NEW/MODIFY — tit
       (`com.weeklyplanner.WeeklyPlanner`, `PlannerLanguageModel`, etc.).
 - [ ] App Store / reviewer notes that mention "Apple Intelligence" as a device
       requirement stay accurate (the *requirement* is real even if the in-app
-      *name* changes) — flag for Phase 25 copy.
+      *name* changes) — flag for Phase 40 copy.
 - [ ] No dangling references to the removed canned streak in tests or previews.
 
 ## Tests (TDD)

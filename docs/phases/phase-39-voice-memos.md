@@ -27,7 +27,7 @@ angle) before investing.
 - **Playback:** inline play/pause + scrubber on the Day page (and event sheet
   if attached to an event).
 - **Permissions:** `NSMicrophoneUsageDescription` in Info.plist + the privacy
-  manifest (coordinate with Phase 25's privacy work) + first-use mic prompt.
+  manifest (coordinate with Phase 40's privacy work) + first-use mic prompt.
 - **Optional transcription:** on-device `Speech` (or Foundation Models) to
   produce a text preview — high value, but its own scope; likely a follow-on.
 - **Backup/sync:** define whether memos are local-only (default) — they will
@@ -47,7 +47,7 @@ angle) before investing.
 
 ## Risks & Notes
 - **New permission + new privacy-manifest entry** — must be declared for App
-  Store review; loop in Phase 25's privacy work if this is scheduled near a
+  Store review; loop in Phase 40's privacy work if this is scheduled near a
   release.
 - Audio file lifecycle (orphans when a day/event is deleted) needs an explicit
   cleanup rule.

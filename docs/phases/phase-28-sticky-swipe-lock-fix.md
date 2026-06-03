@@ -1,6 +1,7 @@
 # Phase 28 — Sticky Note Swipe-Lock Fix
 
-> **Milestone K (Ship).** Submission blocker — Phase 26 waits on this.
+> **Milestone K (Critical Fixes).** Submission blocker — Phase 41 (App Store
+> Submission) waits on this.
 > Derived from `docs/suggestions.md` line 4. AI Sticky Notes stay **opt-in**
 > per `[[ai-sticky-notes-opt-in]]`; this phase fixes only the swipe-lock.
 

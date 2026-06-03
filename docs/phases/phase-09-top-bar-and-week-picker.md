@@ -124,7 +124,7 @@ WeeklyPlannerTests/Features/WeekPickerSnapshotTests.swift      # NEW
 
 ### `BookTopBar` state
 - [ ] Reads `weekOffset`, `meta` (range + week number) from `PageFlipController` / `WeekMath`.
-- [ ] `paperView` (Day | Week) from `SettingsStore.paperView` (or a local `@State` initialized from settings — Phase 25 will fully wire).
+- [ ] `paperView` (Day | Week) from `SettingsStore.paperView` (or a local `@State` initialized from settings — Phase 40 will fully wire).
 - [ ] Has callbacks: `onOpenAI()`, `onOpenPicker()`, `onJumpToday()`, `onPrevWeek()`, `onNextWeek()`, `onChangePaperView(_:)`.
 
 ### Chevron behavior split

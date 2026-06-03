@@ -62,10 +62,10 @@ Milestone J shipped — all three Phase 22/23/24 functional gaps closed:
   Refresh / Show another / kind-specific). Eyebrow ↻ for cache
   invalidation.
 
-Then **Phase 25** (Final Polish, App Icon, Launch Screen, Privacy
-Manifest) and **Phase 26** (App Store Submission & TestFlight) close
-out the ship milestone. Plus these manual checks should happen in
-TestFlight before public release:
+Then **Phase 40** (Final Polish, App Icon, Launch Screen, Privacy
+Manifest) and **Phase 41** (App Store Submission & TestFlight) close
+out the plan as the final two phases. Plus these manual checks should
+happen in TestFlight before public release:
 
 - [ ] **VoiceOver sweep** across Day → Week → Review → Settings → AI search
       overlay → Event sheet on a real device. Automated

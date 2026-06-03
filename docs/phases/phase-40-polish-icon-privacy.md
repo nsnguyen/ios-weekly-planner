@@ -1,4 +1,10 @@
-# Phase 25 — Final Polish, App Icon, Launch Screen, Privacy Manifest
+# Phase 40 — Final Polish, App Icon, Launch Screen, Privacy Manifest
+
+> **Renumbered 2026-06-02** from Phase 25 → 40 so the final polish lands
+> *after* the post-launch feedback work (Phases 27–39), making polish +
+> submission the literal last phases of the plan. Phase numbers are stable
+> creation-order IDs; the 25/26 IDs are retired. Git history preserved via
+> `git mv`.
 
 ## Goal
 Finalize the visual identity (app icon set, launch screen, marketing artwork), complete the privacy manifest, optimize performance, fix all warnings, prepare release notes, and harden the app for App Store review.
@@ -7,7 +13,7 @@ Finalize the visual identity (app icon set, launch screen, marketing artwork), c
 Cosmetic and metadata work that has to be right for a credible v1.0 launch. App Store reviewers will reject misformatted icons, missing privacy declarations, or first-launch crashes.
 
 ## Prerequisites
-- All feature phases (01–21).
+- All feature + fix phases complete (01–24, 27–39; 20 archived).
 
 ## Files Created / Modified
 
