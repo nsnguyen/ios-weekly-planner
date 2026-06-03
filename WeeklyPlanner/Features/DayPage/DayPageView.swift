@@ -128,7 +128,10 @@ struct DayPageContent: View {
 
                         ScrollView {
                             content(weekDay: weekDay, weekMeta: weekMeta)
-                                .padding(.top, 18)
+                                // Phase 29 (7): header sits higher; the
+                                // events/notes area gains ~10pt of vertical
+                                // space (was 18).
+                                .padding(.top, 8)
                                 .padding(.leading, 44)
                                 .padding(.trailing, 18)
                                 .padding(.bottom, 18)
@@ -165,8 +168,10 @@ struct DayPageContent: View {
                             bottomAffordances(weekDay: weekDay)
                         }
 
-                        PageNumber(date: weekDay.date)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        // Phase 29 (8): the bottom-right page-number/date
+                        // footer is removed — it duplicated the header date
+                        // and ate corner space. (PageNumber stays for the
+                        // Week page; only the Day page drops it.)
                     }
                 }
             }
