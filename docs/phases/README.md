@@ -60,7 +60,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
 | 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| ✅     |
-| 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| 📋     |
+| 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| ✅     |
 | 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | 📋     |
 | 30 | Week Page Polish                                     | L                   | 📋     |
 | 31 | Month Grid & Week-Picker Navigation                  | L                   | 📋     |
@@ -82,14 +82,16 @@ post-launch feedback (`docs/suggestions.md`) is triaged in
 `docs/superpowers/specs/2026-05-30-post-launch-feedback-roadmap-design.md`
 and decomposed into Phases 27–39.
 
-**Next up (Milestone K — Ship):** Phase 27 (Week View Stability) is
-**done** — the navigation-freeze root cause (a stranded `isFlipping`) is
-fixed and unit-verified (387 tests green); on-device confirmation of the
-3-min repro is still recommended before submission. Phase 28 (Sticky
-Swipe-Lock) is the remaining submission **blocker** — fix it, finish Phase
-25 (Polish), then ship Phase 26 (Submission). Phases 29–37 are v1.1 polish
-+ features (post-submission); Phases 38–39 are outline-only future bets. AI
-Sticky Notes stay opt-in (only the swipe-lock is fixed — see
+**Next up (Milestone K — Ship):** Both submission **blockers are done** —
+Phase 27 (Week View Stability; the navigation freeze, a stranded
+`isFlipping`) and Phase 28 (Sticky Swipe-Lock; a stranded
+`stickyDragActive`). Both are unit-verified (390 tests green) with new UI
+tests; **on-device confirmation of both is still recommended before
+submission** (each is a runtime/gesture symptom the unit tests model but
+can't fully reproduce). Remaining to ship: finish Phase 25 (Polish), then
+Phase 26 (Submission). Phases 29–37 are v1.1 polish + features
+(post-submission); Phases 38–39 are outline-only future bets. AI Sticky
+Notes stay opt-in (only the swipe-lock is fixed — see
 `[[ai-sticky-notes-opt-in]]`).
 
 ## Reading a Phase Doc
@@ -1023,14 +1025,66 @@ Phase 37).
 (`testAutoCommitResolvesStrandedFlip`, `testRapidFlipsNeverStrandIsFlipping`,
 `testSetWeekAppliesOffset`).
 
-**Deferred (do before the Phase 26 submission):** the
-`WeekNavigationStabilityUITests` XCUITest (needs a `TimelineSchedule`/clock
-seam for the one-minute tick) and the on-device 3-min idle/navigation
-confirmation — the freeze is a runtime/UX symptom the unit tests model but
-can't fully reproduce. Shipped on branch `phase-27-week-view-stability`.
+**Follow-up (full week-flip parity):** a later pass on the same branch gave
+the Week view a real `PageFlipContainer` (`WeekFlipView`) so it flips and
+swipes exactly like the Day view — safe precisely because the
+`autoCommitDelay` fallback means a dropped commit can no longer strand. That
+pass also built `WeekNavigationStabilityUITests` (the freeze regression, run
+at the real 65s idle window) and added the Day/Week toggle + chevron + picker
+automation hooks the a11y-audit test had been waiting on.
+
+**Deferred (do before the Phase 26 submission):** on-device 3-min
+idle/navigation confirmation — the freeze is a runtime/UX symptom the unit +
+UI tests model but can't fully reproduce on the host. Shipped on branch
+`phase-27-week-view-stability`.
 
 **Files:** `WeeklyPlanner/Features/DayPage/PageFlipController.swift`,
 `WeeklyPlanner/Navigation/AppShell.swift`,
 `WeeklyPlanner/Features/Settings/ConnectionRow.swift`,
-`WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`.
+`WeeklyPlanner/Features/WeekPage/WeekFlipView.swift`,
+`WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`,
+`WeeklyPlannerUITests/WeekNavigationStabilityUITests.swift`.
+
+### Phase 28 — Sticky Note Swipe-Lock Fix
+
+Fixed suggestion 4: *"when sticky note on, unable to swipe page or change page
+unless reboot."*
+
+**Root cause** (confirmed from the full `stickyDragActive` reference graph):
+the flag lives on the *shared* `PageFlipController`; it was set `true` in the
+sticky `DragGesture`'s `.onChanged` and reset `false` **only** in `.onEnded`.
+SwiftUI doesn't guarantee `.onEnded` fires when a gesture is cancelled or the
+hosting view is torn down — and `AIStickyStack` is conditionally rendered
+(gated on non-empty `insights` **and** `aiStickyNotesEnabled`) inside
+`DayPageContent`, which rebuilds on `.eventStoreDidChange` /
+`.taskStoreDidChange` / `.everyMinute`. A refresh/tick/dismiss/toggle-off
+mid-drag skipped `.onEnded`, stranding the flag `true`; since both
+`DayPageView` and `WeekFlipView` guard page flips on it, *all* navigation
+locked until relaunch.
+
+**Fix** (the working pattern was already in the same file — `dragOffset` is
+`@GestureState`, which SwiftUI auto-resets on end/cancel/teardown): derive an
+`isDragging` `@GestureState` from the swipe and mirror it to
+`controller.stickyDragActive` via `.onChange(of: isDragging)`, so the reset is
+framework-guaranteed rather than a manual side effect that can be skipped.
+Belt-and-suspenders resets in `.onDisappear` and when `insights.count` hits 0.
+The suppression mechanism itself (Phase 24's reason it exists — sticky drag vs
+page flip) is preserved; only the reset is made interruption-proof.
+
+**Tests:** unit suite **390 / 0**. `PageFlipControllerTests` gains the
+`stickyDragActive` consumer contract (inactive-by-default,
+independent-of-flip-lifecycle, clearing-restores-flip). `StickySwipeUITests`
+(NEW, permissive per project convention — stickies are opt-in/default-off with
+no test-seed seam): baseline navigation with a sticky enabled, plus the
+aborted-drag-doesn't-lock-navigation regression. Existing `AIStickyStackTests`
+(9) stay green with the new gesture wiring.
+
+**Deferred (do before the Phase 26 submission):** on-device — enable the
+sticky, perform several partial/aborted drags, confirm navigation never locks.
+The reset itself is `@GestureState`-guaranteed, but the mid-drag-teardown
+interruption can't be deterministically reproduced in XCUITest on the host.
+
+**Files:** `WeeklyPlanner/Features/DayPage/AIStickyStack.swift`,
+`WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`,
+`WeeklyPlannerUITests/StickySwipeUITests.swift`.
 
