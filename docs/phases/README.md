@@ -59,7 +59,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 24 | AI Sticky v2 — Live & Actionable                     | J                   | ✅     |
 | 27 | Week View Stability & Cross-View Navigation          | K — Critical Fixes  | ✅     |
 | 28 | Sticky Note Swipe-Lock Fix                           | K — Critical Fixes  | ✅     |
-| 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | 📋     |
+| 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | ✅     |
 | 30 | Week Page Polish                                     | L                   | 📋     |
 | 31 | Month Grid & Week-Picker Navigation                  | L                   | 📋     |
 | 32 | AI Surfaces & Review Cleanup                         | L                   | 📋     |
@@ -1095,4 +1095,47 @@ interruption can't be deterministically reproduced in XCUITest on the host.
 **Files:** `WeeklyPlanner/Features/DayPage/AIStickyStack.swift`,
 `WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`,
 `WeeklyPlannerUITests/StickySwipeUITests.swift`.
+
+### Phase 29 — Day Page & Event Sheet Polish
+
+Eight targeted tweaks from TestFlight feedback across the two most-used
+screens. Seven shipped; one (#13) closed as not-reproducible. Each tweak is an
+atomic commit so any single one can be reverted from feedback.
+
+- **(7)** Day content top padding 18→8 — header sits higher, events/notes gain
+  room.
+- **(8)** Removed the bottom-right `PageNumber` date footer on the Day page (it
+  duplicated the header date; the Week page keeps its `PageNumber`).
+- **(9)** Dropped "· Week NN" from the day-header caption (redundant with the
+  top-bar week label); extracted `DayPageHeader.caption(for:)` + test.
+- **(10)** Bottom day/week controls are arrows-only; `prevLabel`/`nextLabel`
+  retained as VoiceOver labels. **Side effect:** the larger 18pt chevron +
+  −10 hit-area inset *fixed a pre-existing "hit area too small" a11y-audit
+  failure* — `testDayPagePassesAudit` now passes (it failed on `main`).
+- **(14)** Delete control reads "Delete" (was "Tear out this page"); label
+  extracted to a static + `EventDeleteButtonTests`.
+- **(15)** Event-sheet header: title 28→32pt, faint ink-wash band + 0.5pt
+  hairline rule so it separates from the body rows.
+- **(16)** AI suggestion is no longer always-on — it hides behind a dashed
+  "✨ Ask AI" affordance and reveals the `EventAISticky` inline on tap
+  (`showAISuggestion`, reset per seeded event). *User chose "add an Ask AI
+  button" over hide-only.*
+- **(13) — not reproduced / closed.** Spec expected ruled lines bleeding
+  through the add-event form; code trace showed the sheet card already sits on
+  opaque `theme.cream` (`#FAF6E9`, no alpha) with no `RuledLines` inside, and
+  on-device confirmed the form background is clean (the horizontal lines are
+  intentional field dividers). No change made. Reopen if feedback recurs.
+
+**Tests:** unit suite **394 / 0** (was 390; +`EventDeleteButtonTests`,
+`DayPageHeaderTests`). Day-page a11y audit now passes; verified on simulator
+(day-page tweaks visible; add-event form clean).
+
+**Deferred to on-device:** eyeball the event-sheet view-mode tweaks (15/16) on
+a real existing event — the bundled seed events are dated to a past week and
+don't surface on the current date, so they need an event created+reopened to
+view.
+
+**Files:** `WeeklyPlanner/Features/DayPage/{DayPageView,DayPageHeader,BookBottomControls}.swift`,
+`WeeklyPlanner/Features/EventDetail/{EventDeleteButton,EventHeader,PaperEventSheet}.swift`,
+`WeeklyPlannerTests/{DayPage/DayPageHeaderTests,EventDetail/EventDeleteButtonTests}.swift`.
 

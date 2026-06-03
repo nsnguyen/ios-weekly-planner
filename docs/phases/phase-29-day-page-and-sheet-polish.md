@@ -41,8 +41,12 @@ WeeklyPlannerTests/DayPage/DayPageHeaderTests.swift         # MODIFY — no week
       gone; the day-of-week + date remain.
 - [ ] **(10)** The bottom previous-day / next-day controls render as arrows
       only (no spelled-out adjacent day names).
-- [ ] **(13)** In the add-event / template state the paper template background
-      is less transparent so the ruled line doesn't bleed through the form.
+- [x] **(13) — CLOSED, not reproduced (2026-06-03).** Investigated: the
+      add-event sheet card already renders on opaque `theme.cream` (`#FAF6E9`,
+      no alpha) and contains no `RuledLines`; on-device the form background is
+      clean (the horizontal lines are intentional per-field dividers, not
+      ruled-paper bleed-through). No code change made. Reopen if feedback
+      recurs against a specific build.
 - [ ] **(14)** The delete control reads **"Delete"** (the confirm alert already
       says "Delete this event?").
 - [ ] **(15)** The event sheet header / left side is larger or uses a distinct
@@ -82,8 +86,16 @@ WeeklyPlannerTests/DayPage/DayPageHeaderTests.swift         # MODIFY — no week
   reclaiming layout space, not the annotation feature.
 
 ## Risks & Notes
-- **(16)** is the only behavioral change — confirm with the user whether "AI
-  suggested" should appear as a button under Ask AI or only inside the AI
-  overlay results. Default to the least-intrusive (surface on Ask AI tap).
-- Keep each tweak an atomic commit so any single change can be reverted from
-  TestFlight feedback without unwinding the others.
+- **(16) — RESOLVED (2026-06-03).** User chose "add an Ask AI button in the
+  sheet": the suggestion stays hidden until the user taps a dashed "✨ Ask AI"
+  affordance, which reveals `EventAISticky` inline. Implemented in
+  `PaperEventSheet` via `showAISuggestion` (reset per seeded event).
+- Each tweak shipped as an atomic commit so any single change can be reverted
+  from TestFlight feedback without unwinding the others.
+
+## Outcome (2026-06-03)
+Seven tweaks shipped (7, 8, 9, 10, 14, 15, 16) across 6 atomic commits; (13)
+closed as not-reproduced. Unit suite 394/0; the Day-page accessibility audit
+now passes (tweak 10 fixed a pre-existing hit-target failure). View-mode
+sheet tweaks (15/16) verified structurally + by code; recommend an on-device
+eyeball on a real existing event before the Phase 41 submission.

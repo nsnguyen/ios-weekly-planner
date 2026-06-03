@@ -35,7 +35,7 @@ struct DayPageHeader: View {
                         .foregroundStyle(theme.ink)
                         .tracking(-0.5)
 
-                    Text("\(weekDay.dayNumber) \(weekDay.monthShort) · Week \(weekMeta.weekNumber)")
+                    Text(Self.caption(for: weekDay))
                         .font(.custom("Cochin-Italic", size: 12))
                         .foregroundStyle(theme.ink2)
                 }
@@ -50,8 +50,16 @@ struct DayPageHeader: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(weekDay.weekdayLong), \(weekDay.dayNumber) \(weekDay.monthShort), week \(weekMeta.weekNumber)")
+        .accessibilityLabel("\(weekDay.weekdayLong), \(weekDay.dayNumber) \(weekDay.monthShort)")
         .accessibilityAddTraits(.isHeader)
+    }
+
+    /// The italic caption under the weekday. Phase 29 (9) dropped the
+    /// "· Week NN" suffix that used to trail the date — TestFlight feedback
+    /// found it redundant with the top-bar week label. Static so it's
+    /// unit-testable without view introspection.
+    static func caption(for weekDay: WeekDay) -> String {
+        "\(weekDay.dayNumber) \(weekDay.monthShort)"
     }
 }
 
