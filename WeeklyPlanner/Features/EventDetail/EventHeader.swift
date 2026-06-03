@@ -37,6 +37,10 @@ struct EventHeader: View {
     @Environment(\.paperFont) private var font
 
     var body: some View {
+        // Phase 29 (15): the header sits on a faint tinted band with a hairline
+        // rule beneath it, so the title block reads as clearly separated from
+        // the body rows below (TestFlight feedback: header blended into the
+        // form). The tint is a translucent ink wash that works on every theme.
         HStack(alignment: .top, spacing: 10) {
             leftColumn
                 .accessibilityElement(children: .combine)
@@ -49,7 +53,13 @@ struct EventHeader: View {
             }
             closeButton
         }
-        .padding(EdgeInsets(top: 38, leading: 44, bottom: 14, trailing: 18))
+        .padding(EdgeInsets(top: 38, leading: 44, bottom: 16, trailing: 18))
+        .background(theme.ink.opacity(0.035))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(theme.ink.opacity(0.12))
+                .frame(height: 0.5)
+        }
     }
 
     // MARK: - Left column
@@ -63,7 +73,7 @@ struct EventHeader: View {
                 .padding(.bottom, 6)
 
             Text(event.title)
-                .font(font.font(at: 28, weight: .bold))
+                .font(font.font(at: 32, weight: .bold))
                 .lineSpacing(1.05)
                 .foregroundStyle(CategoryPalette.inkColor(event.category, in: theme))
 
