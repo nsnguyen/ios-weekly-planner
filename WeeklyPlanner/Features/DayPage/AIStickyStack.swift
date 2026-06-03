@@ -9,6 +9,15 @@ struct AIStickyStack: View {
 
     @State var currentIndex: Int = 0
     @GestureState private var dragOffset: CGFloat = 0
+    /// Gesture-state-backed "a sticky drag is in progress" truth. Unlike a
+    /// manual flag, SwiftUI guarantees `@GestureState` resets to `false` when
+    /// the gesture ends, is cancelled, OR the view hosting it is torn down
+    /// mid-drag. We mirror this onto the shared controller via `.onChange`
+    /// below so the page-flip suppression can never strand `true` (Phase 28 —
+    /// the swipe-lock fix). The previous code set the controller flag directly
+    /// in `.onChanged`/`.onEnded`, and a refresh/tick/dismiss mid-drag could
+    /// skip `.onEnded`, leaving navigation permanently suppressed.
+    @GestureState private var isDragging: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(PageFlipController.self) private var flipController: PageFlipController?
 
@@ -87,6 +96,25 @@ struct AIStickyStack: View {
                 if currentIndex >= newCount {
                     currentIndex = max(0, newCount - 1)
                 }
+                // If the cascade empties mid-drag (dismiss / toggle off), the
+                // sticky disappears; make sure we're not still suppressing the
+                // page flip.
+                if newCount == 0 {
+                    flipController?.stickyDragActive = false
+                }
+            }
+            // Mirror the gesture-state truth onto the shared controller. This
+            // is the interruption-proof reset: `isDragging` returns to `false`
+            // automatically on gesture end/cancel/teardown, and this fires the
+            // controller clear even when `.onEnded` would have been skipped.
+            .onChange(of: isDragging) { _, dragging in
+                flipController?.stickyDragActive = dragging
+            }
+            // Final safety net: leaving the page (Day→Week, tab switch) while a
+            // drag is somehow still marked active must never leave navigation
+            // locked on the shared controller.
+            .onDisappear {
+                flipController?.stickyDragActive = false
             }
         }
     }
@@ -102,11 +130,14 @@ struct AIStickyStack: View {
                     state = dx
                 }
             }
-            .onChanged { _ in
-                flipController?.stickyDragActive = true
+            // `isDragging` is held true for the life of the gesture and reset
+            // automatically by SwiftUI when it ends/cancels/tears down. The
+            // `.onChange(of: isDragging)` above turns that into the controller
+            // flag — no manual reset that a skipped `.onEnded` could drop.
+            .updating($isDragging) { _, state, _ in
+                state = true
             }
             .onEnded { value in
-                flipController?.stickyDragActive = false
                 let dx = value.translation.width
                 let dy = value.translation.height
                 guard abs(dx) > abs(dy), abs(dx) > 30 else { return }

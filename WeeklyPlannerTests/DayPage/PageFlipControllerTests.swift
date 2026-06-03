@@ -141,4 +141,48 @@ final class PageFlipControllerTests: XCTestCase {
         XCTAssertFalse(controller.isFlipping)
         XCTAssertEqual(controller.current, PageCoordinate(week: 0, day: 5))
     }
+
+    // MARK: - Phase 28: stickyDragActive consumer contract (the swipe-lock)
+    //
+    // The swipe-lock bug was a stranded `stickyDragActive` flag suppressing
+    // page flips forever. The reset itself is now framework-guaranteed
+    // (`@GestureState` auto-resets on end/cancel/teardown, mirrored to the
+    // controller via `.onChange`) and is exercised by the UI test + on-device.
+    // These tests pin the *consumer* half: the flag defaults clear, gates
+    // nothing about the flip lifecycle, and once cleared, flips always work —
+    // so a stuck flag is the ONLY thing that could lock navigation, and
+    // clearing it always restores it.
+
+    /// The suppression flag is clear on a fresh controller (page flips are not
+    /// suppressed by default — they only yield to an *active* sticky drag).
+    func testStickyDragInactiveByDefault() {
+        let controller = PageFlipController(current: PageCoordinate(week: 0, day: 3))
+        XCTAssertFalse(controller.stickyDragActive)
+    }
+
+    /// `stickyDragActive` is owned independently of the flip lifecycle: a flip
+    /// + commit never sets or clears it. (Guards against a future change that
+    /// couples the two and reintroduces a lock.)
+    func testStickyDragFlagIndependentOfFlipLifecycle() {
+        let controller = PageFlipController(current: PageCoordinate(week: 0, day: 3))
+        controller.flipDay(direction: .next)
+        controller.commit()
+        XCTAssertFalse(controller.stickyDragActive,
+                       "flip lifecycle must not touch the sticky suppression flag")
+    }
+
+    /// Clearing the flag (what the gesture-state mirror does on end/cancel/
+    /// teardown) always restores flip capability — even if it had been stuck
+    /// true. This is the post-fix invariant: a cleared flag => navigable.
+    func testClearingStickyDragRestoresFlip() {
+        let controller = PageFlipController(current: PageCoordinate(week: 0, day: 3))
+        // Simulate the stranded-flag state the bug produced.
+        controller.stickyDragActive = true
+        // The page-flip guard (DayPageView/WeekFlipView) would no-op here.
+        // The fix guarantees the flag returns to false; once it does, flips work.
+        controller.stickyDragActive = false
+        controller.flipDay(direction: .next)
+        XCTAssertEqual(controller.target, PageCoordinate(week: 0, day: 4),
+                       "a cleared sticky flag must leave the page flippable")
+    }
 }
