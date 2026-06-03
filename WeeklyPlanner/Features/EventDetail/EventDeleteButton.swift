@@ -1,13 +1,19 @@
 import SwiftUI
 
-/// "Tear out this page" button at the bottom of the Paper Event Detail
-/// sheet. Full-width, transparent background, dashed `redInk` border, and
-/// `redInk` handwriting label.
+/// "Delete" button at the bottom of the Paper Event Detail sheet. Full-width,
+/// transparent background, dashed `redInk` border, and `redInk` handwriting
+/// label.
 ///
 /// The button itself only fires `action` — confirmation handling is the
 /// caller's responsibility (`PaperEventSheet` shows the destructive alert
 /// before calling `viewModel.delete()`).
 struct EventDeleteButton: View {
+    /// Visible button copy. Phase 29 (14): plain "Delete" — the prior "Tear
+    /// out this page" read as cute-but-unclear in TestFlight feedback; the
+    /// confirm alert already says "Delete this event?". Exposed as a static so
+    /// it's unit-testable without view introspection.
+    static let label = "Delete"
+
     /// Invoked on tap. Wires to a confirmation alert in the sheet root.
     var action: () -> Void
 
@@ -16,7 +22,7 @@ struct EventDeleteButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text("Tear out this page")
+            Text(Self.label)
                 .font(font.font(at: 17, weight: .semibold))
                 .tracking(0.4)
                 .foregroundStyle(theme.redInk)
