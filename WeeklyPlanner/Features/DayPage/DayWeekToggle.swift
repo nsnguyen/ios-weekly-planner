@@ -59,6 +59,11 @@ struct DayWeekToggle: View {
                 .contentShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
         }
         .buttonStyle(.plain)
+        // Per-segment identifier so XCUITest can flip Day↔Week (the hook the
+        // accessibility-audit test was waiting on). The container's combined
+        // VoiceOver element is unaffected — identifiers don't change spoken
+        // output.
+        .accessibilityIdentifier(AccessibilityIDs.dayWeekSegment(value == .day ? "day" : "week"))
     }
 }
 

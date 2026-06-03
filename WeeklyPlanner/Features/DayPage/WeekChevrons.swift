@@ -53,6 +53,9 @@ struct WeekChevronButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(direction.accessibilityLabel)
+        .accessibilityIdentifier(direction == .prev
+            ? AccessibilityIDs.weekChevronPrev
+            : AccessibilityIDs.weekChevronNext)
     }
 }
 

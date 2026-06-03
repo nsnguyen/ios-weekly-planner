@@ -156,6 +156,13 @@ struct AppShell: View {
                           }
                       },
                       onPrevWeek: {
+                          // Day view jumps the week instantly (no week-flip
+                          // animation in day mode); Week view does an animated
+                          // page-flip, matching the day-to-day flip. The flip
+                          // is safe from the Phase 27 freeze because the Week
+                          // view now has a real PageFlipContainer (WeekFlipView)
+                          // to drive commit(), backstopped by the controller's
+                          // autoCommitDelay fallback.
                           if paperView == .day {
                               controller.setWeek(controller.current.week - 1)
                           } else {
@@ -176,7 +183,13 @@ struct AppShell: View {
                           case .day:
                               DayPageView(controller: controller)
                           case .week:
-                              WeekPageView(weekOffset: controller.current.week)
+                              // WeekFlipView wraps the week spread in a
+                              // PageFlipContainer (parity with DayPageView).
+                              // The container's `.id(coord)` reloads the week's
+                              // view model per offset, so the picker shows the
+                              // selected week's events (Phase 27 / suggestion
+                              // 22) — replacing the earlier manual `.id`.
+                              WeekFlipView(controller: controller)
                           }
                       },
                       includesCover: false)

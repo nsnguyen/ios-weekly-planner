@@ -59,8 +59,8 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 24 | AI Sticky v2 — Live & Actionable                     | J                   | ✅     |
 | 25 | Final Polish, App Icon, Launch Screen, Privacy       | K — Ship            | ⏳     |
 | 26 | App Store Submission & TestFlight                    | K                   | ⏳     |
-| 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| 📋     |
-| 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| 📋     |
+| 27 | Week View Stability & Cross-View Navigation          | K — Ship (blocks 26)| ✅     |
+| 28 | Sticky Note Swipe-Lock Fix                           | K — Ship (blocks 26)| ✅     |
 | 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | 📋     |
 | 30 | Week Page Polish                                     | L                   | 📋     |
 | 31 | Month Grid & Week-Picker Navigation                  | L                   | 📋     |
@@ -82,12 +82,17 @@ post-launch feedback (`docs/suggestions.md`) is triaged in
 `docs/superpowers/specs/2026-05-30-post-launch-feedback-roadmap-design.md`
 and decomposed into Phases 27–39.
 
-**Next up (Milestone K — Ship):** Phases 27 (Week View Stability) and
-28 (Sticky Swipe-Lock) are submission **blockers** — fix them, finish
-Phase 25 (Polish), then ship Phase 26 (Submission). Phases 29–37 are
-v1.1 polish + features (post-submission); Phases 38–39 are outline-only
-future bets. AI Sticky Notes stay opt-in (only the swipe-lock is fixed —
-see `[[ai-sticky-notes-opt-in]]`).
+**Next up (Milestone K — Ship):** Both submission **blockers are done** —
+Phase 27 (Week View Stability; the navigation freeze, a stranded
+`isFlipping`) and Phase 28 (Sticky Swipe-Lock; a stranded
+`stickyDragActive`). Both are unit-verified (390 tests green) with new UI
+tests; **on-device confirmation of both is still recommended before
+submission** (each is a runtime/gesture symptom the unit tests model but
+can't fully reproduce). Remaining to ship: finish Phase 25 (Polish), then
+Phase 26 (Submission). Phases 29–37 are v1.1 polish + features
+(post-submission); Phases 38–39 are outline-only future bets. AI Sticky
+Notes stay opt-in (only the swipe-lock is fixed — see
+`[[ai-sticky-notes-opt-in]]`).
 
 ## Reading a Phase Doc
 
@@ -985,4 +990,101 @@ Modified: `WeeklyPlanner/Models/AIInsight.swift` (schema v2),
 + deep-link routing), `WeeklyPlanner/Stores/Environment+Stores.swift`
 (`\.stickyOrchestrator` env key),
 `WeeklyPlanner/Supporting/WeeklyPlanner.entitlements` (+weatherkit).
+
+### Phase 27 — Week View Stability & Cross-View Navigation
+
+Fixed the #1 TestFlight bug: the app froze after ~a minute on the Week view
+and **all** navigation (week and day) died until force-quit (suggestions
+21/23), and the week picker showed the previous week's events (22).
+
+**Root cause** (confirmed from the call graph, not hypothesized):
+`PageFlipController.commit()` was driven *only* by `PageFlipContainer`, which
+exists *only* in the Day view. The Week view's chevrons called `flipWeek()`,
+which set `target` (so `isFlipping == true`) with **no committer in the week
+path** — `target` stranded non-nil forever, and since every mutator guards on
+`!isFlipping`, the *shared* controller deadlocked every navigation path (week
+*and* day). Separately, `WeekPageView` cached its view model in `@State`
+(created once in `.task`, no `.task(id:)`), so jumping weeks via `setWeek`
+changed `current.week` but kept the view's identity and the old week's events.
+
+**Fix:** `PageFlipController` now owns a fallback `autoCommitDelay` (700ms) +
+`pendingCommit` task that force-commits any un-committed flip, so `isFlipping`
+can never strand regardless of which view (or no view) drives `commit()`;
+`commit()`/`cancel()` cancel it and `commit()` is idempotent so the Day view's
+animation-synced commit still wins. `init(current:)` kept its signature (added
+a separate `init(current:autoCommitDelay:)` test seam) so the symbol is stable
+and untouched callers don't need a relink. The Week chevrons now use the
+strand-proof `setWeek` in both views, and the Week page gets
+`.id(controller.current.week)` so its VM reloads events per offset (mirrors
+`DayPageContent`'s `.id(coord)`). `ConnectionRow` makes the disabled Google
+Calendar "Coming soon" row non-actionable (suggestion 5 stop-gap; real sync is
+Phase 37).
+
+**Tests:** full `WeeklyPlannerTests` suite green — **387 tests, 0 failures**
+(iPhone 17 sim, Xcode 26.5) — including new no-strand regression tests
+(`testAutoCommitResolvesStrandedFlip`, `testRapidFlipsNeverStrandIsFlipping`,
+`testSetWeekAppliesOffset`).
+
+**Follow-up (full week-flip parity):** a later pass on the same branch gave
+the Week view a real `PageFlipContainer` (`WeekFlipView`) so it flips and
+swipes exactly like the Day view — safe precisely because the
+`autoCommitDelay` fallback means a dropped commit can no longer strand. That
+pass also built `WeekNavigationStabilityUITests` (the freeze regression, run
+at the real 65s idle window) and added the Day/Week toggle + chevron + picker
+automation hooks the a11y-audit test had been waiting on.
+
+**Deferred (do before the Phase 26 submission):** on-device 3-min
+idle/navigation confirmation — the freeze is a runtime/UX symptom the unit +
+UI tests model but can't fully reproduce on the host. Shipped on branch
+`phase-27-week-view-stability`.
+
+**Files:** `WeeklyPlanner/Features/DayPage/PageFlipController.swift`,
+`WeeklyPlanner/Navigation/AppShell.swift`,
+`WeeklyPlanner/Features/Settings/ConnectionRow.swift`,
+`WeeklyPlanner/Features/WeekPage/WeekFlipView.swift`,
+`WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`,
+`WeeklyPlannerUITests/WeekNavigationStabilityUITests.swift`.
+
+### Phase 28 — Sticky Note Swipe-Lock Fix
+
+Fixed suggestion 4: *"when sticky note on, unable to swipe page or change page
+unless reboot."*
+
+**Root cause** (confirmed from the full `stickyDragActive` reference graph):
+the flag lives on the *shared* `PageFlipController`; it was set `true` in the
+sticky `DragGesture`'s `.onChanged` and reset `false` **only** in `.onEnded`.
+SwiftUI doesn't guarantee `.onEnded` fires when a gesture is cancelled or the
+hosting view is torn down — and `AIStickyStack` is conditionally rendered
+(gated on non-empty `insights` **and** `aiStickyNotesEnabled`) inside
+`DayPageContent`, which rebuilds on `.eventStoreDidChange` /
+`.taskStoreDidChange` / `.everyMinute`. A refresh/tick/dismiss/toggle-off
+mid-drag skipped `.onEnded`, stranding the flag `true`; since both
+`DayPageView` and `WeekFlipView` guard page flips on it, *all* navigation
+locked until relaunch.
+
+**Fix** (the working pattern was already in the same file — `dragOffset` is
+`@GestureState`, which SwiftUI auto-resets on end/cancel/teardown): derive an
+`isDragging` `@GestureState` from the swipe and mirror it to
+`controller.stickyDragActive` via `.onChange(of: isDragging)`, so the reset is
+framework-guaranteed rather than a manual side effect that can be skipped.
+Belt-and-suspenders resets in `.onDisappear` and when `insights.count` hits 0.
+The suppression mechanism itself (Phase 24's reason it exists — sticky drag vs
+page flip) is preserved; only the reset is made interruption-proof.
+
+**Tests:** unit suite **390 / 0**. `PageFlipControllerTests` gains the
+`stickyDragActive` consumer contract (inactive-by-default,
+independent-of-flip-lifecycle, clearing-restores-flip). `StickySwipeUITests`
+(NEW, permissive per project convention — stickies are opt-in/default-off with
+no test-seed seam): baseline navigation with a sticky enabled, plus the
+aborted-drag-doesn't-lock-navigation regression. Existing `AIStickyStackTests`
+(9) stay green with the new gesture wiring.
+
+**Deferred (do before the Phase 26 submission):** on-device — enable the
+sticky, perform several partial/aborted drags, confirm navigation never locks.
+The reset itself is `@GestureState`-guaranteed, but the mid-drag-teardown
+interruption can't be deterministically reproduced in XCUITest on the host.
+
+**Files:** `WeeklyPlanner/Features/DayPage/AIStickyStack.swift`,
+`WeeklyPlannerTests/DayPage/PageFlipControllerTests.swift`,
+`WeeklyPlannerUITests/StickySwipeUITests.swift`.
 

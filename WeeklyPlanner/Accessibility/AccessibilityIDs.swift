@@ -14,6 +14,14 @@ enum AccessibilityIDs {
     // Side tabs
     static func sideTab(_ dayIdx: Int) -> String { "daypage.sidetab.\(dayIdx)" }
 
+    // Top bar — Day/Week toggle segments + week chevrons
+    static func dayWeekSegment(_ view: String) -> String { "topbar.dayweek.\(view)" }
+    static let weekChevronPrev = "topbar.week.chevron.prev"
+    static let weekChevronNext = "topbar.week.chevron.next"
+    /// The date-range pill that opens the week picker. Its a11y *value* is the
+    /// visible range string (e.g. "May 25 – 31"), used to assert week changes.
+    static let dateRangePill = "topbar.daterange.pill"
+
     // Week page
     static func weekpageDayRow(_ dayIdx: Int) -> String { "weekpage.day.row.\(dayIdx)" }
     static func weekpageTodoRow(_ id: UUID) -> String { "weekpage.todo.row.\(id)" }
