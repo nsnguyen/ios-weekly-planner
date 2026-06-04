@@ -35,19 +35,30 @@ final class WeekSummaryGeneratorTests: XCTestCase {
         XCTAssertTrue(prompt.contains("≤ 2 sentences"))
     }
 
-    func testGenerateProducesSummaryWhenAvailable() async throws {
+    func testGenerateProducesRealSummaryWhenAvailable() async throws {
+        let saturday = Self.may16_2026()
+        try await eventStore.upsert(Event(title: "Standup",
+                                          start: saturday.addingTimeInterval(-3600),
+                                          end: saturday.addingTimeInterval(-1800),
+                                          category: .work))
         let service = StubIntelligenceService(eventStore: eventStore)
         let generator = WeekSummaryGenerator(
             intelligence: service,
             events: eventStore,
             tasks: taskStore
         )
-        let summary = try await generator.generate(weekOffset: 0, today: Self.may16_2026())
+        let outcome = await generator.generate(weekOffset: 0, today: saturday)
+        guard case .generated(let summary) = outcome else {
+            return XCTFail("expected .generated, got \(outcome)")
+        }
         XCTAssertFalse(summary.headline.isEmpty)
-        XCTAssertEqual(summary.completionPercent, 0.0, accuracy: 0.01)
+        XCTAssertTrue(summary.bullets.isEmpty,
+                      "real AI output must not carry design-placeholder bullets")
+        XCTAssertFalse(summary.headline.contains("balanced week"),
+                       "canned fallback copy must not leak into real output")
     }
 
-    func testGenerateFallsBackWhenAIDisabled() async throws {
+    func testGenerateReturnsUnavailableWhenAIDisabled() async {
         let service = StubIntelligenceService(eventStore: eventStore)
         let generator = WeekSummaryGenerator(
             intelligence: service,
@@ -55,9 +66,20 @@ final class WeekSummaryGeneratorTests: XCTestCase {
             tasks: taskStore,
             settings: { false }
         )
-        let summary = try await generator.generate(weekOffset: 0, today: Self.may16_2026())
-        XCTAssertTrue(summary.headline.contains("balanced week"))
-        XCTAssertEqual(summary.bullets.count, 3)
+        let outcome = await generator.generate(weekOffset: 0, today: Self.may16_2026())
+        XCTAssertEqual(outcome, .unavailable)
+    }
+
+    func testGenerateReturnsNoContentForGenuinelyEmptyWeek() async {
+        let service = StubIntelligenceService(eventStore: eventStore)
+        let generator = WeekSummaryGenerator(
+            intelligence: service,
+            events: eventStore,
+            tasks: taskStore
+        )
+        let outcome = await generator.generate(weekOffset: 0, today: Self.may16_2026())
+        XCTAssertEqual(outcome, .noContent,
+                       "an empty week must not invoke the model or fabricate a summary")
     }
 
     private static func may16_2026() -> Date {

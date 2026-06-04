@@ -1,12 +1,27 @@
 import Foundation
 
+/// Result of a week-summary generation attempt. Phase 32 (#38): the
+/// generator no longer fabricates canned summaries — callers receive an
+/// honest outcome and decide how to degrade.
+enum WeekSummaryOutcome: Equatable, Sendable {
+    /// The on-device model produced a real summary.
+    case generated(WeekSummary)
+    /// AI is off or unavailable (planner toggle, device eligibility,
+    /// model state). Callers may invite the user to enable it.
+    case unavailable
+    /// AI is available but there is nothing to summarize (genuinely empty
+    /// week), or the model returned no usable text.
+    case noContent
+}
+
 /// Produces a `WeekSummary` for the Review page. Aggregates store data
 /// (tasks done/total, hours-by-category) deterministically, then asks the
-/// `IntelligenceService` for a handwritten one-paragraph headline plus
-/// three star-bullet notes.
+/// `IntelligenceService` for a handwritten one-paragraph headline.
 ///
-/// Falls back to `WeekSummary.fallback(...)` when the model is unavailable
-/// so the Review page always renders with useful copy.
+/// Phase 32 (#38): never invents content. When the model is unavailable
+/// the outcome is `.unavailable`; when the week is genuinely empty or the
+/// model fails, the outcome is `.noContent`. The old canned
+/// `WeekSummary.fallback` (fabricated streak/notes copy) is gone.
 @MainActor
 final class WeekSummaryGenerator {
     private let intelligence: any IntelligenceService
@@ -25,7 +40,7 @@ final class WeekSummaryGenerator {
         self.settings = settings
     }
 
-    func generate(weekOffset: Int, today: Date) async throws -> WeekSummary {
+    func generate(weekOffset: Int, today: Date) async -> WeekSummaryOutcome {
         let weekEvents = (try? await events.events(forWeekOffset: weekOffset, today: today)) ?? []
         let weekTasks = (try? await tasks.tasks(forWeekOffset: weekOffset, today: today)) ?? []
 
@@ -45,11 +60,11 @@ final class WeekSummaryGenerator {
             appleIntelligenceEnabled: settings()
         )
         let availability = await intelligence.availability(context: context)
-        guard availability.isAvailable else {
-            return WeekSummary.fallback(weekOffset: weekOffset,
-                                         tasksDone: tasksDone,
-                                         tasksTotal: tasksTotal)
-        }
+        guard availability.isAvailable else { return .unavailable }
+
+        // Genuinely empty week: nothing to summarize. Don't ask the model
+        // to reflect on zero data — that's how fabricated content happens.
+        guard !(weekEvents.isEmpty && weekTasks.isEmpty) else { return .noContent }
 
         let prompt = Self.prompt(weekOffset: weekOffset,
                                  tasksDone: tasksDone,
@@ -58,25 +73,15 @@ final class WeekSummaryGenerator {
         do {
             let answer = try await intelligence.ask(query: prompt, context: context)
             let trimmed = answer.body.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else {
-                return WeekSummary.fallback(weekOffset: weekOffset,
-                                             tasksDone: tasksDone,
-                                             tasksTotal: tasksTotal)
-            }
-            // Phase 14 ships with model output as a single headline string.
-            // Bullet structuring (per-line ink) is a Phase 14-b polish item;
-            // for now we keep the canned bullets as design placeholders
-            // alongside the live headline so the visual rhythm holds.
-            let fallback = WeekSummary.fallback(weekOffset: weekOffset,
-                                                  tasksDone: tasksDone,
-                                                  tasksTotal: tasksTotal)
-            return WeekSummary(headline: trimmed,
-                                bullets: fallback.bullets,
-                                completionPercent: pct)
+            guard !trimmed.isEmpty else { return .noContent }
+            // The model emits a single headline; bullet structuring is a
+            // later polish item. Bullets stay empty — no design
+            // placeholders alongside live output (Phase 32 #38).
+            return .generated(WeekSummary(headline: trimmed,
+                                          bullets: [],
+                                          completionPercent: pct))
         } catch {
-            return WeekSummary.fallback(weekOffset: weekOffset,
-                                         tasksDone: tasksDone,
-                                         tasksTotal: tasksTotal)
+            return .noContent
         }
     }
 

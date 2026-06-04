@@ -2,12 +2,24 @@ import Foundation
 import Observation
 
 /// Drives the Paper Review page. Aggregates per-week stats from the
-/// existing stores and exposes the `WeekSummary` that the AI summary +
-/// notes blocks read. Holds a hardcoded "Morning run" streak per spec
-/// v1.0 — a later phase swaps that for a real `StreakStore`.
+/// existing stores and exposes a three-state `SummaryState` that the AI
+/// summary + notes blocks read. Phase 32 (#38): no state fabricates
+/// content — no canned summaries, no hardcoded streaks.
 @MainActor
 @Observable
 final class ReviewViewModel {
+    /// What the AI summary area should render. Three honest states —
+    /// real model output, an "AI off" invitation, or nothing at all.
+    enum SummaryState: Equatable {
+        /// Real on-device model output — render it.
+        case real(WeekSummary)
+        /// AI is off/unavailable — render the one-line enable prompt.
+        case aiOff
+        /// AI is on but there's nothing to show (genuinely empty week,
+        /// model failure) — omit the block entirely.
+        case hidden
+    }
+
     let weekOffset: Int
 
     /// Hours-by-category for the week, sorted descending elsewhere by
@@ -25,10 +37,12 @@ final class ReviewViewModel {
     /// `0.0–1.0` share of the week's tasks completed.
     var completionPercent: Double = 0.0
 
-    /// The AI (or fallback) week summary.
-    var summary: WeekSummary
+    /// What the AI summary area renders. Starts `.hidden` so nothing
+    /// flashes while the first `refresh()` is in flight.
+    var summaryState: SummaryState = .hidden
 
-    /// Hardcoded for v1.0 — single "Morning run" streak.
+    /// Always empty until a real `StreakStore` ships (later phase). The
+    /// Streaks section hides itself when this is empty — no fabricated rows.
     var streaks: [Streak] = []
 
     /// Localized description of the most recent fetch failure, if any.
@@ -50,13 +64,11 @@ final class ReviewViewModel {
         self.taskStore = taskStore
         self.summaryGenerator = summaryGenerator
         self.clock = clock
-        self.summary = WeekSummary.fallback(weekOffset: weekOffset,
-                                             tasksDone: 0,
-                                             tasksTotal: 0)
     }
 
     /// Refresh aggregates + summary. Errors swallow into `loadError` so
-    /// the page never crashes; falls back to canned summary on any error.
+    /// the page never crashes; the summary degrades honestly via
+    /// `SummaryState` instead of falling back to canned copy.
     func refresh() async {
         let now = clock()
 
@@ -85,30 +97,15 @@ final class ReviewViewModel {
         }
 
         if let summaryGenerator {
-            if let produced = try? await summaryGenerator.generate(weekOffset: weekOffset, today: now) {
-                summary = produced
-            } else {
-                summary = WeekSummary.fallback(weekOffset: weekOffset,
-                                                tasksDone: tasksDone,
-                                                tasksTotal: tasksTotal)
+            switch await summaryGenerator.generate(weekOffset: weekOffset, today: now) {
+            case .generated(let produced): summaryState = .real(produced)
+            case .unavailable: summaryState = .aiOff
+            case .noContent: summaryState = .hidden
             }
         } else {
-            summary = WeekSummary.fallback(weekOffset: weekOffset,
-                                            tasksDone: tasksDone,
-                                            tasksTotal: tasksTotal)
+            // No intelligence service at all (older device, previews):
+            // same honest treatment as the toggle being off.
+            summaryState = .aiOff
         }
-
-        streaks = [Self.morningRunStreak()]
-    }
-
-    /// Hardcoded "Morning run" streak per spec v1.0. A later phase
-    /// introducing user-defined habits will replace this with a real
-    /// `StreakStore` query.
-    private static func morningRunStreak() -> Streak {
-        Streak(name: "Morning run",
-               emoji: "🏃",
-               consecutiveWeeks: 6,
-               last7Days: [true, false, true, false, true, false, true],
-               categoryHint: .health)
     }
 }

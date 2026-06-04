@@ -23,6 +23,10 @@ import SwiftUI
 /// The `onSubmit` callback fires on the keyboard's `.search` button. The
 /// caller is responsible for forwarding the typed `text` to its view model.
 struct AskInputField: View {
+    /// Phase 32 (#49): VoiceOver name for the query field — the product's
+    /// "Ask the planner", not Apple's framework branding. Exposed for tests.
+    static let inputAccessibilityLabel = String(localized: "Ask the planner")
+
     /// Two-way binding to the typed query. Owned by the parent view model so
     /// the input reflects programmatic updates (e.g. a suggestion tap
     /// populating the field).
@@ -68,7 +72,7 @@ struct AskInputField: View {
                     .submitLabel(.search)
                     .onSubmit(onSubmit)
                     .disabled(false)
-                    .accessibilityLabel("Ask Apple Intelligence")
+                    .accessibilityLabel(Self.inputAccessibilityLabel)
                     .accessibilityAddTraits(.isSearchField)
                     .accessibilityIdentifier(AccessibilityIDs.aiSearchInput)
 

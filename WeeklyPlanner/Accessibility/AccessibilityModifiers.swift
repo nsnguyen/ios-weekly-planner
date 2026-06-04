@@ -91,10 +91,12 @@ extension View {
             .accessibilityAddTraits(.isButton)
     }
 
-    /// Apple Intelligence search button.
+    /// "Ask the planner" button — opens the on-device AI overlay.
+    /// (Phase 32 #49: user-facing copy says "Ask the planner", never
+    /// "Apple Intelligence".)
     func accessibleAIButton() -> some View {
         self
-            .accessibilityLabel("Apple Intelligence search")
+            .accessibilityLabel("Ask the planner")
             .accessibilityHint("Double tap to ask about your week.")
             .accessibilityAddTraits(.isButton)
     }

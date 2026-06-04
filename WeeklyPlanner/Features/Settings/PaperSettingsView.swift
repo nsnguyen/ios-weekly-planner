@@ -8,6 +8,11 @@ import SwiftUI
 /// `SettingsViewModel` is built lazily in `.task` so a fresh navigation
 /// always reads the latest `UserSettings` row.
 struct PaperSettingsView: View {
+    /// Phase 32 (#49): user-facing name of the on-device AI toggle. The
+    /// stored setting keeps its `appleIntelligenceEnabled` code symbol.
+    /// Exposed for tests.
+    static let askThePlannerToggleLabel = String(localized: "Ask the planner")
+
     @Environment(\.settingsStore) private var settingsStore
     @Environment(\.paperTheme) private var theme
 
@@ -82,7 +87,7 @@ struct PaperSettingsView: View {
                     viewModel.setDefaultReminderMinutes(newValue.minutes)
                 }
                 PrefRowDivider()
-                ToggleRow(label: "Apple Intelligence",
+                ToggleRow(label: PaperSettingsView.askThePlannerToggleLabel,
                           detail: "On-device only · keeps data private",
                           isOn: Binding(
                               get: { viewModel.appleIntelligenceEnabled },

@@ -2,6 +2,9 @@ import SwiftUI
 
 /// "Notes from AI" section: wavy-underlined header + a list of
 /// `WeekSummary.Bullet` rows, each leading with a ★ in its ink color.
+/// Renders nothing when there are no bullets (Phase 32 #38) — a lone
+/// header above zero rows reads as broken, and placeholder bullets are
+/// never fabricated to fill it.
 struct AINotesList: View {
     let bullets: [WeekSummary.Bullet]
 
@@ -9,6 +12,14 @@ struct AINotesList: View {
     @Environment(\.paperFont) private var font
 
     var body: some View {
+        if bullets.isEmpty {
+            EmptyView()
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Notes from AI")
                 .font(font.font(at: 20, weight: .bold))

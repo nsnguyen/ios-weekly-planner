@@ -14,6 +14,13 @@ import SwiftUI
 /// mock uses, giving the handwriting just enough lift to read on the leather
 /// gradient.
 struct AISearchTopBar: View {
+    /// Phase 32 (#49) UX copy: the surface is the product's own "Ask the
+    /// planner"; Apple's framework branding stays out of user-facing
+    /// strings (code symbols are unchanged). Exposed for tests.
+    static let eyebrowText = String(localized: "ON-DEVICE AI")
+    static let titleText = String(localized: "Ask the planner")
+    static let closeAccessibilityLabel = String(localized: "Close Ask the planner")
+
     /// Invoked when the user taps the trailing Close pill. The host closes
     /// the overlay.
     var onClose: () -> Void
@@ -36,16 +43,16 @@ struct AISearchTopBar: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Close Apple Intelligence search")
+            .accessibilityLabel(Self.closeAccessibilityLabel)
             .accessibilityIdentifier(AccessibilityIDs.aiSearchClose)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("ASK THE PLANNER")
+                Text(Self.eyebrowText)
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1.6)
                     .foregroundStyle(theme.chromeText.opacity(0.65))
 
-                Text("Apple Intelligence")
+                Text(Self.titleText)
                     .font(font.font(at: 24, weight: .regular))
                     .foregroundStyle(theme.chromeText)
                     .shadow(color: Color.black.opacity(0.4), radius: 1, x: 0, y: 1)
