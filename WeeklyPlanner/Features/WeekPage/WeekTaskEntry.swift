@@ -8,6 +8,10 @@ import SwiftUI
 /// The whole row is wrapped in a `.plain`-styled `Button` so the user can tap
 /// anywhere along the line to toggle done. All colors and fonts come from the
 /// environment — no hex literals.
+///
+/// As of Phase 30 (#26) the week spread is events-only, so this row is no
+/// longer rendered there; it is retained for previews and any future task
+/// surface at the week scale.
 struct WeekTaskEntry: View {
     /// The to-do this row represents.
     let task: TaskItem

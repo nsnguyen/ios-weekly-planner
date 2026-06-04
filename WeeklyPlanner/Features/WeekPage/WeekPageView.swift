@@ -2,7 +2,8 @@ import SwiftUI
 
 /// The composite Hobonichi-style week spread: paper book chrome + ruled lines
 /// + red margin + hole punches + header + seven `WeekDayRow`s + bottom-right
-/// `WeekStickyNote` + page-number footer for a single `weekOffset`.
+/// `WeekStickyNote` for a single `weekOffset`. (The page-number footer was
+/// removed in Phase 30, #27; rows are events-only per #26.)
 ///
 /// Renders ONE static week page — Group T will host this inside a flip
 /// container alongside `DayPageView`. Owns a `WeekPageViewModel` instance
@@ -61,9 +62,6 @@ struct WeekPageView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                             .padding(.trailing, 14)
                             .padding(.bottom, 14)
-
-                        PageNumber(date: days.first?.date ?? .init())
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     }
                 }
             }
@@ -98,22 +96,15 @@ struct WeekPageView: View {
     /// content column.
     private func content(days: [WeekDay], weekMeta: WeekMeta, year: Int, todayIdx: Int?) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            WeekPageHeader(weekMeta: weekMeta,
-                           year: year,
-                           eventCount: viewModel?.eventCount ?? 0,
-                           openTaskCount: viewModel?.openTaskCount ?? 0)
+            WeekPageHeader(weekMeta: weekMeta, year: year)
 
             if viewModel != nil {
                 VStack(spacing: 0) {
                     ForEach(Array(days.enumerated()), id: \.element.idx) { offset, day in
                         WeekDayRow(day: day,
                                    events: viewModel?.eventsByDay[day.idx] ?? [],
-                                   tasks: viewModel?.tasksByDay[day.idx] ?? [],
                                    isToday: todayIdx == day.idx,
                                    showSeparator: offset < days.count - 1,
-                                   onToggleTask: { id in
-                                       Task { await viewModel?.toggleTask(id: id) }
-                                   },
                                    onTapEvent: { id in
                                        openEventID = id
                                    })

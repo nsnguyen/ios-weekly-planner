@@ -1,72 +1,43 @@
 import SwiftUI
 
-/// Top-of-page header for the Hobonichi week spread. Renders the week title
-/// (`"Week NN"`) and date range on the left, the event / open-task counts on
-/// the right, and a 2pt fading underline below the row.
+/// Top-of-page header for the Hobonichi week spread. Renders the week's date
+/// range as the single enlarged title (Phase 30, #30 — the `"Week NN"` label
+/// and the right-hand `"N events"` / `"M tasks left"` count lines are gone,
+/// #29) above a 2pt fading underline.
 ///
 /// All design tokens come from `@Environment(\.paperTheme)` and
-/// `\.paperFont`. The single hardcoded element is the `"Cochin-Italic"` system
-/// serif used for the subtitle — consistent with the Day page header.
+/// `\.paperFont`.
 struct WeekPageHeader: View {
-    /// Metadata for the containing week. Supplies week number + date range.
+    /// Metadata for the containing week. Supplies the date range.
     let weekMeta: WeekMeta
 
-    /// Calendar year of the week's first day (Monday). Rendered next to the
-    /// range in the subtitle, e.g., `"May 11 – 17, 2026"`.
+    /// Calendar year of the week's first day (Monday). Rendered after the
+    /// range in the title, e.g., `"May 11 – 17, 2026"`.
     let year: Int
-
-    /// Total event count for the week. Drives the `"N events"` line.
-    let eventCount: Int
-
-    /// Open (i.e., not-done) to-do count for the week. Drives the
-    /// `"M tasks left"` line.
-    let openTaskCount: Int
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
-                leftColumn
-
-                Spacer()
-
-                rightColumn
-            }
-            .padding(EdgeInsets(top: 14, leading: 44, bottom: 4, trailing: 18))
+            Text(Self.title(weekMeta: weekMeta, year: year))
+                .font(font.font(at: 30, weight: .bold))
+                .foregroundStyle(theme.ink)
+                .padding(EdgeInsets(top: 14, leading: 44, bottom: 4, trailing: 18))
 
             underline
                 .padding(EdgeInsets(top: 6, leading: 44, bottom: 0, trailing: 18))
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Title
 
-    /// Title `"Week NN"` plus italic Cochin date-range subtitle.
-    private var leftColumn: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Week \(weekMeta.weekNumber)")
-                .font(font.font(at: 26, weight: .bold))
-                .foregroundStyle(theme.ink)
-
-            Text("\(weekMeta.range), \(year)")
-                .font(.custom("Cochin-Italic", size: 12))
-                .foregroundStyle(theme.ink2)
-        }
-    }
-
-    /// Two right-aligned italic count lines.
-    private var rightColumn: some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            Text("\(eventCount) events")
-                .font(font.font(at: 15, weight: .regular).italic())
-                .foregroundStyle(theme.ink2)
-
-            Text("\(openTaskCount) tasks left")
-                .font(font.font(at: 15, weight: .regular).italic())
-                .foregroundStyle(theme.ink2)
-        }
+    /// The header's single line of copy — the week's date range plus year,
+    /// e.g. `"May 11 – 17, 2026"`. Static + internal so
+    /// `WeekPageHeaderTests` can pin the no-"Week"/no-counts contract
+    /// without view introspection (Phase 30, #29 + #30).
+    static func title(weekMeta: WeekMeta, year: Int) -> String {
+        "\(weekMeta.range), \(year)"
     }
 
     /// 2pt-tall horizontal gradient that fades the ink underline out to the
@@ -94,10 +65,7 @@ struct WeekPageHeader: View {
         BookCover()
         BookPage {
             PaperSurface {
-                WeekPageHeader(weekMeta: meta,
-                               year: 2026,
-                               eventCount: 7,
-                               openTaskCount: 3)
+                WeekPageHeader(weekMeta: meta, year: 2026)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
         }
