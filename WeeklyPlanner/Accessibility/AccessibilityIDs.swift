@@ -29,6 +29,13 @@ enum AccessibilityIDs {
     // Week picker
     static func weekpickerWeekRow(_ offset: Int) -> String { "weekpicker.weekrow.\(offset)" }
 
+    // Week picker — month/year navigation bar (Phase 31)
+    static let weekpickerMonthPrev = "weekpicker.nav.month.prev"
+    static let weekpickerMonthNext = "weekpicker.nav.month.next"
+    static let weekpickerYearPrev = "weekpicker.nav.year.prev"
+    static let weekpickerYearNext = "weekpicker.nav.year.next"
+    static let weekpickerNavTitle = "weekpicker.nav.title"
+
     // Settings
     static func settingsThemeCard(_ key: String) -> String { "settings.theme.card.\(key)" }
     static func settingsFontCard(_ key: String) -> String { "settings.font.card.\(key)" }

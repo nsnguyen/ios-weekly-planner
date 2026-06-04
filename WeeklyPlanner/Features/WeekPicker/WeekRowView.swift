@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// One Mon-Sun row inside the week picker. Renders the `W##` label in a
-/// fixed-width leading column and then seven equal-width day cells.
+/// One Mon-Sun row inside the week picker. Renders seven equal-width day
+/// cells (the leading `W##` ISO week-number column was removed in Phase 31
+/// #33 — the columns now line up with `MonthGridView`'s weekday header).
 ///
 /// Three visual states layered onto the same row:
-/// - **Selected**: 12% blue-ink wash behind the row, week-number switches to
-///   `theme.blueInk`.
+/// - **Selected**: 12% blue-ink wash behind the row.
 /// - **Contains today, not selected**: a 3pt-wide red vertical bar pinned to
 ///   the leading edge.
 /// - **Today's cell**: a 24pt red circle behind the day number, with white
@@ -15,6 +15,13 @@ import SwiftUI
 /// pushes that offset back to `RootView` via `WeekPickerSheet.onPick` and
 /// closes itself.
 struct WeekRowView: View {
+    /// Phase 31 (33) presentation contract — the leading "W##" ISO
+    /// week-number column was removed; rows are seven full-width day cells.
+    /// `PickerWeek.weekNumber` stays in the model (the removal is
+    /// presentation-only). Unit-tested in
+    /// `MonthGridViewTests.testNoWeekNumberRendered`.
+    static let showsWeekNumberColumn = false
+
     /// The week to render. Carries the 7-day span and the `containsToday` /
     /// `weekNumber` metadata used for styling.
     let week: PickerWeek
@@ -35,7 +42,6 @@ struct WeekRowView: View {
             onPick(week.offset)
         } label: {
             HStack(spacing: 3) {
-                weekNumberLabel
                 ForEach(week.days) { day in
                     dayCell(day)
                         .frame(maxWidth: .infinity)
@@ -58,20 +64,30 @@ struct WeekRowView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(AccessibilityIDs.weekpickerWeekRow(week.offset))
-        .accessibilityLabel("Week \(week.weekNumber)")
+        .accessibilityLabel(Self.accessibilityLabel(for: week))
         .accessibilityAddTraits(.isButton)
     }
 
-    // MARK: - Subviews
+    // MARK: - Accessibility
 
-    /// Fixed-width `W##` chip on the leading edge of the row. Picks up the
-    /// blue ink when the row is selected, ink3 otherwise.
-    private var weekNumberLabel: some View {
-        Text("W\(week.weekNumber)")
-            .font(.system(size: 9, weight: .bold))
-            .foregroundStyle(isSelected ? theme.blueInk : theme.ink3)
-            .frame(width: 28, alignment: .center)
+    /// Date-based VoiceOver label ("Week of May 11") — replaces the old
+    /// "Week 21" ISO-number label, which no longer matches anything visible
+    /// (Phase 31 #33).
+    static func accessibilityLabel(for week: PickerWeek) -> String {
+        guard let monday = week.days.first?.date else { return "Week" }
+        return "Week of \(mondayFormatter.string(from: monday))"
     }
+
+    /// "May 11" style. POSIX-locale so the label doesn't drift across
+    /// devices; shared across all rows.
+    private static let mondayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM d"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    // MARK: - Subviews
 
     /// One day cell. Today gets the red filled circle behind the day number
     /// and white text on top; other days inherit `ink` (in-month) or `ink3`

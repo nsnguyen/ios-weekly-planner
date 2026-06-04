@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// Drop-down week picker overlay. Sits above the book chrome whenever
-/// `isOpen == true` and renders a 5-month mini grid the user can scroll
-/// through and tap to jump to any week.
+/// `isOpen == true` and renders a ±24-month mini grid the user can scroll
+/// through — or drive with the month/year nav bar (Phase 31 #35 #36) — and
+/// tap to jump to any week.
 ///
 /// Layout:
 /// - A `ZStack` that renders nothing when closed.
@@ -30,6 +31,12 @@ struct WeekPickerSheet: View {
     var onPick: (Int) -> Void
 
     @State private var viewModel: WeekPickerViewModel
+
+    /// Month id (`"yyyy-MM"`) the scroll body is anchored to, bound to
+    /// `.scrollPosition(id:)`. Nav-bar buttons write it (programmatic
+    /// scroll); manual scrolling writes it back and `syncDisplayedMonth`
+    /// keeps the nav title in step. Phase 31 (35)(36).
+    @State private var scrolledMonthID: String?
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
@@ -85,7 +92,8 @@ struct WeekPickerSheet: View {
         VStack(spacing: 0) {
             header
             divider
-            dayOfWeekHeader
+            monthNavBar
+            divider
             scrollBody
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -146,75 +154,122 @@ struct WeekPickerSheet: View {
             .frame(height: 0.5)
     }
 
-    // MARK: - Day-of-week header
+    // MARK: - Month/year navigation
 
-    /// Seven two-character weekday labels above the grid. Sits on a faint
-    /// cream tint with a `ruleSoft` hairline beneath so it visually separates
-    /// from the scroll body. Two letters (vs. the JS mock's single letter)
-    /// because the single-letter form repeats T and S and reads as a typo.
-    private var dayOfWeekHeader: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 3) {
-                Color.clear.frame(width: 28)
+    /// Explicit month/year navigation (Phase 31 #35): « / » step a year,
+    /// ‹ / › step a month, the centered label names the displayed month.
+    /// Not scroll-only anymore — but scrolling still works and keeps the
+    /// label in sync via `scrolledMonthID`.
+    private var monthNavBar: some View {
+        HStack(spacing: 2) {
+            navButton(systemName: "chevron.left.2",
+                      id: AccessibilityIDs.weekpickerYearPrev,
+                      label: "Previous year",
+                      enabled: viewModel.canStepBackward) { step(-12) }
+            navButton(systemName: "chevron.left",
+                      id: AccessibilityIDs.weekpickerMonthPrev,
+                      label: "Previous month",
+                      enabled: viewModel.canStepBackward) { step(-1) }
 
-                ForEach(Array(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].enumerated()), id: \.offset) { _, letter in
-                    Text(letter)
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(0.6)
-                        .foregroundStyle(theme.ink3)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
-            }
-            .padding(EdgeInsets(top: 8, leading: 14, bottom: 6, trailing: 14))
+            Text(viewModel.displayedMonth?.title ?? " ")
+                .font(font.font(at: 16, weight: .bold))
+                .foregroundStyle(theme.ink)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .accessibilityIdentifier(AccessibilityIDs.weekpickerNavTitle)
 
-            Rectangle()
-                .fill(theme.ruleSoft)
-                .frame(height: 0.5)
+            navButton(systemName: "chevron.right",
+                      id: AccessibilityIDs.weekpickerMonthNext,
+                      label: "Next month",
+                      enabled: viewModel.canStepForward) { step(1) }
+            navButton(systemName: "chevron.right.2",
+                      id: AccessibilityIDs.weekpickerYearNext,
+                      label: "Next year",
+                      enabled: viewModel.canStepForward) { step(12) }
         }
+        .padding(EdgeInsets(top: 6, leading: 10, bottom: 6, trailing: 10))
         .background(Color(red: 250 / 255, green: 246 / 255, blue: 233 / 255).opacity(0.85))
+    }
+
+    /// One chevron button in the nav bar. 32pt square hit target, dimmed
+    /// and disabled at a window edge.
+    private func navButton(systemName: String,
+                           id: String,
+                           label: String,
+                           enabled: Bool,
+                           action: @escaping () -> Void) -> some View
+    {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(enabled ? theme.ink2 : theme.ink3.opacity(0.4))
+                .frame(width: 32, height: 32)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityIdentifier(id)
+        .accessibilityLabel(label)
+    }
+
+    /// Step the displayed month and scroll the grid to it. ±1 from the
+    /// month chevrons, ±12 from the year steppers; the view model clamps
+    /// to the built window.
+    private func step(_ deltaMonths: Int) {
+        viewModel.stepMonth(by: deltaMonths)
+        guard let id = viewModel.displayedMonth?.id else { return }
+        if reduceMotion {
+            scrolledMonthID = id
+        } else {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                scrolledMonthID = id
+            }
+        }
     }
 
     // MARK: - Scroll body
 
-    /// Vertical scroll containing the five months. Uses `ScrollViewReader`
-    /// so the initial appearance can center the focused week.
+    /// Vertical scroll containing the ±24-month window. `LazyVStack` keeps
+    /// 49 month sections affordable; `.scrollTargetLayout()` +
+    /// `.scrollPosition(id:)` give month-granular two-way scroll control
+    /// (nav bar ↔ manual scrolling) and replace the old
+    /// `ScrollViewReader` + deferred-`scrollTo` hack.
     ///
-    /// `ScrollView` is the outer view (standard SwiftUI pattern — putting
-    /// `ScrollViewReader` outside means the frame modifier doesn't propagate
-    /// through to the actual scrolling surface, which left the ScrollView
-    /// sized to its content's natural height and broke the gesture). The
-    /// `.frame(maxHeight: .infinity)` on the ScrollView is what the JS mock's
-    /// `flex: 1, overflowY: 'auto'` does — claim the remaining vertical
-    /// space inside the sheet VStack so content overflows and scrolls.
-    /// `.layoutPriority(1)` reinforces this against the parent VStack's
-    /// other (fixed-height) children.
+    /// The `.frame(maxHeight: .infinity)` + `.layoutPriority(1)` MUST stay
+    /// directly on the `ScrollView` — that is the fix for the historical
+    /// "picker scroll gesture dead" bug (the scroll surface otherwise sizes
+    /// to its content's natural height and the gesture breaks). It is what
+    /// the JS mock's `flex: 1, overflowY: 'auto'` does — claim the
+    /// remaining vertical space inside the sheet VStack so content
+    /// overflows and scrolls.
     private var scrollBody: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            ScrollViewReader { proxy in
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(viewModel.months) { month in
-                        MonthGridView(month: month,
-                                      selectedWeekOffset: viewModel.selectedWeekOffset,
-                                      onPick: handlePick)
-                    }
+            LazyVStack(alignment: .leading, spacing: 0) {
+                ForEach(viewModel.months) { month in
+                    MonthGridView(month: month,
+                                  selectedWeekOffset: viewModel.selectedWeekOffset,
+                                  onPick: handlePick)
+                }
 
-                    footer
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 8)
-                .padding(.bottom, 14)
-                .onAppear {
-                    // Defer one runloop tick so the VStack is laid out
-                    // before we ask the proxy to scroll — otherwise the
-                    // proxy can pick an offset based on stale row frames.
-                    DispatchQueue.main.async {
-                        proxy.scrollTo("\(initialWeekOffset)", anchor: .center)
-                    }
-                }
+                footer
             }
+            .scrollTargetLayout()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
+            .padding(.bottom, 14)
         }
+        .scrollPosition(id: $scrolledMonthID, anchor: .top)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .layoutPriority(1)
+        .onAppear {
+            // Re-anchor on the focus month every time the sheet opens
+            // (replaces the old scrollTo-on-appear).
+            scrolledMonthID = viewModel.displayedMonth?.id
+        }
+        .onChange(of: scrolledMonthID) { _, newID in
+            guard let newID else { return }
+            viewModel.syncDisplayedMonth(toID: newID)
+        }
     }
 
     /// Italic handwritten footer line — purely decorative hint.
