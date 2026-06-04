@@ -85,7 +85,6 @@ struct WeekPickerSheet: View {
         VStack(spacing: 0) {
             header
             divider
-            dayOfWeekHeader
             scrollBody
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -144,34 +143,6 @@ struct WeekPickerSheet: View {
         Rectangle()
             .fill(theme.rule)
             .frame(height: 0.5)
-    }
-
-    // MARK: - Day-of-week header
-
-    /// Seven two-character weekday labels above the grid. Sits on a faint
-    /// cream tint with a `ruleSoft` hairline beneath so it visually separates
-    /// from the scroll body. Two letters (vs. the JS mock's single letter)
-    /// because the single-letter form repeats T and S and reads as a typo.
-    private var dayOfWeekHeader: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 3) {
-                Color.clear.frame(width: 28)
-
-                ForEach(Array(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].enumerated()), id: \.offset) { _, letter in
-                    Text(letter)
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(0.6)
-                        .foregroundStyle(theme.ink3)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
-            }
-            .padding(EdgeInsets(top: 8, leading: 14, bottom: 6, trailing: 14))
-
-            Rectangle()
-                .fill(theme.ruleSoft)
-                .frame(height: 0.5)
-        }
-        .background(Color(red: 250 / 255, green: 246 / 255, blue: 233 / 255).opacity(0.85))
     }
 
     // MARK: - Scroll body
