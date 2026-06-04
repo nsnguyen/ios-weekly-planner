@@ -123,6 +123,65 @@ final class WeekPickerViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.canStepForward)
     }
 
+    // MARK: - Phase 31 (36): offset integrity at far-out months
+
+    /// Hard-coded year-boundary anchors: the week containing Jan 1 2027
+    /// starts Mon Dec 28 2026 (+33 weeks from Mon May 11 2026); the week
+    /// containing Jan 1 2026 starts Mon Dec 29 2025 (−19 weeks).
+    func testWeekOffsetCorrectAcrossYearBoundary() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+
+        let jan2027 = viewModel.months.first { $0.year == 2027 && $0.month == 1 }
+        XCTAssertNotNil(jan2027)
+        let newYearWeek2027 = jan2027?.weeks.first { week in
+            week.days.contains { $0.id == "2027-01-01" }
+        }
+        XCTAssertEqual(newYearWeek2027?.offset, 33)
+        XCTAssertEqual(newYearWeek2027?.days.first?.id, "2026-12-28")
+
+        let jan2026 = viewModel.months.first { $0.year == 2026 && $0.month == 1 }
+        XCTAssertNotNil(jan2026)
+        let newYearWeek2026 = jan2026?.weeks.first { week in
+            week.days.contains { $0.id == "2026-01-01" }
+        }
+        XCTAssertEqual(newYearWeek2026?.offset, -19)
+        XCTAssertEqual(newYearWeek2026?.days.first?.id, "2025-12-29")
+    }
+
+    /// Sweep the whole ±24-month window: deduped week offsets must form a
+    /// gapless contiguous integer range, every week must start on a Monday
+    /// and hold exactly 7 days, and offset 0 must start on Mon May 11 2026.
+    /// Catches integer drift across year boundaries and DST transitions
+    /// (Mar/Nov 2024–2028 all fall inside the window).
+    func testWeekOffsetsContiguousAcrossWholeWindow() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        let calendar = WeekMath.mondayCalendar()
+
+        var mondayByOffset: [Int: String] = [:]
+        for month in viewModel.months {
+            for week in month.weeks {
+                XCTAssertEqual(week.days.count, 7, "Week \(week.offset) must span 7 days")
+                guard let monday = week.days.first else { continue }
+                XCTAssertEqual(calendar.component(.weekday, from: monday.date), 2,
+                               "Week \(week.offset) must start on a Monday")
+                if let existing = mondayByOffset[week.offset] {
+                    XCTAssertEqual(existing, monday.id,
+                                   "Offset \(week.offset) maps to two different Mondays")
+                } else {
+                    mondayByOffset[week.offset] = monday.id
+                }
+            }
+        }
+
+        XCTAssertEqual(mondayByOffset[0], "2026-05-11")
+        let offsets = mondayByOffset.keys.sorted()
+        guard let first = offsets.first, let last = offsets.last else {
+            return XCTFail("No weeks built")
+        }
+        XCTAssertEqual(last - first + 1, offsets.count,
+                       "Offsets must be gapless: \(first)...\(last)")
+    }
+
     func testSyncDisplayedMonthToScrolledID() {
         let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
         viewModel.syncDisplayedMonth(toID: "2026-11")
