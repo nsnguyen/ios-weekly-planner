@@ -15,6 +15,7 @@ struct PaperReviewView: View {
 
     @Environment(\.eventStore) private var eventStore
     @Environment(\.taskStore) private var taskStore
+    @Environment(\.settingsStore) private var settingsStore
     @Environment(\.intelligenceService) private var intelligenceService
     @Environment(\.paperTheme) private var theme
 
@@ -36,11 +37,22 @@ struct PaperReviewView: View {
                                               dateRange: Self.formatWeekRange(weekOffset: viewModel.weekOffset,
                                                                               today: Date()),
                                               completionPercent: viewModel.completionPercent)
-                                ReviewSummaryBlock(summaryBody: viewModel.summary.headline)
+                                // Phase 32 (#38): three honest states — real
+                                // AI output, an enable-AI prompt, or nothing.
+                                switch viewModel.summaryState {
+                                case .real(let summary):
+                                    ReviewSummaryBlock(summaryBody: summary.headline)
+                                case .aiOff:
+                                    ReviewAIOffPrompt()
+                                case .hidden:
+                                    EmptyView()
+                                }
                                 TimeSpentBarChart(timeByCategory: viewModel.timeByCategory,
                                                   maxHours: viewModel.maxHours)
-                                AINotesList(bullets: viewModel.summary.bullets)
-                                StreaksBlock(streaks: viewModel.streaks)
+                                if case .real(let summary) = viewModel.summaryState {
+                                    AINotesList(bullets: summary.bullets) // self-hides when empty
+                                }
+                                StreaksBlock(streaks: viewModel.streaks)  // self-hides when empty
                             } else {
                                 ProgressView()
                                     .padding(.top, 60)
@@ -54,10 +66,16 @@ struct PaperReviewView: View {
         }
         .task(id: weekOffset) {
             if viewModel == nil || viewModel?.weekOffset != weekOffset {
-                let generator = intelligenceService.map { service in
+                // Wire the planner's own AI toggle into the generator's
+                // existing `settings` hook so the Review page honors it
+                // (Phase 32 #38 — the AI-off prompt depends on this).
+                let generator = intelligenceService.map { [settingsStore] service in
                     WeekSummaryGenerator(intelligence: service,
                                           events: eventStore,
-                                          tasks: taskStore)
+                                          tasks: taskStore,
+                                          settings: {
+                                              (try? settingsStore.current())?.appleIntelligenceEnabled ?? true
+                                          })
                 }
                 viewModel = ReviewViewModel(weekOffset: weekOffset,
                                              eventStore: eventStore,

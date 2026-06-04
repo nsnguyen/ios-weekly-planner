@@ -3,6 +3,9 @@ import SwiftUI
 /// "Streaks" section: wavy-underlined header + a row per `Streak`. Each
 /// row shows the emoji, "Name · N weeks", a 7-cell pill row (filled
 /// green for completed days, neutral otherwise), and a trailing 🔥.
+/// Renders nothing when there are no streaks (Phase 32 #38) — real streak
+/// tracking is a later phase; until then the section hides instead of
+/// showing a fabricated row.
 struct StreaksBlock: View {
     let streaks: [Streak]
 
@@ -10,6 +13,14 @@ struct StreaksBlock: View {
     @Environment(\.paperFont) private var font
 
     var body: some View {
+        if streaks.isEmpty {
+            EmptyView()
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Streaks")
                 .font(font.font(at: 20, weight: .bold))

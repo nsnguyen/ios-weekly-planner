@@ -65,28 +65,87 @@ final class ReviewViewModelTests: XCTestCase {
         XCTAssertEqual(vm.completionPercent, 2.0 / 3.0, accuracy: 0.01)
     }
 
-    func testFallbackSummaryUsedWhenGeneratorNil() async {
+    // MARK: - Phase 32 (#38): three honest summary states
+
+    func testSummaryStateIsAIOffWhenGeneratorNil() async {
         let vm = ReviewViewModel(weekOffset: 0,
                                   eventStore: eventStore,
                                   taskStore: taskStore,
                                   summaryGenerator: nil,
                                   clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
-        XCTAssertTrue(vm.summary.headline.contains("balanced week"))
-        XCTAssertEqual(vm.summary.bullets.count, 3)
+        XCTAssertEqual(vm.summaryState, .aiOff)
     }
 
-    func testHardcodedMorningRunStreakAlwaysPresent() async {
+    func testSummaryStateIsAIOffWhenSettingsToggleOff() async {
+        let generator = WeekSummaryGenerator(
+            intelligence: StubIntelligenceService(eventStore: eventStore),
+            events: eventStore,
+            tasks: taskStore,
+            settings: { false })
+        let vm = ReviewViewModel(weekOffset: 0,
+                                  eventStore: eventStore,
+                                  taskStore: taskStore,
+                                  summaryGenerator: generator,
+                                  clock: { Self.may18_2026(hour: 12) })
+        await vm.refresh()
+        XCTAssertEqual(vm.summaryState, .aiOff)
+    }
+
+    func testSummaryStateHiddenForEmptyWeekWithAIOn() async {
+        let generator = WeekSummaryGenerator(
+            intelligence: StubIntelligenceService(eventStore: eventStore),
+            events: eventStore,
+            tasks: taskStore)
+        let vm = ReviewViewModel(weekOffset: 0,
+                                  eventStore: eventStore,
+                                  taskStore: taskStore,
+                                  summaryGenerator: generator,
+                                  clock: { Self.may18_2026(hour: 12) })
+        await vm.refresh()
+        XCTAssertEqual(vm.summaryState, .hidden)
+    }
+
+    func testSummaryStateRealCarriesModelOutputAndNoPlaceholders() async throws {
+        let monday = Self.may18_2026(hour: 9)
+        try await eventStore.upsert(Event(title: "Standup",
+                                          start: monday,
+                                          end: monday.addingTimeInterval(1800),
+                                          category: .work))
+        let generator = WeekSummaryGenerator(
+            intelligence: StubIntelligenceService(eventStore: eventStore),
+            events: eventStore,
+            tasks: taskStore)
+        let vm = ReviewViewModel(weekOffset: 0,
+                                  eventStore: eventStore,
+                                  taskStore: taskStore,
+                                  summaryGenerator: generator,
+                                  clock: { Self.may18_2026(hour: 12) })
+        await vm.refresh()
+        guard case .real(let summary) = vm.summaryState else {
+            return XCTFail("expected .real, got \(vm.summaryState)")
+        }
+        XCTAssertFalse(summary.headline.isEmpty)
+        XCTAssertTrue(summary.bullets.isEmpty,
+                      "no design-placeholder bullets alongside real output")
+    }
+
+    func testNoFabricatedStreaksInAnyState() async {
         let vm = ReviewViewModel(weekOffset: 0,
                                   eventStore: eventStore,
                                   taskStore: taskStore,
                                   summaryGenerator: nil,
                                   clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
-        XCTAssertEqual(vm.streaks.count, 1)
-        XCTAssertEqual(vm.streaks.first?.name, "Morning run")
-        XCTAssertEqual(vm.streaks.first?.emoji, "🏃")
-        XCTAssertEqual(vm.streaks.first?.last7Days.count, 7)
+        XCTAssertTrue(vm.streaks.isEmpty,
+                      "no real StreakStore exists yet — streaks must never be fabricated")
+        XCTAssertFalse(vm.streaks.contains { $0.name == "Morning run" })
+    }
+
+    func testAIOffPromptCopyNamesAskThePlanner() {
+        XCTAssertEqual(ReviewAIOffPrompt.promptText,
+                       "Turn on Ask the planner for a weekly summary")
+        XCTAssertFalse(ReviewAIOffPrompt.promptText.contains("Apple Intelligence"))
     }
 
     private static func may18_2026(hour: Int) -> Date {

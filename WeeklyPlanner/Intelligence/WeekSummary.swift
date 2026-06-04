@@ -39,22 +39,7 @@ struct WeekSummary: Equatable, Sendable {
     }
 }
 
-extension WeekSummary {
-    /// Canned fallback used when the AI model is unavailable. Matches the
-    /// strings called out in the Phase 14 spec's "default fallback" notes
-    /// so the page never renders empty.
-    static func fallback(weekOffset: Int, tasksDone: Int, tasksTotal: Int) -> WeekSummary {
-        let pct = tasksTotal == 0 ? 0.0 : Double(tasksDone) / Double(tasksTotal)
-        let headline = "A balanced week. You wrapped up \(tasksDone) of \(tasksTotal) tasks, "
-            + "kept Wednesday's run, and still owe Sara her gift."
-        return WeekSummary(
-            headline: headline,
-            bullets: [
-                .init(text: "Health is up 40% this week. Keep it.", ink: .green),
-                .init(text: "Friday afternoon — nothing booked. Block focus.", ink: .red),
-                .init(text: "Sara's gift still on the list. Today!", ink: .red),
-            ],
-            completionPercent: pct
-        )
-    }
-}
+// Phase 32 (#38): the old `WeekSummary.fallback(...)` extension was removed.
+// It fabricated content ("kept Wednesday's run", "Sara's gift", canned
+// bullets) that rendered as if it were real AI output. The Review page now
+// degrades honestly via `WeekSummaryOutcome` / `ReviewViewModel.SummaryState`.
