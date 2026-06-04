@@ -60,9 +60,9 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 27 | Week View Stability & Cross-View Navigation          | K — Critical Fixes  | ✅     |
 | 28 | Sticky Note Swipe-Lock Fix                           | K — Critical Fixes  | ✅     |
 | 29 | Day Page & Event Sheet Polish                        | L — v1.1 Polish     | ✅     |
-| 30 | Week Page Polish                                     | L                   | 📋     |
-| 31 | Month Grid & Week-Picker Navigation                  | L                   | 📋     |
-| 32 | AI Surfaces & Review Cleanup                         | L                   | 📋     |
+| 30 | Week Page Polish                                     | L                   | ✅     |
+| 31 | Month Grid & Week-Picker Navigation                  | L                   | ✅     |
+| 32 | AI Surfaces & Review Cleanup                         | L                   | ✅     |
 | 33 | Notes Tab                                            | M — v1.1 Features   | 📋     |
 | 34 | Free-Text Annotations                                | M                   | 📋     |
 | 35 | Repeating Events                                     | M                   | 📋     |
@@ -95,8 +95,11 @@ Stability; the navigation freeze, a stranded `isFlipping`) and Phase 28
 tests green) with new UI tests and merged to `main`. **On-device
 confirmation of both is still recommended before the public submission**
 (each is a runtime/gesture symptom the unit tests model but can't fully
-reproduce). The remaining roadmap runs **L → M → O**: Phases 29–32 (v1.1
-polish), 33–37 (v1.1 features), 38–39 (future bets), then the plan closes
+reproduce). **Milestone L — v1.1 Polish is done**: Phases 29–32 all shipped
+(Phase 29 solo; Phases 30–32 built in parallel by a three-agent team on
+2026-06-03, merged sequentially, 423 unit tests green). The remaining
+roadmap runs **M → O**: Phases 33–37 (v1.1 features), 38–39 (future bets),
+then the plan closes
 with **Phase 40 (Final Polish)** and **Phase 41 (App Store Submission)** as
 the literal final two phases — submission ships last, after all the feedback
 work. AI Sticky Notes stay opt-in (only the swipe-lock is fixed — see
@@ -1138,4 +1141,92 @@ view.
 **Files:** `WeeklyPlanner/Features/DayPage/{DayPageView,DayPageHeader,BookBottomControls}.swift`,
 `WeeklyPlanner/Features/EventDetail/{EventDeleteButton,EventHeader,PaperEventSheet}.swift`,
 `WeeklyPlannerTests/{DayPage/DayPageHeaderTests,EventDetail/EventDeleteButtonTests}.swift`.
+
+### Phase 30 — Week Page Polish
+
+Six TestFlight tweaks (suggestions 25–30) refocusing the Hobonichi week
+spread on events at a glance. Built by agent `phase-30` on branch
+`phase-30-week-page-polish` (2026-06-03).
+
+- **(29)** Header count lines (`"N events"` / `"M tasks left"`) removed; dead
+  `eventCount`/`openTaskCount` plumbing pruned from `WeekPageViewModel`.
+- **(30)** `"Week NN"` removed — the date range (`"May 11 – 17, 2026"`) is the
+  single 30pt bold title via testable `WeekPageHeader.title(weekMeta:year:)`;
+  day numerals 28→32pt.
+- **(26)** Week rows are events-only (permanent default; Day page keeps
+  tasks). `tasksByDay`/`toggleTask` retained in the VM — presentation-only.
+- **(25)** Overflow rule in pure `WeekDayRowLayout` (derived from the mock's
+  3-line row rhythm): 1–3 events single column → 4–6 two columns
+  (column-major chronological) → 7+ first 5 + non-interactive `"+K more"`
+  with a `"K more events"` a11y label.
+- **(28)** Empty days read italic `"none"` (was `"—"`), pinned by
+  `WeekDayRow.emptyPlaceholder`.
+- **(27)** Bottom `PageNumber` date removed from the week page.
+
+**Tests:** branch suite **402 / 0** (+`WeekPageHeaderTests`,
+`WeekDayRowTests`; count tests swapped for a `tasksByDay` grouping test).
+Week rows use `children: .combine`, so combined a11y labels updated
+automatically; `AccessibilityIDs` untouched (the now-unused
+`weekpageTodoRow` helper was swept at integration).
+
+### Phase 31 — Month Grid & Week-Picker Navigation
+
+Four picker tweaks (suggestions 33–36) making the month grid navigable and
+readable. Built by agent `phase-31` on branch `phase-31-month-grid-navigation`
+(2026-06-03).
+
+- **(36)** `buildMonths` window ±2 → `monthWindowRadius` = ±24 (49 months,
+  still eager in `init`; scroll body VStack→LazyVStack). Fixed window chosen
+  over lazy paging; revisit only if memory/scroll feel demands.
+- **(35)** Nav bar with year steppers («/»), month chevrons (‹/›), and a
+  centered title; `stepMonth(by:)` (clamped), `jumpTo(year:month:)` (nil
+  outside window, never touches `selectedWeekOffset`), bidirectional sync
+  with manual scrolling via iOS 17 `.scrollPosition(id:)`.
+- **(34)** Month/year title centered; trailing rule removed.
+- **(33)** ISO week-number column deleted (presentation-only —
+  `PickerWeek.weekNumber` stays); Monday-first `Mo…Su` weekday header now
+  per-month inside `MonthGridView`.
+
+**Tests:** branch suite **405 / 0** (+8 VM tests incl. independently-computed
+year-boundary/DST anchors and a gapless whole-window offset sweep; +3
+`MonthGridViewTests` presentation contracts).
+`testWeekPickerNavigatesToSelectedWeek` passed end-to-end against the new
+lazy plumbing. Five additive `weekpicker.nav.*` a11y ids. Deviations: focus
+month anchors to top (not centered week); VoiceOver row label now
+`"Week of May 11"`.
+
+### Phase 32 — AI Surfaces & Review Cleanup
+
+Honest-AI cleanup (suggestions 38, 49). Built by agent `phase-32` on branch
+`phase-32-ai-surfaces-cleanup` (2026-06-03).
+
+- **(38)** Review page no longer fabricates content: hardcoded
+  `"Morning run"` streak and the canned `WeekSummary.fallback` bullets
+  deleted outright. Three explicit states — **real** (model headline, blue
+  ink), **AI off** (one-line "Turn on Ask the planner for a weekly summary"
+  prompt), **hidden** (AI on but empty week or model error: blocks omitted).
+  `generate()` now returns non-throwing `WeekSummaryOutcome`;
+  `PaperReviewView` finally feeds the planner's AI toggle into the
+  generator's existing `settings:` hook (it previously defaulted always-on).
+- **(49)** `"Apple Intelligence"` → `"Ask the planner"` in all user-facing
+  copy + a11y labels (Settings toggle, AISearch top bar, AskInputField,
+  xcstrings). UX copy only — framework symbols/subsystems untouched. The one
+  intentional survivor: `Availability` fallback text pointing at the real
+  iOS **Settings** toggle name (flagged for Phase 40 copy). Top-bar eyebrow
+  became `"ON-DEVICE AI"` to avoid duplicating the new title.
+
+**Tests:** branch suite **404 / 0** (+`AISearchTopBarTests`; ReviewViewModel/
+WeekSummaryGenerator/Availability/PaperSettingsView suites rewritten with
+negative asserts guarding the rename and the deleted canned content).
+Pre-existing `testAISearchOverlayPassesAudit` failure (mic hit area)
+verified identical on unmodified `main` — not a Phase 32 regression.
+
+### Milestone L integration (2026-06-03)
+
+Phases 30–32 were built **in parallel by a three-agent team** (worktree
+isolation, disjoint file scopes) and merged sequentially to `main` with zero
+conflicts. Post-merge: **423 unit tests, 0 failures** (394 baseline + 8 + 11
++ 10). Full UITest suite re-run at integration; the mic-button audit failure
+predates the milestone. Screenshot diffs vs. `docs/mock/` remain the visual
+gate before the next TestFlight build.
 
