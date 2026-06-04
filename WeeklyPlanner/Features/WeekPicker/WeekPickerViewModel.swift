@@ -101,6 +101,11 @@ final class WeekPickerViewModel {
     /// this in sync before dismissing.
     var selectedWeekOffset: Int
 
+    /// Index into `months` of the month the nav bar currently displays.
+    /// Starts at the focus month; nav chevrons step it, manual scrolling
+    /// syncs it via `syncDisplayedMonth(toID:)`. Phase 31 (35).
+    var displayedMonthIndex: Int = 0
+
     /// Designated initializer. Builds the month grid eagerly.
     ///
     /// - Parameters:
@@ -115,6 +120,55 @@ final class WeekPickerViewModel {
         self.focusWeekOffset = focusWeekOffset
         selectedWeekOffset = focusWeekOffset
         months = Self.buildMonths(around: focusWeekOffset, baseDate: baseDate)
+
+        // Start the displayed month on the focus month. Derived by id (not
+        // by assuming the middle index) so a dropped month at the window
+        // edge can't shift the anchor.
+        let calendar = WeekMath.mondayCalendar()
+        let todayMonday = Self.mondayOfWeek(containing: baseDate, calendar: calendar)
+        let focusMonday = calendar.date(byAdding: .day, value: focusWeekOffset * 7, to: todayMonday) ?? todayMonday
+        let comps = calendar.dateComponents([.year, .month], from: focusMonday)
+        let focusID = String(format: "%04d-%02d", comps.year ?? 0, comps.month ?? 0)
+        displayedMonthIndex = months.firstIndex { $0.id == focusID } ?? months.count / 2
+    }
+
+    // MARK: - Phase 31 (35): month/year navigation
+
+    /// The month the nav bar shows. `nil` only if `months` is empty.
+    var displayedMonth: PickerMonth? {
+        months.indices.contains(displayedMonthIndex) ? months[displayedMonthIndex] : nil
+    }
+
+    /// True when a backward (older) step is possible.
+    var canStepBackward: Bool { displayedMonthIndex > 0 }
+
+    /// True when a forward (newer) step is possible.
+    var canStepForward: Bool { displayedMonthIndex < months.count - 1 }
+
+    /// Step the displayed month by `delta` months (±1 chevrons, ±12 year
+    /// steppers), clamped to the built window.
+    func stepMonth(by delta: Int) {
+        guard !months.isEmpty else { return }
+        displayedMonthIndex = min(max(displayedMonthIndex + delta, 0), months.count - 1)
+    }
+
+    /// Jump straight to a month/year. Returns the month on success, `nil`
+    /// (and no state change) when the target is outside the built window.
+    /// Never touches `selectedWeekOffset` — selection only changes on row tap.
+    @discardableResult
+    func jumpTo(year: Int, month: Int) -> PickerMonth? {
+        guard let idx = months.firstIndex(where: { $0.year == year && $0.month == month }) else {
+            return nil
+        }
+        displayedMonthIndex = idx
+        return months[idx]
+    }
+
+    /// Keep `displayedMonthIndex` in sync while the user scrolls manually.
+    /// Unknown ids (footer overscroll, transient nil) are ignored.
+    func syncDisplayedMonth(toID id: String) {
+        guard let idx = months.firstIndex(where: { $0.id == id }) else { return }
+        displayedMonthIndex = idx
     }
 
     // MARK: - Month-grid construction

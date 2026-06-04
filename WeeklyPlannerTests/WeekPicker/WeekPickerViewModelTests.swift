@@ -70,4 +70,65 @@ final class WeekPickerViewModelTests: XCTestCase {
         let saturday = weekOfMay11?.days.first { $0.dayNumber == 16 }
         XCTAssertTrue(saturday?.isToday == true)
     }
+
+    // MARK: - Phase 31 (35): displayed month + step/jump
+
+    func testDisplayedMonthStartsAtFocusMonth() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2026-05")
+        // Focus offset +6 → Mon Jun 22, 2026 → June is the focus month.
+        let shifted = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 6)
+        XCTAssertEqual(shifted.displayedMonth?.id, "2026-06")
+    }
+
+    /// Phase 31 (35): jumping to an arbitrary month/year selects that month
+    /// for display, leaves the week *selection* untouched, and the target
+    /// month's week offsets are correct (Mon Mar 1 2027 = +42 weeks from
+    /// Mon May 11 2026 — exactly 294 days).
+    func testJumpToMonthYear() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        let target = viewModel.jumpTo(year: 2027, month: 3)
+        XCTAssertNotNil(target)
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2027-03")
+        XCTAssertEqual(viewModel.displayedMonth?.title, "March 2027")
+        XCTAssertEqual(viewModel.selectedWeekOffset, 0,
+                       "Jumping must not change the selected week")
+        let firstWeek = target?.weeks.first
+        XCTAssertEqual(firstWeek?.offset, 42)
+        XCTAssertEqual(firstWeek?.days.first?.id, "2027-03-01")
+    }
+
+    func testJumpOutsideWindowReturnsNil() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        XCTAssertNil(viewModel.jumpTo(year: 2030, month: 1))
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2026-05",
+                       "Failed jump must not move the displayed month")
+    }
+
+    func testStepMonthAndYearClampAtWindowEdges() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        viewModel.stepMonth(by: 1)
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2026-06")
+        viewModel.stepMonth(by: 12)
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2027-06")
+        // Clamp forward: +24 from June 2027 overshoots → lands on May 2028.
+        viewModel.stepMonth(by: 24)
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2028-05")
+        XCTAssertFalse(viewModel.canStepForward)
+        XCTAssertTrue(viewModel.canStepBackward)
+        // Clamp backward to the window start.
+        viewModel.stepMonth(by: -100)
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2024-05")
+        XCTAssertFalse(viewModel.canStepBackward)
+        XCTAssertTrue(viewModel.canStepForward)
+    }
+
+    func testSyncDisplayedMonthToScrolledID() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        viewModel.syncDisplayedMonth(toID: "2026-11")
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2026-11")
+        viewModel.syncDisplayedMonth(toID: "not-a-month")
+        XCTAssertEqual(viewModel.displayedMonth?.id, "2026-11",
+                       "Unknown ids must be ignored")
+    }
 }
