@@ -25,6 +25,11 @@ final class WeekPageViewModel {
 
     /// To-dos keyed by Monday-based weekday index. Each bucket is sorted
     /// high-priority-first then alphabetical by title for stability.
+    ///
+    /// As of Phase 30 (#26) the week spread renders events only, so no week
+    /// view consumes these buckets — the data layer is intentionally
+    /// untouched (tasks remain first-class on the Day page). The header's
+    /// former `eventCount`/`openTaskCount` lines were pruned with it (#29).
     var tasksByDay: [Int: [TaskItem]] = [:]
 
     /// Total pending inbox suggestions whose `proposedStart` falls inside the
@@ -59,18 +64,6 @@ final class WeekPageViewModel {
         self.taskStore = taskStore
         self.inboxStore = inboxStore
         self.clock = clock
-    }
-
-    /// Total event count across all seven days. Drives the header's
-    /// `"N events"` line.
-    var eventCount: Int {
-        eventsByDay.values.flatMap(\.self).count
-    }
-
-    /// Count of unfinished to-dos across all seven days. Drives the header's
-    /// `"M tasks left"` line.
-    var openTaskCount: Int {
-        tasksByDay.values.flatMap(\.self).count(where: { !$0.done })
     }
 
     /// Triggered by pull-to-refresh on the Week page. Delegates to the
