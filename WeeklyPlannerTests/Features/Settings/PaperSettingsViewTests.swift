@@ -39,4 +39,12 @@ final class PaperSettingsViewTests: XCTestCase {
         XCTAssertEqual(PaperSize.allCases.count, 3)
         XCTAssertEqual(PaperSize.allCases.map(\.displayName), ["Small", "Medium", "Large"])
     }
+
+    /// Phase 32 (#49): the on-device AI toggle is named "Ask the planner"
+    /// in the UI; the stored setting keeps its `appleIntelligenceEnabled`
+    /// code symbol.
+    func testAIToggleLabelReadsAskThePlanner() {
+        XCTAssertEqual(PaperSettingsView.askThePlannerToggleLabel, "Ask the planner")
+        XCTAssertFalse(PaperSettingsView.askThePlannerToggleLabel.contains("Apple Intelligence"))
+    }
 }

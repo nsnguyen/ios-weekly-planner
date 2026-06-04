@@ -18,14 +18,27 @@ final class AvailabilityTests: XCTestCase {
         XCTAssertFalse(AvailabilityState.unavailable(.userDisabled).isAvailable)
     }
 
-    func testFallbackMessageMatchesSpec() {
+    /// Phase 32 (#49): fallback copy uses the product voice ("Ask the
+    /// planner" / "on-device AI"), not Apple's framework branding.
+    func testFallbackMessagesAreHonestAndUseProductVoice() {
         XCTAssertEqual(
             AvailabilityState.unavailable(.deviceNotEligible).fallbackMessage,
-            "Apple Intelligence is unavailable on this device. Showing canned suggestions."
+            "On-device AI isn't available on this device. Showing canned suggestions."
+        )
+        XCTAssertEqual(
+            AvailabilityState.unavailable(.modelNotReady).fallbackMessage,
+            "On-device AI is still warming up. Showing canned suggestions."
         )
         XCTAssertEqual(
             AvailabilityState.unavailable(.userDisabled).fallbackMessage,
-            "Apple Intelligence is turned off in Settings. Showing canned suggestions."
+            "Ask the planner is turned off in Settings. Showing canned suggestions."
+        )
+        // Intentional exception (flagged for Phase 40): this case points the
+        // user at the REAL iOS Settings toggle, which Apple names "Apple
+        // Intelligence" — renaming it here would hide the actual setting.
+        XCTAssertEqual(
+            AvailabilityState.unavailable(.appleIntelligenceNotEnabled).fallbackMessage,
+            "Enable Apple Intelligence in iOS Settings to get personalized answers. Showing canned suggestions."
         )
     }
 }
