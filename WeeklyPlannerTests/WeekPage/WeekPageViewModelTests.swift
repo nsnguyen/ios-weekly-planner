@@ -95,31 +95,38 @@ final class WeekPageViewModelTests: XCTestCase {
 
     // MARK: - Tasks
 
-    /// `openTaskCount` should only count tasks where `done == false`.
-    func testTaskCountExcludesDone() async throws {
-        let open = TaskItem(title: "Water plants",
-                            due: Self.may16_2026(hour: 9),
-                            done: false,
-                            priority: .low,
-                            category: .personal)
-        let done1 = TaskItem(title: "Confirm reservation",
-                             due: Self.may16_2026(hour: 10),
-                             done: true,
-                             priority: .low,
-                             category: .personal)
-        let done2 = TaskItem(title: "Pick up dry cleaning",
-                             due: Self.may16_2026(hour: 11),
-                             done: true,
-                             priority: .med,
-                             category: .personal)
-        try await taskStore.upsert(open)
-        try await taskStore.upsert(done1)
-        try await taskStore.upsert(done2)
+    /// Tasks should land in the Monday-based weekday bucket of their due
+    /// date, sorted high-priority-first. (The week UI no longer renders
+    /// tasks — Phase 30 #26 — but the data layer is untouched; the header's
+    /// `eventCount`/`openTaskCount` were pruned with their last consumer,
+    /// Phase 30 #29.)
+    func testTasksGroupedByDayIndex() async throws {
+        let satLow = TaskItem(title: "Water plants",
+                              due: Self.may16_2026(hour: 9),
+                              done: false,
+                              priority: .low,
+                              category: .personal)
+        let satHigh = TaskItem(title: "Buy gift for Sara",
+                               due: Self.may16_2026(hour: 10),
+                               done: false,
+                               priority: .high,
+                               category: .family)
+        let mon = TaskItem(title: "File expenses",
+                           due: Self.may11_2026(hour: 9),
+                           done: false,
+                           priority: .med,
+                           category: .work)
+        try await taskStore.upsert(satLow)
+        try await taskStore.upsert(satHigh)
+        try await taskStore.upsert(mon)
 
         let vm = makeViewModel()
         await vm.refresh()
 
-        XCTAssertEqual(vm.openTaskCount, 1)
+        XCTAssertEqual(vm.tasksByDay[5]?.count, 2)
+        XCTAssertEqual(vm.tasksByDay[0]?.count, 1)
+        XCTAssertEqual(vm.tasksByDay[5]?.first?.title, "Buy gift for Sara",
+                       "high priority sorts first")
     }
 
     // MARK: - Inbox
@@ -150,29 +157,4 @@ final class WeekPageViewModelTests: XCTestCase {
         XCTAssertEqual(vm.inboxCount, 2)
     }
 
-    // MARK: - Event count
-
-    /// `eventCount` should equal the sum of events across every weekday bucket.
-    func testEventCountIsTotal() async throws {
-        let mon = Event(title: "Mon",
-                        start: Self.may11_2026(hour: 9),
-                        end: Self.may11_2026(hour: 10),
-                        category: .work)
-        let sat1 = Event(title: "Sat 1",
-                         start: Self.may16_2026(hour: 9),
-                         end: Self.may16_2026(hour: 10),
-                         category: .work)
-        let sat2 = Event(title: "Sat 2",
-                         start: Self.may16_2026(hour: 11),
-                         end: Self.may16_2026(hour: 12),
-                         category: .work)
-        try await eventStore.upsert(mon)
-        try await eventStore.upsert(sat1)
-        try await eventStore.upsert(sat2)
-
-        let vm = makeViewModel()
-        await vm.refresh()
-
-        XCTAssertEqual(vm.eventCount, 3)
-    }
 }

@@ -1,8 +1,12 @@
 import SwiftUI
 
 /// One row of the Hobonichi week page: the weekday tag and oversized date
-/// numeral on the left, the day's compact events + tasks list (or an italic
-/// em-dash placeholder) on the right.
+/// numeral on the left, the day's compact events (or an italic `"none"`
+/// placeholder) on the right.
+///
+/// The week spread is events-only (Phase 30, #26 — permanent default; tasks
+/// still render on the Day page). Event-heavy days split into two columns
+/// capped with a `"+K more"` affordance per `WeekDayRowLayout` (#25).
 ///
 /// Today's row gets a warm yellow fade behind it; the left column always
 /// reads in red ink when `isToday`. Tokens flow in from
@@ -15,10 +19,6 @@ struct WeekDayRow: View {
     /// Compact list of events on this day, pre-sorted by start ascending.
     let events: [Event]
 
-    /// Compact list of to-dos on this day, pre-sorted by priority desc then
-    /// title asc.
-    let tasks: [TaskItem]
-
     /// Whether this row represents the current calendar day. Drives the
     /// yellow background fade and the red-ink left column.
     let isToday: Bool
@@ -27,9 +27,6 @@ struct WeekDayRow: View {
     /// pass `false` for the last row in a stack of seven so the page doesn't
     /// pick up a trailing rule under Sunday.
     var showSeparator: Bool = true
-
-    /// Invoked when a task row is tapped. Carries the toggled task's id.
-    var onToggleTask: (UUID) -> Void
 
     /// Invoked when an event row is tapped. Carries the tapped event's id
     /// so `WeekPageView` can open the `PaperEventSheet`. Defaults to a
@@ -71,34 +68,55 @@ struct WeekDayRow: View {
                 .foregroundStyle(isToday ? theme.redInk : theme.ink2)
 
             Text("\(day.dayNumber)")
-                .font(font.font(at: 28, weight: .bold))
+                .font(font.font(at: 32, weight: .bold))
                 .foregroundStyle(isToday ? theme.redInk : theme.ink)
                 .padding(.top, 1)
         }
         .frame(width: 52, alignment: .leading)
     }
 
-    /// Flex right column. Either the events + tasks stack or an italic
-    /// em-dash placeholder when the day is empty.
+    /// Copy shown when a day has no events — Phase 30 (#28) softened this
+    /// from a bare em-dash to `"none"`. Static + internal so
+    /// `WeekDayRowTests` can pin the wording.
+    static let emptyPlaceholder = "none"
+
+    /// Flex right column. Either the day's events laid out per
+    /// `WeekDayRowLayout` (single column up to 3, two columns for 4–6,
+    /// capped at 5 + `"+K more"` beyond — Phase 30 #25) or the italic
+    /// `"none"` placeholder (#28). Tasks never render here (#26).
     @ViewBuilder
     private var rightColumn: some View {
-        if events.isEmpty, tasks.isEmpty {
-            Text("—")
+        let layout = WeekDayRowLayout.compute(for: events)
+        if layout.isEmpty {
+            Text(Self.emptyPlaceholder)
                 .font(font.font(at: 16, weight: .regular).italic())
                 .foregroundStyle(theme.ink3)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        } else if !layout.isTwoColumn {
+            eventColumn(layout.leftColumn, overflowCount: 0)
         } else {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(events, id: \.id) { event in
-                    WeekEventEntry(event: event, onTap: { onTapEvent(event.id) })
-                }
-                ForEach(tasks, id: \.id) { task in
-                    WeekTaskEntry(task: task) { onToggleTask(task.id) }
-                        .accessibilityIdentifier(AccessibilityIDs.weekpageTodoRow(task.id))
-                }
+            HStack(alignment: .top, spacing: 10) {
+                eventColumn(layout.leftColumn, overflowCount: 0)
+                eventColumn(layout.rightColumn, overflowCount: layout.overflowCount)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// One vertical run of compact event entries; when `overflowCount > 0`
+    /// the column ends with the non-interactive `"+K more"` affordance.
+    private func eventColumn(_ columnEvents: [Event], overflowCount: Int) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(columnEvents, id: \.id) { event in
+                WeekEventEntry(event: event, onTap: { onTapEvent(event.id) })
+            }
+            if overflowCount > 0 {
+                Text(WeekDayRowLayout.overflowLabel(overflowCount))
+                    .font(font.font(at: 13, weight: .regular).italic())
+                    .foregroundStyle(theme.ink3)
+                    .accessibilityLabel("\(overflowCount) more events")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Warm yellow gradient fade behind the today row. Off-rows return a
@@ -119,9 +137,68 @@ struct WeekDayRow: View {
     }
 }
 
+// MARK: - WeekDayRowLayout
+
+/// Pure layout decision for a week row's events column (Phase 30, #25).
+///
+/// Chosen against `docs/mock/paper-planner.jsx`: the mock's week row is a
+/// 56pt-min, single-column run with `overflow: hidden` — i.e. it silently
+/// clips after ~3 compact event lines. This keeps that 3-line row rhythm
+/// (the budget freed by hiding the checklist, #26) but spends the row's
+/// horizontal space instead of clipping:
+///
+/// - 1–3 events → one full-width column (exactly the mock's layout)
+/// - 4–6 events → two side-by-side columns, column-major chronological
+///   order (read down the left column, then down the right)
+/// - 7+ events → the first 5 events plus a `"+K more"` affordance
+struct WeekDayRowLayout {
+    /// Events rendered in the (always-present-when-non-empty) left column.
+    let leftColumn: [Event]
+
+    /// Events rendered in the right column; empty in single-column mode.
+    let rightColumn: [Event]
+
+    /// How many events are hidden behind `"+K more"`. 0 when all fit.
+    let overflowCount: Int
+
+    /// Max events that render as a single full-width column (the mock's
+    /// natural 3-line row height).
+    static let singleColumnMax = 3
+
+    /// Visible-event cap once a day overflows two full columns; the sixth
+    /// slot goes to the overflow affordance.
+    static let overflowVisibleEventCap = 5
+
+    /// The day has no events → the row renders the `"none"` placeholder.
+    var isEmpty: Bool { leftColumn.isEmpty }
+
+    /// Whether the row splits into two side-by-side columns.
+    var isTwoColumn: Bool { !rightColumn.isEmpty }
+
+    /// Applies the Phase 30 overflow rule to a pre-sorted event list.
+    static func compute(for events: [Event]) -> WeekDayRowLayout {
+        if events.count <= singleColumnMax {
+            return .init(leftColumn: events, rightColumn: [], overflowCount: 0)
+        }
+        if events.count <= singleColumnMax * 2 {
+            let mid = (events.count + 1) / 2
+            return .init(leftColumn: Array(events[..<mid]),
+                         rightColumn: Array(events[mid...]),
+                         overflowCount: 0)
+        }
+        let visible = events.prefix(overflowVisibleEventCap)
+        return .init(leftColumn: Array(visible.prefix(singleColumnMax)),
+                     rightColumn: Array(visible.dropFirst(singleColumnMax)),
+                     overflowCount: events.count - overflowVisibleEventCap)
+    }
+
+    /// `"+K more"` copy for the overflow affordance.
+    static func overflowLabel(_ count: Int) -> String { "+\(count) more" }
+}
+
 // MARK: - Previews
 
-#Preview("WeekDayRow · Today with content") {
+#Preview("WeekDayRow · Today, overflow, empty") {
     let calendar = WeekMath.mondayCalendar()
     var components = DateComponents()
     components.year = 2026
@@ -137,27 +214,33 @@ struct WeekDayRow: View {
                       start: nineAM,
                       end: calendar.date(byAdding: .hour, value: 1, to: nineAM) ?? nineAM,
                       category: .personal)
-    let task = TaskItem(title: "Buy gift for Sara",
-                        due: satNoon,
-                        priority: .high,
-                        category: .family)
+
+    // Seven events on Friday to eyeball the two-column "+K more" rule (#25).
+    let categories: [Category] = [.work, .personal, .health, .family, .focus, .work, .personal]
+    let friday = days[4]
+    let heavy: [Event] = (0..<7).map { i in
+        let start = calendar.date(byAdding: .hour, value: i, to: nineAM) ?? nineAM
+        return Event(title: "Busy block \(i + 1)",
+                     start: start,
+                     end: calendar.date(byAdding: .hour, value: 1, to: start) ?? start,
+                     category: categories[i])
+    }
 
     return ZStack {
         BookCover()
         BookPage {
             PaperSurface {
                 VStack(alignment: .leading, spacing: 0) {
+                    WeekDayRow(day: friday,
+                               events: heavy,
+                               isToday: false)
                     WeekDayRow(day: saturday,
                                events: [event],
-                               tasks: [task],
-                               isToday: true,
-                               onToggleTask: { _ in })
+                               isToday: true)
                     WeekDayRow(day: days[6],
                                events: [],
-                               tasks: [],
                                isToday: false,
-                               showSeparator: false,
-                               onToggleTask: { _ in })
+                               showSeparator: false)
                 }
                 .padding(.top, 40)
                 .padding(.leading, 44)
