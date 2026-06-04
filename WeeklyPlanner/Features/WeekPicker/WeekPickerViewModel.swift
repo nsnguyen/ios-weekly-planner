@@ -1,8 +1,9 @@
 import Foundation
 import Observation
 
-/// One calendar month rendered inside the week picker. The picker mounts five
-/// of these in a vertical scroll — the focus month plus two on either side.
+/// One calendar month rendered inside the week picker. The picker mounts a
+/// ±24-month window of these in a vertical scroll — the focus month plus
+/// `WeekPickerViewModel.monthWindowRadius` on either side (Phase 31 #36).
 ///
 /// Identified by its `"yyyy-MM"` key so `ForEach` over `[PickerMonth]` keeps
 /// stable identity when the focus week changes.
@@ -66,8 +67,8 @@ struct PickerDay: Equatable, Identifiable {
 
 /// View model for `WeekPickerSheet`. Pure math — given the user's `baseDate`
 /// (typically `Date()`) and the currently-focused `focusWeekOffset` (the
-/// offset that was selected when the picker opened), produces five
-/// `PickerMonth`s laid out around the focus month.
+/// offset that was selected when the picker opened), produces a ±24-month
+/// window of `PickerMonth`s laid out around the focus month (Phase 31 #36).
 ///
 /// `@MainActor @Observable` so the sheet view can re-render as
 /// `selectedWeekOffset` changes (e.g., user taps a row, parent updates the
@@ -76,6 +77,11 @@ struct PickerDay: Equatable, Identifiable {
 @MainActor
 @Observable
 final class WeekPickerViewModel {
+    /// Phase 31 (36): months built on either side of the focus month.
+    /// ±24 (49 months total) — a generous fixed window chosen over lazy
+    /// paging; revisit only if memory or scroll feel demands it.
+    static let monthWindowRadius = 24
+
     /// The "now" date the picker treats as today. Tests inject a fixed date
     /// to avoid `Date()` flake; production callers pass `Date()`.
     let baseDate: Date
@@ -84,8 +90,10 @@ final class WeekPickerViewModel {
     /// the auto-scroll target and the initial `selectedWeekOffset`.
     let focusWeekOffset: Int
 
-    /// Five months laid out around the focus month — `focusMonth - 2`
-    /// through `focusMonth + 2`. Computed once in `init`; never mutated.
+    /// The month window laid out around the focus month —
+    /// `focusMonth - monthWindowRadius` through `focusMonth +
+    /// monthWindowRadius` (49 months). Computed once in `init`; never
+    /// mutated.
     var months: [PickerMonth] = []
 
     /// The week offset currently shown as selected. Starts equal to
@@ -100,8 +108,8 @@ final class WeekPickerViewModel {
     ///     pin this to May 16, 2026 to match the mock; production passes
     ///     `Date()`.
     ///   - focusWeekOffset: Week offset the picker should center on. Used
-    ///     for both the month grid (focus month ± 2) and the initial
-    ///     selection highlight.
+    ///     for both the month grid (focus month ± `monthWindowRadius`) and
+    ///     the initial selection highlight.
     init(baseDate: Date = Date(), focusWeekOffset: Int) {
         self.baseDate = baseDate
         self.focusWeekOffset = focusWeekOffset
@@ -111,14 +119,14 @@ final class WeekPickerViewModel {
 
     // MARK: - Month-grid construction
 
-    /// Build five `PickerMonth`s centered on the month containing the Monday
-    /// of `baseDate + focusWeekOffset * 7 days`.
+    /// Build `2 * monthWindowRadius + 1` `PickerMonth`s centered on the
+    /// month containing the Monday of `baseDate + focusWeekOffset * 7 days`.
     ///
     /// - Parameters:
     ///   - focusWeekOffset: Offset that defines the focus month.
     ///   - baseDate: "Today" reference. Determines which week has offset 0
     ///     and which day is the red-circle today.
-    /// - Returns: A 5-element array, oldest first.
+    /// - Returns: A 49-element array, oldest first.
     static func buildMonths(around focusWeekOffset: Int, baseDate: Date) -> [PickerMonth] {
         let calendar = WeekMath.mondayCalendar()
         let todayMonday = mondayOfWeek(containing: baseDate, calendar: calendar)
@@ -128,7 +136,7 @@ final class WeekPickerViewModel {
             return []
         }
 
-        return (-2 ... 2).compactMap { delta -> PickerMonth? in
+        return (-monthWindowRadius ... monthWindowRadius).compactMap { delta -> PickerMonth? in
             guard let monthStart = calendar.date(from: DateComponents(year: focusYear,
                                                                       month: focusMonth + delta,
                                                                       day: 1))

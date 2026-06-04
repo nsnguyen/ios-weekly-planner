@@ -14,14 +14,29 @@ final class WeekPickerViewModelTests: XCTestCase {
         return WeekMath.mondayCalendar().date(from: components) ?? Date()
     }
 
-    func testFiveMonthsCenteredOnFocus() {
+    /// Phase 31 (36): the window is ±24 months around the focus month —
+    /// 49 months total, symmetric, oldest first.
+    func testMonthWindowCenteredOnFocus() {
         let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
-        XCTAssertEqual(viewModel.months.count, 5)
-        // Focus is May 2026 → months should span Mar through Jul 2026.
-        XCTAssertEqual(viewModel.months.first?.month, 3)
-        XCTAssertEqual(viewModel.months.first?.year, 2026)
-        XCTAssertEqual(viewModel.months.last?.month, 7)
-        XCTAssertEqual(viewModel.months.last?.year, 2026)
+        XCTAssertEqual(viewModel.months.count, 49)
+        // Focus is May 2026 → window spans May 2024 through May 2028.
+        XCTAssertEqual(viewModel.months.first?.month, 5)
+        XCTAssertEqual(viewModel.months.first?.year, 2024)
+        XCTAssertEqual(viewModel.months.last?.month, 5)
+        XCTAssertEqual(viewModel.months.last?.year, 2028)
+        // The focus month sits exactly in the middle.
+        XCTAssertEqual(viewModel.months[24].month, 5)
+        XCTAssertEqual(viewModel.months[24].year, 2026)
+    }
+
+    /// Phase 31 (36): regression guard against the old hard ±2 cap — months
+    /// well beyond two months out exist in both directions.
+    func testRangeExtendsBeyondTwoMonths() {
+        let viewModel = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        XCTAssertTrue(viewModel.months.contains { $0.year == 2025 && $0.month == 5 },
+                      "Expected May 2025 (−12 months) in the window")
+        XCTAssertTrue(viewModel.months.contains { $0.year == 2027 && $0.month == 5 },
+                      "Expected May 2027 (+12 months) in the window")
     }
 
     func testMay2026HasFiveOrSixWeeks() {
