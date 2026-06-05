@@ -85,19 +85,37 @@ final class EventKitSync {
         // Snapshot every local event in the window so we can detect deletes.
         var seenIdentifiers: Set<String> = []
 
-        for ekEvent in ekEvents {
-            guard let identifier = ekEvent.eventIdentifier else { continue }
+        // A recurring EKEvent enumerates one instance per occurrence, all
+        // sharing the same `eventIdentifier`. Group them and reconcile each
+        // series once from its earliest (canonical) instance so a later
+        // occurrence can't thrash the master's anchor.
+        let grouped = Dictionary(grouping: ekEvents.filter { $0.eventIdentifier != nil }) {
+            $0.eventIdentifier ?? UUID().uuidString
+        }
+        for (identifier, instances) in grouped {
+            guard let ekEvent = instances.min(by: { $0.startDate < $1.startDate }) else { continue }
             seenIdentifiers.insert(identifier)
 
             let inferredCategory = ekEvent.calendar.flatMap(CategoryCalendarManager.category(for:)) ?? .personal
             let mapped = EKEventMapping.toEvent(ekEvent, defaultCategory: inferredCategory)
 
-            // Look up existing local event by EventKit identifier.
-            if let existing = try await fetchLocalEvent(forEventKitID: identifier) {
+            // Look up existing local event by EventKit identifier. For a
+            // recurring series, `fetchLocalEvent` yields a transient occurrence
+            // copy — resolve it back to the persisted master before mutating.
+            if let matched = try await fetchLocalEvent(forEventKitID: identifier),
+               let existing = try await eventStore.event(id: matched.id)
+            {
                 if (ekEvent.lastModifiedDate ?? .distantPast) > existing.updatedAt {
                     existing.title = mapped.title
-                    existing.start = mapped.start
-                    existing.end = mapped.end
+                    // A recurring app event keeps its own anchor dates +
+                    // recurrence rule: an externally-moved series anchor won't
+                    // re-anchor the app copy (stated Phase 35 limit).
+                    if !existing.isRecurring {
+                        existing.start = mapped.start
+                        existing.end = mapped.end
+                        existing.recurrence = mapped.recurrence
+                        existing.isRecurring = mapped.recurrence != nil
+                    }
                     existing.location = mapped.location
                     existing.categoryRaw = mapped.categoryRaw
                     existing.attendeesCount = mapped.attendeesCount
