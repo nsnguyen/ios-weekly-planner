@@ -31,6 +31,11 @@ enum EKEventMapping {
         if let calendar { ekEvent.calendar = calendar }
         ekEvent.notes = encodeNotes(forEvent: event)
         ekEvent.alarms = event.reminders.compactMap(makeAlarm(from:))
+        if let recurrence = event.recurrence {
+            ekEvent.recurrenceRules = [RecurrenceMapper.toEKRule(recurrence)]
+        } else {
+            ekEvent.recurrenceRules = nil
+        }
     }
 
     /// Build our `Event` from an `EKEvent`. `defaultCategory` is used when
@@ -56,7 +61,8 @@ enum EKEventMapping {
                      gmailMessageID: meta?.gmailMessageID,
                      gmailFrom: meta?.gmailFrom,
                      gmailSubject: meta?.gmailSubject,
-                     reminders: (ekEvent.alarms ?? []).compactMap(makeReminder(from:)))
+                     reminders: (ekEvent.alarms ?? []).compactMap(makeReminder(from:)),
+                     recurrence: RecurrenceMapper.toRecurrence(ekEvent.recurrenceRules))
     }
 
     /// Strips the planner-meta blob so the user-facing notes are clean.
