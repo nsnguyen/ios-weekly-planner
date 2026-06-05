@@ -49,4 +49,12 @@ enum AccessibilityIDs {
 
     // Tab bar
     static func tabBarTab(_ tab: String) -> String { "tabbar.tab.\(tab)" }
+
+    // MARK: Notes tab (Phase 33)
+    static let notesAddRow = "notes.addRow"
+    static func notesRow(_ id: UUID) -> String { "notes.row.\(id)" }
+    static let notesEditorBody = "notes.editor.body"
+    static let notesEditorDone = "notes.editor.done"
+    static let notesEditorBack = "notes.editor.back"
+    static let notesEditorDelete = "notes.editor.delete"
 }
