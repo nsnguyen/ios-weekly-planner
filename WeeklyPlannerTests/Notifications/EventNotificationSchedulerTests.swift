@@ -109,6 +109,82 @@ final class EventNotificationSchedulerTests: XCTestCase {
         try await scheduler.schedule(event: event)
         XCTAssertTrue(center.addedRequests.isEmpty)
     }
+
+    func testRecurringEventSchedulesOnlyWindowedOccurrences() async throws {
+        // Weekly with a 15-min alert: a 30-day window holds 4–5 occurrences.
+        let start = Date().addingTimeInterval(2 * 24 * 3600)
+        let event = Event(title: "Gym",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          category: .health,
+                          reminders: [.timeBefore(minutes: 15)],
+                          recurrence: Recurrence(frequency: .weekly))
+
+        try await scheduler.schedule(event: event)
+
+        XCTAssertGreaterThanOrEqual(center.addedRequests.count, 4)
+        XCTAssertLessThanOrEqual(center.addedRequests.count, 5)
+        XCTAssertEqual(Set(center.addedRequests.map(\.identifier)).count,
+                       center.addedRequests.count,
+                       "Each occurrence needs a distinct identifier")
+        XCTAssertTrue(center.addedRequests.allSatisfy {
+            $0.identifier.hasPrefix("event-\(event.id.uuidString)-")
+        }, "Identifiers must keep the event prefix so re-schedules can purge them")
+    }
+
+    func testDailyRecurringIsCappedAtMaxOccurrences() async throws {
+        let start = Date().addingTimeInterval(24 * 3600)
+        let event = Event(title: "Walk",
+                          start: start,
+                          end: start.addingTimeInterval(1800),
+                          category: .health,
+                          reminders: [.timeBefore(minutes: 5)],
+                          recurrence: Recurrence(frequency: .daily))
+
+        try await scheduler.schedule(event: event)
+
+        XCTAssertEqual(center.addedRequests.count, 8,
+                       "30-day daily series must cap at the max-occurrence bound")
+    }
+
+    func testExcludedOccurrenceIsNotScheduled() async throws {
+        let start = Date().addingTimeInterval(24 * 3600)
+        let excluded = start.addingTimeInterval(7 * 24 * 3600)
+        let event = Event(title: "Gym",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          category: .health,
+                          reminders: [.timeBefore(minutes: 15)],
+                          recurrence: Recurrence(frequency: .weekly),
+                          excludedOccurrenceStarts: [excluded])
+
+        try await scheduler.schedule(event: event)
+
+        let expectedExcludedFire = excluded.addingTimeInterval(-15 * 60)
+        for request in center.addedRequests {
+            if let trigger = request.trigger as? UNCalendarNotificationTrigger,
+               let fire = Calendar.current.date(from: trigger.dateComponents)
+            {
+                XCTAssertGreaterThan(abs(fire.timeIntervalSince(expectedExcludedFire)), 60,
+                                     "Excluded occurrence must not get a reminder")
+            }
+        }
+    }
+
+    func testSingleEventIdentifiersUnchanged() async throws {
+        // Phase 19 contract: single events keep "event-<id>-time-<min>".
+        let start = Date().addingTimeInterval(7 * 24 * 3600)
+        let event = Event(title: "Lunch",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          category: .personal,
+                          reminders: [.timeBefore(minutes: 15)])
+
+        try await scheduler.schedule(event: event)
+
+        XCTAssertEqual(center.addedRequests.map(\.identifier),
+                       ["event-\(event.id.uuidString)-time-15"])
+    }
 }
 
 /// In-test fake for `LocationRegistering`. Just records inputs.
