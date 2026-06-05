@@ -73,8 +73,9 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     ///
     /// - Caveat: Regular → SemiBold
     /// - Kalam: Regular → Bold (family ships Light / Regular / Bold)
-    /// - Architects Daughter: Regular (single-weight family; no change)
-    /// - Indie Flower: Regular (single-weight family; no change)
+    /// - All other families (Architects Daughter, Indie Flower, Patrick
+    ///   Hand, Shadows Into Light, Gochi Hand, Nanum Pen): single-weight —
+    ///   Regular, no change.
     func weightFor(legibility: LegibilityWeight) -> Font.Weight {
         guard legibility == .bold else { return .regular }
         switch self {
