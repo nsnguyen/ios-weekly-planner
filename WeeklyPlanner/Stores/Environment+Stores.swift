@@ -23,6 +23,9 @@ extension EnvironmentValues {
     /// The active `TaskStoring` for this subtree. Defaults to `StubTaskStore`.
     @Entry var taskStore: any TaskStoring = StubTaskStore()
 
+    /// The active `NoteStoring` for this subtree. Defaults to `StubNoteStore`.
+    @Entry var noteStore: any NoteStoring = StubNoteStore()
+
     /// The active `SettingsStoring` for this subtree. Defaults to
     /// `StubSettingsStore` so previews/tests that read `settingsStore`
     /// (e.g. `AppShell` constructing `TabSelection`) never crash for

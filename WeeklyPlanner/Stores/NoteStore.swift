@@ -57,3 +57,14 @@ final class SwiftDataNoteStore: NoteStoring {
 extension Notification.Name {
     static let noteStoreDidChange = Notification.Name("WeeklyPlanner.NoteStore.didChange")
 }
+
+/// Inert default for previews and unwired subtrees.
+@MainActor
+final class StubNoteStore: NoteStoring {
+    nonisolated init() {}
+
+    func notes() async throws -> [Note] { [] }
+    func note(id _: UUID) async throws -> Note? { nil }
+    func upsert(_: Note) async throws {}
+    func delete(id _: UUID) async throws {}
+}
