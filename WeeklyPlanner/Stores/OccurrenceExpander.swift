@@ -54,4 +54,22 @@ enum OccurrenceExpander {
         }
         return result
     }
+
+    /// Transient display copies of `event` for each occurrence in `window`.
+    /// Single events pass through when their start is inside the window.
+    /// Copies share the master's `id` and are NEVER inserted into a context.
+    static func occurrences(of event: Event,
+                            in window: Range<Date>,
+                            calendar: Calendar) -> [Event]
+    {
+        guard let recurrence = event.recurrence else {
+            return window.contains(event.start) ? [event] : []
+        }
+        return occurrenceStarts(seriesStart: event.start,
+                                recurrence: recurrence,
+                                in: window,
+                                excluding: event.excludedOccurrenceStarts,
+                                calendar: calendar)
+            .map { event.occurrenceCopy(start: $0) }
+    }
 }

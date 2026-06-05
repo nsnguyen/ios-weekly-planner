@@ -230,5 +230,6 @@ final class InMemoryEventStore: EventStoring {
     func event(id _: UUID) async throws -> Event? { nil }
     func upsert(_ event: Event) async throws { upsertedEvents.append(event) }
     func delete(id _: UUID) async throws {}
+    func deleteOccurrence(eventID _: UUID, occurrenceStart _: Date) async throws {}
     func events(matching _: EventQuery) async throws -> [Event] { [] }
 }

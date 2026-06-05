@@ -48,6 +48,7 @@ final class FindEventsToolTests: XCTestCase {
             func event(id: UUID) async throws -> Event? { nil }
             func upsert(_ event: Event) async throws {}
             func delete(id: UUID) async throws {}
+            func deleteOccurrence(eventID: UUID, occurrenceStart: Date) async throws {}
             func events(matching query: EventQuery) async throws -> [Event] {
                 struct Boom: Error {}
                 throw Boom()

@@ -42,6 +42,11 @@ final class EventKitMirroringEventStore: EventStoring {
         try await base.delete(id: id)
     }
 
+    func deleteOccurrence(eventID: UUID, occurrenceStart: Date) async throws {
+        // Phase 35 Task 7 adds the EK detach; for now defer to the base store.
+        try await base.deleteOccurrence(eventID: eventID, occurrenceStart: occurrenceStart)
+    }
+
     func events(matching query: EventQuery) async throws -> [Event] {
         try await base.events(matching: query)
     }
