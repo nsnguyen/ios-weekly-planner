@@ -56,6 +56,7 @@ struct PaperTab: View {
         switch tab {
         case .calendar: return "calendar"
         case .review: return "tray"
+        case .notes: return "note.text"
         case .settings: return "gearshape"
         }
     }
@@ -64,6 +65,7 @@ struct PaperTab: View {
         switch tab {
         case .calendar: return "Calendar"
         case .review: return "Review"
+        case .notes: return "Notes"
         case .settings: return "Settings"
         }
     }

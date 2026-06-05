@@ -79,6 +79,8 @@ struct AppShell: View {
                     calendarTab
                 case .review:
                     PaperReviewView(weekOffset: controller.current.week)
+                case .notes:
+                    PaperNotesView()
                 case .settings:
                     PaperSettingsView()
                 }
