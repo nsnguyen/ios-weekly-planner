@@ -27,6 +27,14 @@ enum AccessibilityFormatters {
         return "\(task.title), \(state)"
     }
 
+    // MARK: - Note
+
+    static func noteLabel(_ note: Note) -> String {
+        let kind = note.kind == .goal ? "goal" : "note"
+        let title = note.title.isEmpty ? "Untitled" : note.title
+        return "\(title), \(kind)"
+    }
+
     // MARK: - Navigation
 
     /// Side tab on the day page — "{Weekday}, day {N} of 7".
@@ -73,6 +81,15 @@ extension View {
             .accessibilityHint("Double tap to toggle complete.")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction(.default) { onToggle() }
+    }
+
+    /// Phase 33: combined label for a Notes-tab row.
+    func accessibleNote(_ note: Note) -> some View {
+        self
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(AccessibilityFormatters.noteLabel(note))
+            .accessibilityHint("Double tap to open the note.")
+            .accessibilityAddTraits(.isButton)
     }
 
     /// Side tab on the day page — announces day name and position.

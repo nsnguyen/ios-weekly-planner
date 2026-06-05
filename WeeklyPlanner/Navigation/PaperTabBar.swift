@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Bottom tab bar that lives over the leather book cover. Three `PaperTab`
+/// Bottom tab bar that lives over the leather book cover. Four `PaperTab`
 /// cells laid out evenly with the `theme.bookCover` gradient as background,
 /// a dark 0.5pt hairline at the top edge, and a soft drop shadow above.
 /// Matches the paper-mode `TabBar` in `docs/mock/overlays.jsx`: no cream

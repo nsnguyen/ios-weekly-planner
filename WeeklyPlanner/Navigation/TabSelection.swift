@@ -1,11 +1,12 @@
 import Foundation
 import Observation
 
-/// The three destinations on the bottom paper tab bar. Raw values double as
+/// The four destinations on the bottom paper tab bar. Raw values double as
 /// the persisted-form string in `UserSettings.lastTabRaw`.
 enum Tab: String, CaseIterable, Hashable, Sendable {
     case calendar
     case review
+    case notes
     case settings
 }
 
