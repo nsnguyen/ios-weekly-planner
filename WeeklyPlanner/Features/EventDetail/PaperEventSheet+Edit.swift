@@ -24,6 +24,12 @@ struct EditableEventContent: View {
                 .padding(EdgeInsets(top: 38, leading: 44, bottom: 14, trailing: 18))
 
             VStack(alignment: .leading, spacing: 0) {
+                if isCreate {
+                    TemplateChipsRow { template in
+                        composer.apply(template)
+                    }
+                }
+
                 InkTextField(isCreate ? "New event" : "Title",
                              text: $composer.title,
                              variant: .title)

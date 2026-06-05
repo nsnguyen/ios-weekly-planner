@@ -47,6 +47,9 @@ enum AccessibilityIDs {
     // Event sheet
     static let eventSheetDelete = "eventsheet.delete"
 
+    // MARK: Quick templates (Phase 36a)
+    static func eventTemplateChip(_ id: String) -> String { "paperEventSheet.template.\(id)" }
+
     // Tab bar
     static func tabBarTab(_ tab: String) -> String { "tabbar.tab.\(tab)" }
 }
