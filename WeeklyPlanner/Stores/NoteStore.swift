@@ -21,6 +21,8 @@ final class SwiftDataNoteStore: NoteStoring {
     }
 
     func notes() async throws -> [Note] {
+        // Most-recently-updated first — editing a note intentionally
+        // bubbles it to the top (upsert refreshes `updatedAt`).
         try context.fetch(FetchDescriptor<Note>(
             sortBy: [SortDescriptor(\Note.updatedAt, order: .reverse)]))
     }
