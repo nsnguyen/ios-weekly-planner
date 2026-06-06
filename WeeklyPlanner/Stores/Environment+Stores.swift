@@ -103,6 +103,7 @@ final class StubEventStore: EventStoring {
 
     func upsert(_: Event) async throws {}
     func delete(id _: UUID) async throws {}
+    func deleteOccurrence(eventID _: UUID, occurrenceStart _: Date) async throws {}
     func events(matching _: EventQuery) async throws -> [Event] { [] }
 }
 

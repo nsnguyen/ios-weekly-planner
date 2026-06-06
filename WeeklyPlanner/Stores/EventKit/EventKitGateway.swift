@@ -27,8 +27,8 @@ protocol EventKitGateway: AnyObject {
     /// All incomplete reminders across `calendars` (or all if `nil`).
     func fetchReminders(in calendars: [EKCalendar]?) async -> [EKReminder]
 
-    func save(_ event: EKEvent) throws
-    func remove(_ event: EKEvent) throws
+    func save(_ event: EKEvent, span: EKSpan) throws
+    func remove(_ event: EKEvent, span: EKSpan) throws
     func save(_ reminder: EKReminder) throws
     func remove(_ reminder: EKReminder) throws
 
@@ -54,6 +54,14 @@ protocol EventKitGateway: AnyObject {
     /// Fires every time EventKit posts `EKEventStoreChangedNotification`.
     /// Subscribers should re-fetch their visible window.
     var changes: AsyncStream<Void> { get }
+}
+
+extension EventKitGateway {
+    /// Span-less convenience: existing single-event call sites default to
+    /// `.thisEvent` so they compile unchanged after Phase 35 made spans
+    /// explicit for recurrence support.
+    func save(_ event: EKEvent) throws { try save(event, span: .thisEvent) }
+    func remove(_ event: EKEvent) throws { try remove(event, span: .thisEvent) }
 }
 
 /// Production gateway backed by the system `EKEventStore`.
@@ -118,12 +126,12 @@ final class SystemEventKitGateway: EventKitGateway {
         return box.reminders
     }
 
-    func save(_ event: EKEvent) throws {
-        try store.save(event, span: .thisEvent, commit: true)
+    func save(_ event: EKEvent, span: EKSpan) throws {
+        try store.save(event, span: span, commit: true)
     }
 
-    func remove(_ event: EKEvent) throws {
-        try store.remove(event, span: .thisEvent, commit: true)
+    func remove(_ event: EKEvent, span: EKSpan) throws {
+        try store.remove(event, span: span, commit: true)
     }
 
     func save(_ reminder: EKReminder) throws {

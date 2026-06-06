@@ -101,6 +101,11 @@ struct DayPageContent: View {
     /// when no sheet is presented. Tapping any `EventEntryRow` sets this.
     @State private var openEventID: UUID?
 
+    /// Start of the specific (possibly recurring) occurrence the user tapped.
+    /// Threaded into the sheet so "delete this occurrence" targets the right
+    /// instance (Phase 35).
+    @State private var openEventOccurrenceStart: Date?
+
     @State private var creatingEventAt: Date?
 
     /// Identifier of the event currently open for editing via long-press →
@@ -178,8 +183,9 @@ struct DayPageContent: View {
 
             if let id = openEventID {
                 PaperEventSheet(initialMode: .view(id),
+                                occurrenceStart: openEventOccurrenceStart,
                                 isOpen: Binding(get: { openEventID != nil },
-                                                set: { if !$0 { openEventID = nil } }))
+                                                set: { if !$0 { openEventID = nil; openEventOccurrenceStart = nil } }))
             }
             if let anchor = creatingEventAt {
                 PaperEventSheet(initialMode: .create(at: anchor),
@@ -387,6 +393,7 @@ struct DayPageContent: View {
                     EventEntryList(events: viewModel.events,
                                    onTap: { event in
                                        commitPendingTaskIfAny()
+                                       openEventOccurrenceStart = event.start
                                        openEventID = event.id
                                    },
                                    onEdit: { event in

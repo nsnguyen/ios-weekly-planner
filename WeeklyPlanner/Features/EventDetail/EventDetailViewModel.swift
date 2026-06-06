@@ -224,6 +224,12 @@ final class EventDetailViewModel {
         return EventAISuggestion.text(for: event)
     }
 
+    /// Read-mode recurrence line, or nil for single events.
+    var recurrenceSummary: String? {
+        guard let event, let recurrence = event.recurrence else { return nil }
+        return RecurrenceSummary.text(for: recurrence, seriesStart: event.start)
+    }
+
     /// Async hook the sheet calls on appear. Runs the
     /// `EventSuggestionGenerator` against the loaded event; the resulting
     /// string lands in `liveSuggestion` and the view re-renders. No-op

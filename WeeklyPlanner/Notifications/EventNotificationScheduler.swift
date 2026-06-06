@@ -14,6 +14,12 @@ import os
 final class EventNotificationScheduler {
     private static let log = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", category: "Notifications")
 
+    /// Recurring series schedule only this far ahead; the Phase 19
+    /// rescheduling observer rolls the window forward on every event
+    /// change / app activation.
+    static let recurringWindowDays = 30
+    static let recurringMaxOccurrences = 8
+
     private let center: any NotificationCentering
     private let locationRegistrar: any LocationRegistering
     private let eventStore: (any EventStoring)?
@@ -39,11 +45,49 @@ final class EventNotificationScheduler {
         }
         locationRegistrar.unregister(eventID: event.id)
 
+        if let recurrence = event.recurrence {
+            let calendar = WeekMath.mondayCalendar()
+            let now = Date()
+            let windowEnd = calendar.date(byAdding: .day, value: Self.recurringWindowDays, to: now) ?? now
+            let starts = OccurrenceExpander.occurrenceStarts(
+                seriesStart: event.start,
+                recurrence: recurrence,
+                in: now ..< windowEnd,
+                excluding: event.excludedOccurrenceStarts,
+                calendar: calendar)
+                .prefix(Self.recurringMaxOccurrences)
+
+            for start in starts {
+                for reminder in event.reminders {
+                    do {
+                        switch reminder {
+                        case let .timeBefore(minutes):
+                            try await scheduleTime(event: event,
+                                                   occurrenceStart: start,
+                                                   minutesBefore: minutes,
+                                                   occurrenceSuffix: "occ-\(Int(start.timeIntervalSince1970))-")
+                        case .onArrive:
+                            break // Location reminders are not per-occurrence.
+                        }
+                    } catch {
+                        Self.log.error("Recurring schedule failed: \(String(describing: error))")
+                    }
+                }
+            }
+            // Location reminders register once for the series.
+            for reminder in event.reminders {
+                if case let .onArrive(location) = reminder {
+                    scheduleArrival(event: event, reminder: location)
+                }
+            }
+            return
+        }
+
         for reminder in event.reminders {
             do {
                 switch reminder {
                 case let .timeBefore(minutes):
-                    try await scheduleTime(event: event, minutesBefore: minutes)
+                    try await scheduleTime(event: event, occurrenceStart: event.start, minutesBefore: minutes)
                 case let .onArrive(location):
                     scheduleArrival(event: event, reminder: location)
                 }
@@ -93,8 +137,17 @@ final class EventNotificationScheduler {
 
     // MARK: - Private
 
-    private func scheduleTime(event: Event, minutesBefore: Int) async throws {
-        let fireDate = event.start.addingTimeInterval(TimeInterval(-minutesBefore * 60))
+    /// Schedules one time-based reminder for `occurrenceStart`. Single events
+    /// pass `occurrenceStart: event.start` with the default empty suffix, which
+    /// reproduces the exact Phase 19 identifier `event-<id>-time-<min>`.
+    /// Recurring occurrences pass a distinct `occurrenceSuffix` so each
+    /// instance gets its own request under the same event prefix.
+    private func scheduleTime(event: Event,
+                              occurrenceStart: Date,
+                              minutesBefore: Int,
+                              occurrenceSuffix: String = "") async throws
+    {
+        let fireDate = occurrenceStart.addingTimeInterval(TimeInterval(-minutesBefore * 60))
         guard fireDate > Date() else { return }   // Past — silently skip.
 
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute],
@@ -102,13 +155,13 @@ final class EventNotificationScheduler {
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         let content = NotificationContentBuilder.timeBased(
             title: event.title,
-            startsAt: event.start,
+            startsAt: occurrenceStart,
             location: event.location,
             minutesBefore: minutesBefore
         )
         content.userInfo = ["event.id": event.id.uuidString]
 
-        let id = "event-\(event.id.uuidString)-time-\(minutesBefore)"
+        let id = "event-\(event.id.uuidString)-\(occurrenceSuffix)time-\(minutesBefore)"
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         try await center.add(request)
         Self.log.info("Scheduled event-time \(id, privacy: .public) for \(fireDate, privacy: .public)")

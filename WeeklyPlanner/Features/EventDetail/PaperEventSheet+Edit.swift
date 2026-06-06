@@ -34,6 +34,7 @@ struct EditableEventContent: View {
                                  date: $composer.end,
                                  invalidHint: !composer.timesAreValid)
                 CategorySwatchRow(selection: $composer.category)
+                RecurrenceRow(recurrence: $composer.recurrence)
                 LocationField(text: $composer.location)
                 NotesField(text: $composer.notes)
 

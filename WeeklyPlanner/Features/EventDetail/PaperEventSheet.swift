@@ -47,6 +47,12 @@ struct PaperEventSheet: View {
     /// (`.view` ↔ `.edit`) inside the same sheet via the Edit link.
     let initialMode: SheetMode
 
+    /// Start of the specific occurrence the user tapped, when the sheet was
+    /// opened from a recurring series' occurrence. Drives "delete this
+    /// occurrence" so it targets the right instance (Phase 35). `nil` for
+    /// single events, create mode, and deep links (series-level only).
+    var occurrenceStart: Date?
+
     /// Mutable mode the sheet actually renders. `nil` before the first
     /// `.task(id:)` fires; the dispatcher treats `nil` as "default to
     /// view-mode placeholder" so the sheet doesn't flash empty.
@@ -61,10 +67,14 @@ struct PaperEventSheet: View {
     @Environment(\.intelligenceService) private var intelligenceService
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var viewModel: EventDetailViewModel?
     @State private var showDeleteConfirm = false
+    /// Phase 35: shown instead of `showDeleteConfirm` when the event repeats,
+    /// offering this-occurrence vs all-occurrences scopes.
+    @State private var showRecurringDeleteDialog = false
     @State private var showCancelConfirm = false
     @State private var dragOffset: CGFloat = 0
 
@@ -135,6 +145,32 @@ struct PaperEventSheet: View {
                 }
             }
             Button("Keep editing", role: .cancel) {}
+        }
+        .confirmationDialog("This is a repeating event",
+                            isPresented: $showRecurringDeleteDialog,
+                            titleVisibility: .visible) {
+            Button("Delete this occurrence", role: .destructive) {
+                if let id = viewModel?.eventID {
+                    let start = occurrenceStart ?? viewModel?.event?.start
+                    Task {
+                        if let start {
+                            try? await eventStore.deleteOccurrence(eventID: id, occurrenceStart: start)
+                        } else {
+                            try? await eventStore.delete(id: id)
+                        }
+                        isOpen = false
+                    }
+                }
+            }
+            Button("Delete all occurrences", role: .destructive) {
+                if let id = viewModel?.eventID {
+                    Task {
+                        try? await eventStore.delete(id: id)
+                        isOpen = false
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
@@ -246,7 +282,7 @@ struct PaperEventSheet: View {
                                                  isOpen = false
                                              }
                                          },
-                                         onDelete: { showDeleteConfirm = true })
+                                         onDelete: { requestDelete() })
                 } else {
                     Spacer().frame(height: 200)
                 }
@@ -258,6 +294,20 @@ struct PaperEventSheet: View {
     /// out so `cardContent` stays scannable.
     private func bodyRows(event: Event, viewModel: EventDetailViewModel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let summary = viewModel.recurrenceSummary {
+                HStack(spacing: 8) {
+                    Image(systemName: "repeat")
+                        .font(.system(size: 13))
+                        .foregroundStyle(theme.ink2)
+                    Text(summary)
+                        .font(font.font(at: 15 * size.scale, weight: .regular))
+                        .foregroundStyle(theme.ink)
+                }
+                .padding(.vertical, 6)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Repeats: \(summary)")
+            }
+
             if let location = event.location {
                 EventLocationRow(location: location)
             }
@@ -289,7 +339,7 @@ struct PaperEventSheet: View {
             aiSuggestionSection(viewModel: viewModel)
                 .padding(.top, 14)
 
-            EventDeleteButton(action: { showDeleteConfirm = true })
+            EventDeleteButton(action: { requestDelete() })
                 .padding(.top, 14)
                 .padding(.bottom, 18)
         }
@@ -357,6 +407,17 @@ struct PaperEventSheet: View {
     }
 
     // MARK: - Mode promotion
+
+    /// Routes the delete affordance: a repeating event prompts for scope
+    /// (this occurrence vs all occurrences); a single event keeps the plain
+    /// destructive confirm.
+    private func requestDelete() {
+        if viewModel?.event?.recurrence != nil {
+            showRecurringDeleteDialog = true
+        } else {
+            showDeleteConfirm = true
+        }
+    }
 
     /// View → Edit promotion. Called from the view-mode header's Edit
     /// link. Seeds the composer from the loaded event and flips
@@ -483,6 +544,8 @@ private final class PreviewSeededStore: EventStoring {
     func delete(id _: UUID) async throws {
         stored = nil
     }
+
+    func deleteOccurrence(eventID _: UUID, occurrenceStart _: Date) async throws {}
 
     func events(matching _: EventQuery) async throws -> [Event] {
         stored.map { [$0] } ?? []

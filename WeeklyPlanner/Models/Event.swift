@@ -48,6 +48,14 @@ final class Event {
     /// SwiftData because `Reminder` is a Codable enum with associated values.
     var reminders: [Reminder]
 
+    /// Phase 35: repeat rule. `nil` = single occurrence.
+    var recurrence: Recurrence?
+    /// Predicate-friendly mirror of `recurrence != nil` (SwiftData can't
+    /// filter on the Codable column). Maintained by init and the store.
+    var isRecurring: Bool = false
+    /// Occurrence starts the user deleted individually ("this event only").
+    var excludedOccurrenceStarts: [Date] = []
+
     var createdAt: Date
     var updatedAt: Date
 
@@ -66,6 +74,8 @@ final class Event {
          gmailFrom: String? = nil,
          gmailSubject: String? = nil,
          reminders: [Reminder] = [],
+         recurrence: Recurrence? = nil,
+         excludedOccurrenceStarts: [Date] = [],
          createdAt: Date = .init(),
          updatedAt: Date = .init())
     {
@@ -84,8 +94,38 @@ final class Event {
         self.gmailFrom = gmailFrom
         self.gmailSubject = gmailSubject
         self.reminders = reminders
+        self.recurrence = recurrence
+        isRecurring = recurrence != nil
+        self.excludedOccurrenceStarts = excludedOccurrenceStarts
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+}
+
+extension Event {
+    /// Transient display copy for one occurrence of a recurring series —
+    /// same `id` as the master; NEVER insert into a ModelContext.
+    func occurrenceCopy(start occurrenceStart: Date) -> Event {
+        let duration = end.timeIntervalSince(start)
+        return Event(id: id,
+                     eventKitIdentifier: eventKitIdentifier,
+                     title: title,
+                     start: occurrenceStart,
+                     end: occurrenceStart.addingTimeInterval(duration),
+                     location: location,
+                     notes: notes,
+                     category: category,
+                     attendeesCount: attendeesCount,
+                     travelMinutes: travelMinutes,
+                     source: source,
+                     gmailMessageID: gmailMessageID,
+                     gmailFrom: gmailFrom,
+                     gmailSubject: gmailSubject,
+                     reminders: reminders,
+                     recurrence: recurrence,
+                     excludedOccurrenceStarts: excludedOccurrenceStarts,
+                     createdAt: createdAt,
+                     updatedAt: updatedAt)
     }
 }
 

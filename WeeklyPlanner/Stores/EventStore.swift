@@ -11,6 +11,10 @@ protocol EventStoring: AnyObject {
     func upsert(_ event: Event) async throws
     func delete(id: UUID) async throws
 
+    /// Removes ONE occurrence of a recurring series ("delete this event
+    /// only"). No-op for single events.
+    func deleteOccurrence(eventID: UUID, occurrenceStart: Date) async throws
+
     /// Returns events inside `query.dateRange` filtered by the optional
     /// category / keyword / person-name axes. Used by the Intelligence
     /// layer (Phase 13) so the model can ask narrower questions than
@@ -36,9 +40,24 @@ final class SwiftDataEventStore: EventStoring {
         let bounds = Self.weekBounds(forOffset: offset, today: today)
         let start = bounds.start
         let end = bounds.end
-        let descriptor = FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.start >= start && $0.start < end },
-                                                sortBy: [SortDescriptor(\.start, order: .forward)])
-        return try context.fetch(descriptor)
+
+        // Single events: start-in-window, as before — recurring masters
+        // are excluded here and expanded below instead.
+        let singlesDescriptor = FetchDescriptor<Event>(
+            predicate: #Predicate<Event> { $0.start >= start && $0.start < end && !$0.isRecurring },
+            sortBy: [SortDescriptor(\.start, order: .forward)])
+        let singles = try context.fetch(singlesDescriptor)
+
+        // Recurring series: expand into this window (transient copies).
+        let recurringDescriptor = FetchDescriptor<Event>(
+            predicate: #Predicate<Event> { $0.isRecurring })
+        let masters = try context.fetch(recurringDescriptor)
+        let calendar = WeekMath.mondayCalendar()
+        let occurrences = masters.flatMap {
+            OccurrenceExpander.occurrences(of: $0, in: start ..< end, calendar: calendar)
+        }
+
+        return (singles + occurrences).sorted { $0.start < $1.start }
     }
 
     func event(id: UUID) async throws -> Event? {
@@ -64,6 +83,9 @@ final class SwiftDataEventStore: EventStoring {
             existing.gmailFrom = event.gmailFrom
             existing.gmailSubject = event.gmailSubject
             existing.reminders = event.reminders
+            existing.recurrence = event.recurrence
+            existing.isRecurring = event.recurrence != nil
+            existing.excludedOccurrenceStarts = event.excludedOccurrenceStarts
             existing.eventKitIdentifier = event.eventKitIdentifier
             existing.updatedAt = .init()
         } else {
@@ -81,6 +103,14 @@ final class SwiftDataEventStore: EventStoring {
             try context.save()
             changeSubject.post(name: .eventStoreDidChange, object: nil)
         }
+    }
+
+    func deleteOccurrence(eventID: UUID, occurrenceStart: Date) async throws {
+        guard let event = try await event(id: eventID), event.isRecurring else { return }
+        event.excludedOccurrenceStarts.append(occurrenceStart)
+        event.updatedAt = .init()
+        try context.save()
+        changeSubject.post(name: .eventStoreDidChange, object: nil)
     }
 
     func events(matching query: EventQuery) async throws -> [Event] {

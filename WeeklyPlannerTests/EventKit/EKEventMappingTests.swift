@@ -108,4 +108,45 @@ final class EKEventMappingTests: XCTestCase {
         let decoded = EKEventMapping.toEvent(ek)
         XCTAssertEqual(decoded.reminders, [.timeBefore(minutes: 30)])
     }
+
+    func testApplyWritesRecurrenceRule() {
+        let event = Event(title: "Gym",
+                          start: Date(timeIntervalSinceReferenceDate: 1_000_000),
+                          end: Date(timeIntervalSinceReferenceDate: 1_003_600),
+                          category: .health,
+                          recurrence: Recurrence(frequency: .weekly, interval: 2, end: .afterCount(8)))
+        let ek = makeBlankEKEvent()
+        EKEventMapping.apply(event, to: ek, calendar: nil)
+
+        XCTAssertEqual(ek.recurrenceRules?.count, 1)
+        XCTAssertEqual(ek.recurrenceRules?.first?.frequency, .weekly)
+        XCTAssertEqual(ek.recurrenceRules?.first?.interval, 2)
+        XCTAssertEqual(ek.recurrenceRules?.first?.recurrenceEnd?.occurrenceCount, 8)
+    }
+
+    func testApplyClearsRuleWhenRecurrenceRemoved() {
+        let ek = makeBlankEKEvent()
+        ek.recurrenceRules = [RecurrenceMapper.toEKRule(Recurrence(frequency: .daily))]
+
+        let single = Event(title: "One-off",
+                           start: Date(timeIntervalSinceReferenceDate: 1_000_000),
+                           end: Date(timeIntervalSinceReferenceDate: 1_003_600),
+                           category: .personal)
+        EKEventMapping.apply(single, to: ek, calendar: nil)
+
+        XCTAssertTrue(ek.recurrenceRules?.isEmpty ?? true,
+                      "Editing a series to not-repeating must clear the EK rule")
+    }
+
+    func testToEventReadsRecurrenceBack() {
+        let ek = makeBlankEKEvent()
+        ek.title = "Gym"
+        ek.startDate = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        ek.endDate = Date(timeIntervalSinceReferenceDate: 1_003_600)
+        ek.recurrenceRules = [RecurrenceMapper.toEKRule(Recurrence(frequency: .monthly, interval: 3))]
+
+        let event = EKEventMapping.toEvent(ek)
+        XCTAssertEqual(event.recurrence, Recurrence(frequency: .monthly, interval: 3))
+        XCTAssertTrue(event.isRecurring)
+    }
 }

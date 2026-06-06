@@ -21,6 +21,9 @@ final class EventComposerState {
     var alertMinutes: Int
     var locationAlertOn: Bool
 
+    /// Phase 35: draft repeat rule. `nil` = single occurrence.
+    var recurrence: Recurrence?
+
     /// Reminders attached to the source event that the composer's UI does
     /// not expose for editing (`.onArrive` payloads, any `.timeBefore` past
     /// the first). Preserved verbatim so `build()` doesn't erase a geofence
@@ -35,7 +38,8 @@ final class EventComposerState {
          notes: String,
          alertOn: Bool,
          alertMinutes: Int,
-         locationAlertOn: Bool)
+         locationAlertOn: Bool,
+         recurrence: Recurrence? = nil)
     {
         self.title = title
         self.start = start
@@ -46,6 +50,7 @@ final class EventComposerState {
         self.alertOn = alertOn
         self.alertMinutes = alertMinutes
         self.locationAlertOn = locationAlertOn
+        self.recurrence = recurrence
     }
 
     /// `start` snapped to the next hour boundary after `date`; `end` =
@@ -102,7 +107,8 @@ final class EventComposerState {
                                        notes: event.notes ?? "",
                                        alertOn: alertOn,
                                        alertMinutes: alertMinutes,
-                                       locationAlertOn: locationAlertOn)
+                                       locationAlertOn: locationAlertOn,
+                                       recurrence: event.recurrence)
         state.preservedReminders = preserved
         return state
     }
@@ -129,6 +135,7 @@ final class EventComposerState {
             || alertOn != other.alertOn
             || alertMinutes != other.alertMinutes
             || locationAlertOn != other.locationAlertOn
+            || recurrence != other.recurrence
             || preservedReminders.map(reminderKey) != other.preservedReminders.map(reminderKey)
     }
 
@@ -178,6 +185,7 @@ final class EventComposerState {
                      notes: trimmedNotes.isEmpty ? nil : trimmedNotes,
                      category: category,
                      source: .manual,
-                     reminders: reminders)
+                     reminders: reminders,
+                     recurrence: recurrence)
     }
 }

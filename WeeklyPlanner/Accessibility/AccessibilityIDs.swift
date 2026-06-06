@@ -47,6 +47,12 @@ enum AccessibilityIDs {
     // Event sheet
     static let eventSheetDelete = "eventsheet.delete"
 
+    // MARK: Recurrence (Phase 35)
+    static let eventRepeatMenu = "paperEventSheet.repeat"
+    static let eventRepeatEndMenu = "paperEventSheet.repeat.end"
+    static let eventRepeatIntervalMinus = "paperEventSheet.repeat.interval.minus"
+    static let eventRepeatIntervalPlus = "paperEventSheet.repeat.interval.plus"
+
     // Tab bar
     static func tabBarTab(_ tab: String) -> String { "tabbar.tab.\(tab)" }
 

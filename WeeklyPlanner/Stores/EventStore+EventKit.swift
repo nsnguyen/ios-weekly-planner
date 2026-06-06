@@ -37,9 +37,32 @@ final class EventKitMirroringEventStore: EventStoring {
 
     func delete(id: UUID) async throws {
         if let event = try await base.event(id: id), let identifier = event.eventKitIdentifier {
-            removeFromEventKit(identifier: identifier)
+            // Recurring deletes are anchored at the master, so `.futureEvents`
+            // removes the whole series; singles use `.thisEvent`.
+            let span: EKSpan = event.recurrence != nil ? .futureEvents : .thisEvent
+            removeFromEventKit(identifier: identifier, span: span)
         }
         try await base.delete(id: id)
+    }
+
+    func deleteOccurrence(eventID: UUID, occurrenceStart: Date) async throws {
+        // EK detach is best-effort; the local exclusion is the source of truth.
+        if let event = try await base.event(id: eventID),
+           let identifier = event.eventKitIdentifier,
+           gateway.eventsAuthStatus.isFullAccess
+        {
+            let duration = max(event.end.timeIntervalSince(event.start), 60)
+            let candidates = gateway.fetchEvents(from: occurrenceStart.addingTimeInterval(-60),
+                                                 to: occurrenceStart.addingTimeInterval(duration + 60),
+                                                 calendars: nil)
+            if let occurrence = candidates.first(where: {
+                $0.eventIdentifier == identifier &&
+                    abs($0.startDate.timeIntervalSince(occurrenceStart)) < 60
+            }) {
+                try? gateway.remove(occurrence, span: .thisEvent)
+            }
+        }
+        try await base.deleteOccurrence(eventID: eventID, occurrenceStart: occurrenceStart)
     }
 
     func events(matching query: EventQuery) async throws -> [Event] {
@@ -65,7 +88,8 @@ final class EventKitMirroringEventStore: EventStoring {
         }
 
         EKEventMapping.apply(event, to: ekEvent, calendar: target)
-        try gateway.save(ekEvent)
+        let span: EKSpan = event.recurrence != nil ? .futureEvents : .thisEvent
+        try gateway.save(ekEvent, span: span)
 
         if event.eventKitIdentifier == nil, let identifier = ekEvent.eventIdentifier {
             event.eventKitIdentifier = identifier
@@ -73,13 +97,13 @@ final class EventKitMirroringEventStore: EventStoring {
         }
     }
 
-    private func removeFromEventKit(identifier: String) {
+    private func removeFromEventKit(identifier: String, span: EKSpan = .thisEvent) {
         guard gateway.eventsAuthStatus.isFullAccess else { return }
         let window = gateway.fetchEvents(from: Calendar.current.date(byAdding: .day, value: -365, to: Date()) ?? Date(),
                                          to: Calendar.current.date(byAdding: .day, value: 365, to: Date()) ?? Date(),
                                          calendars: nil)
         if let match = window.first(where: { $0.eventIdentifier == identifier }) {
-            try? gateway.remove(match)
+            try? gateway.remove(match, span: span)
         }
     }
 }
