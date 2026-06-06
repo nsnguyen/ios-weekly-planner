@@ -66,4 +66,14 @@ enum AccessibilityIDs {
     static let notesEditorDone = "notes.editor.done"
     static let notesEditorBack = "notes.editor.back"
     static let notesEditorDelete = "notes.editor.delete"
+
+    // MARK: Annotations (Phase 34)
+    static let annotationsLayer = "daypage.annotations.layer"
+    static func annotationView(_ id: UUID) -> String { "daypage.annotation.\(id)" }
+    /// Static (not per-id): only one annotation is ever in edit mode.
+    static let annotationActiveEditor = "daypage.annotation.editor"
+    static func annotationStyleColor(_ token: String) -> String { "annotation.style.color.\(token)" }
+    static let annotationStyleBold = "annotation.style.bold"
+    static let annotationStyleDelete = "annotation.style.delete"
+    static let annotationStyleDone = "annotation.style.done"
 }
