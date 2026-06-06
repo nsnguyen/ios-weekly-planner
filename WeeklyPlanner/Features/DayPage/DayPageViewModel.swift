@@ -39,6 +39,10 @@ final class DayPageViewModel {
     /// Phase 24 — replaces the single-insight read pattern.
     var insights: [AIInsight] = []
 
+    /// Free-text annotations placed on this day, oldest-first by creation
+    /// time (stable z-order). Phase 34.
+    var annotations: [Annotation] = []
+
     /// Localized description of the most recent fetch failure, if any.
     /// Cleared when a refresh succeeds.
     var loadError: String?
@@ -52,7 +56,6 @@ final class DayPageViewModel {
     private let inboxStore: any InboxStoring
     private let taskStore: any TaskStoring
     private let annotationStore: any AnnotationStoring
-    var annotations: [Annotation] = []
     private let orchestrator: StickyOrchestrator?
     private let modelContext: ModelContext?
     /// Read fresh on each `refresh()` to gate sticky-insight *generation*
@@ -350,6 +353,8 @@ final class DayPageViewModel {
     }
 
     func setAnnotationStyle(id: UUID, colorToken: InkColorToken? = nil, isBold: Bool? = nil) async {
+        // Nothing to change — avoid a pointless upsert that would bump `updatedAt`.
+        guard colorToken != nil || isBold != nil else { return }
         guard let annotation = annotations.first(where: { $0.id == id }) else { return }
         if let colorToken { annotation.colorToken = colorToken }
         if let isBold { annotation.isBold = isBold }
