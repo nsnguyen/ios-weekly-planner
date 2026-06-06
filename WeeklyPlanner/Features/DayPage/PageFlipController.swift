@@ -63,6 +63,12 @@ final class PageFlipController {
     /// page-level `HorizontalSwipeGesture` can yield to it.
     var stickyDragActive = false
 
+    /// Set (via `@GestureState` mirroring — see `AnnotationView`) while an
+    /// annotation drag is genuinely in progress so the page-level
+    /// `HorizontalSwipeGesture` yields. Phase 28 contract: never set this
+    /// directly from `.onChanged`/`.onEnded`.
+    var annotationDragActive = false
+
     /// Maximum time a flip may stay un-committed before the controller
     /// force-commits itself.
     ///

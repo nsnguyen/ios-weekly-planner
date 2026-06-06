@@ -48,7 +48,7 @@ struct DayPageView: View {
             }
             .environment(controller)
             .horizontalSwipe { direction in
-                guard !controller.stickyDragActive else { return }
+                guard !controller.stickyDragActive, !controller.annotationDragActive else { return }
                 controller.flipDay(direction: direction)
             }
 
