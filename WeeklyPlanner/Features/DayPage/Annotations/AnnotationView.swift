@@ -29,7 +29,6 @@ struct AnnotationView: View {
         Group {
             if isEditing { editor } else { display }
         }
-        .offset(dragOffset)
         .onChange(of: isDragging) { _, dragging in
             flipController?.annotationDragActive = dragging
         }
@@ -46,6 +45,7 @@ struct AnnotationView: View {
             .foregroundStyle(annotation.colorToken.resolve(in: theme))
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: 220, alignment: .leading)
+            .offset(dragOffset) // drag-only: the editor never moves
             .contentShape(Rectangle())
             .onTapGesture {
                 draft = annotation.text
@@ -69,9 +69,14 @@ struct AnnotationView: View {
             }
             .onEnded { value in
                 guard layerSize.width > 0, layerSize.height > 0 else { return }
-                let newUnit = CGPoint(
+                let newUnit = Annotation.clampUnit(CGPoint(
                     x: annotation.unitX + value.translation.width / layerSize.width,
-                    y: annotation.unitY + value.translation.height / layerSize.height)
+                    y: annotation.unitY + value.translation.height / layerSize.height))
+                // Commit the position to the live model in the same render
+                // transaction that resets `dragOffset`, so the view never
+                // flashes back to its pre-drag spot while persistence runs.
+                annotation.unitX = newUnit.x
+                annotation.unitY = newUnit.y
                 Task { await viewModel.moveAnnotation(id: annotation.id, toUnit: newUnit) }
             }
     }
@@ -106,6 +111,17 @@ struct AnnotationView: View {
         .task { focused = true }
         .onChange(of: focused) { _, isFocused in
             if !isFocused, isEditing {
+                let text = draft
+                editingID = nil
+                Task { await viewModel.commitAnnotationText(id: annotation.id, text: text) }
+            }
+        }
+        .onDisappear {
+            // Page flipped (or view torn down) mid-edit: commit-on-blur may
+            // never fire, which would strand the draft — and a brand-new
+            // annotation as an invisible empty row. Committing here lets the
+            // VM's empty-text path delete the ghost.
+            if isEditing {
                 let text = draft
                 editingID = nil
                 Task { await viewModel.commitAnnotationText(id: annotation.id, text: text) }
