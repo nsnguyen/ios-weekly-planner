@@ -14,6 +14,7 @@ enum SwiftDataStack {
         Streak.self,
         UserSettings.self,
         Note.self,
+        Annotation.self,
     ]
 
     /// Lazily-initialised production container, on-disk. Crashes on
