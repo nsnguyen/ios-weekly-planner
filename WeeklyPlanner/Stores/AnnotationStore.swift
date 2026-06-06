@@ -57,3 +57,13 @@ final class SwiftDataAnnotationStore: AnnotationStoring {
 extension Notification.Name {
     static let annotationStoreDidChange = Notification.Name("WeeklyPlanner.AnnotationStore.didChange")
 }
+
+/// Inert default for previews and unwired subtrees.
+@MainActor
+final class StubAnnotationStore: AnnotationStoring {
+    nonisolated init() {}
+
+    func annotations(dayKey _: String) async throws -> [Annotation] { [] }
+    func upsert(_: Annotation) async throws {}
+    func delete(id _: UUID) async throws {}
+}
