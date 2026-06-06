@@ -41,10 +41,10 @@ struct WeekFlipView: View {
             WeekPageView(weekOffset: coord.week)
         }
         .horizontalSwipe { direction in
-            // Mirror DayPageView's guard: yield to an active sticky-note drag.
-            // (The week page has no sticky drag today, but keeping the guard
-            // matches the day path and is safe if one is ever added.)
-            guard !controller.stickyDragActive else { return }
+            // Mirror DayPageView's guard: yield to an active sticky-note or
+            // annotation drag (no annotation layer on week today, but parity
+            // with the day path is safe if one is ever added).
+            guard !controller.stickyDragActive, !controller.annotationDragActive else { return }
             controller.flipWeek(direction: direction)
         }
     }
