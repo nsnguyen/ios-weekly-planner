@@ -86,6 +86,7 @@ struct DayPageContent: View {
     @Environment(\.eventStore) private var eventStore
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.taskStore) private var taskStore
+    @Environment(\.annotationStore) private var annotationStore
     @Environment(\.stickyOrchestrator) private var stickyOrchestrator
     @Environment(\.modelContext) private var modelContext
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
@@ -116,6 +117,9 @@ struct DayPageContent: View {
 
     @State private var editingTaskID: UUID?
 
+    @State private var annotationLayerSize: CGSize = .zero
+    @State private var editingAnnotationID: UUID?
+
     var body: some View {
         let now = Date()
         let days = WeekMath.weekDays(forOffset: weekOffset, today: now)
@@ -144,6 +148,17 @@ struct DayPageContent: View {
                                 .overlay(alignment: .topTrailing) {
                                     stickyNoteOverlay
                                 }
+                                .overlay(alignment: .topLeading) {
+                                    if let viewModel {
+                                        AnnotationLayer(viewModel: viewModel,
+                                                        editingID: $editingAnnotationID)
+                                    }
+                                }
+                                .onGeometryChange(for: CGSize.self) { proxy in
+                                    proxy.size
+                                } action: { newSize in
+                                    annotationLayerSize = newSize
+                                }
                                 // Tap on empty paper *between* events /
                                 // inbox rows commits the pending to-do.
                                 // SwiftUI only fires this when no child
@@ -155,6 +170,7 @@ struct DayPageContent: View {
                                 .onTapGesture {
                                     commitPendingTaskIfAny()
                                 }
+                                .simultaneousGesture(annotationCreationGesture)
                         }
                         .refreshable {
                             await viewModel?.refresh(via: inboxSyncEngine)
@@ -239,6 +255,7 @@ struct DayPageContent: View {
                                              eventStore: eventStore,
                                              inboxStore: inboxStore,
                                              taskStore: taskStore,
+                                             annotationStore: annotationStore,
                                              orchestrator: stickyOrchestrator,
                                              modelContext: modelContext,
                                              settingsStore: settingsStore)
@@ -255,6 +272,14 @@ struct DayPageContent: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .taskStoreDidChange)) { _ in
             Task { await viewModel?.refresh() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .annotationStoreDidChange)) { _ in
+            // While the in-place editor is open, the VM already self-refreshes
+            // its annotations on every write; a full refresh() here could
+            // recreate the editor subtree and fight focus. Skip until closed.
+            if editingAnnotationID == nil {
+                Task { await viewModel?.refresh() }
+            }
         }
     }
 
@@ -275,6 +300,27 @@ struct DayPageContent: View {
     private func commitPendingTaskIfAny() {
         guard viewModel?.taskComposer.isComposing == true else { return }
         viewModel?.taskComposer.requestBlur()
+    }
+
+    /// Long-press on empty paper creates an annotation at the press point.
+    /// `.simultaneousGesture` keeps scrolling and row taps working; the
+    /// sequenced zero-distance drag is the standard recipe for getting a
+    /// location out of a long-press.
+    private var annotationCreationGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.45)
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
+            .onEnded { value in
+                guard case let .second(true, drag) = value, let drag,
+                      annotationLayerSize.width > 0, annotationLayerSize.height > 0
+                else { return }
+                let unit = CGPoint(x: drag.startLocation.x / annotationLayerSize.width,
+                                   y: drag.startLocation.y / annotationLayerSize.height)
+                Task {
+                    if let created = await viewModel?.addAnnotation(atUnit: unit) {
+                        editingAnnotationID = created.id
+                    }
+                }
+            }
     }
 
     /// Bottom-pinned affordance stack: `EventAddRow` directly above the
