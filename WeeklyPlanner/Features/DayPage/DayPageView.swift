@@ -118,6 +118,9 @@ struct DayPageContent: View {
     @State private var editingTaskID: UUID?
 
     @State private var annotationLayerSize: CGSize = .zero
+    /// Visible paper height; floors the scroll content so empty days are
+    /// fully long-pressable (see the `minHeight` note on the content frame).
+    @State private var scrollViewportHeight: CGFloat = .zero
     @State private var editingAnnotationID: UUID?
 
     var body: some View {
@@ -144,7 +147,15 @@ struct DayPageContent: View {
                                 .padding(.leading, 44)
                                 .padding(.trailing, 18)
                                 .padding(.bottom, 18)
-                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                                // `minHeight`: on sparse days the content's
+                                // natural height ends mid-page, and with it the
+                                // annotation layer + creation gesture — the
+                                // visibly empty paper below would be dead to
+                                // long-presses. Stretch to the viewport so the
+                                // whole page is writable (Phase 34).
+                                .frame(maxWidth: .infinity,
+                                       minHeight: scrollViewportHeight,
+                                       alignment: .topLeading)
                                 .overlay(alignment: .topTrailing) {
                                     stickyNoteOverlay
                                 }
@@ -171,6 +182,11 @@ struct DayPageContent: View {
                                     commitPendingTaskIfAny()
                                 }
                                 .simultaneousGesture(annotationCreationGesture)
+                        }
+                        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                            geometry.containerSize.height
+                        } action: { _, newHeight in
+                            scrollViewportHeight = newHeight
                         }
                         .refreshable {
                             await viewModel?.refresh(via: inboxSyncEngine)
@@ -303,14 +319,19 @@ struct DayPageContent: View {
     }
 
     /// Long-press on empty paper creates an annotation at the press point.
-    /// `.simultaneousGesture` keeps scrolling and row taps working; the
-    /// sequenced zero-distance drag is the standard recipe for getting a
-    /// location out of a long-press.
+    /// `.simultaneousGesture` keeps scrolling and row taps working.
+    /// `.simultaneously(with:)` (NOT `.sequenced(before:)`): the zero-distance
+    /// drag starts observing at touch-down, so `startLocation` is populated
+    /// even for a perfectly still press — a sequenced drag sees no events
+    /// from a motionless finger and hands `.second(true, nil)` to `onEnded`
+    /// (exactly what synthesized XCUI presses and simulator mouse clicks do).
+    /// The long-press half still gates firing: moving early fails it, so
+    /// scrolling never creates annotations.
     private var annotationCreationGesture: some Gesture {
         LongPressGesture(minimumDuration: 0.45)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .local))
+            .simultaneously(with: DragGesture(minimumDistance: 0, coordinateSpace: .local))
             .onEnded { value in
-                guard case let .second(true, drag) = value, let drag,
+                guard value.first == true, let drag = value.second,
                       annotationLayerSize.width > 0, annotationLayerSize.height > 0
                 else { return }
                 // `startLocation`, intentionally: the annotation anchors where

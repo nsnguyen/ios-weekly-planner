@@ -68,7 +68,8 @@ enum AccessibilityIDs {
     static let notesEditorDelete = "notes.editor.delete"
 
     // MARK: Annotations (Phase 34)
-    static let annotationsLayer = "daypage.annotations.layer"
+    // (No layer-container id: an identifier on the layer's ZStack cascades
+    // onto descendant elements and clobbers the per-control ids below.)
     static func annotationView(_ id: UUID) -> String { "daypage.annotation.\(id)" }
     /// Static (not per-id): only one annotation is ever in edit mode.
     static let annotationActiveEditor = "daypage.annotation.editor"

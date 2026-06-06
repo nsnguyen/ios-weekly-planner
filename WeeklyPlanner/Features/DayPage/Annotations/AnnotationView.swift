@@ -32,10 +32,26 @@ struct AnnotationView: View {
         .onChange(of: isDragging) { _, dragging in
             flipController?.annotationDragActive = dragging
         }
+        .onChange(of: editingID) { oldID, newID in
+            // Editorship left this annotation (Done, tap-away, or another
+            // annotation starting to edit): the single commit point. An
+            // empty draft routes to delete in the VM, so an abandoned new
+            // annotation can never strand an invisible row.
+            guard oldID == annotation.id, newID != annotation.id else { return }
+            let text = draft
+            Task { await viewModel.commitAnnotationText(id: annotation.id, text: text) }
+        }
         .onDisappear {
             // Final safety net: leaving the page mid-drag must never leave
             // navigation locked.
             flipController?.annotationDragActive = false
+            // Page teardown mid-edit: editingID never transitioned, so the
+            // commit above can't fire — commit here instead.
+            if isEditing {
+                let text = draft
+                editingID = nil
+                Task { await viewModel.commitAnnotationText(id: annotation.id, text: text) }
+            }
         }
     }
 
@@ -110,22 +126,9 @@ struct AnnotationView: View {
         }
         .task { focused = true }
         .onChange(of: focused) { _, isFocused in
-            if !isFocused, isEditing {
-                let text = draft
-                editingID = nil
-                Task { await viewModel.commitAnnotationText(id: annotation.id, text: text) }
-            }
-        }
-        .onDisappear {
-            // Page flipped (or view torn down) mid-edit: commit-on-blur may
-            // never fire, which would strand the draft — and a brand-new
-            // annotation as an invisible empty row. Committing here lets the
-            // VM's empty-text path delete the ghost.
-            if isEditing {
-                let text = draft
-                editingID = nil
-                Task { await viewModel.commitAnnotationText(id: annotation.id, text: text) }
-            }
+            // Losing focus relinquishes editorship; the body-level
+            // `.onChange(of: editingID)` performs the single commit.
+            if !isFocused, isEditing { editingID = nil }
         }
     }
 }

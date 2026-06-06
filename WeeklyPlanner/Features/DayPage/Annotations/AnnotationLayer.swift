@@ -15,6 +15,9 @@ struct AnnotationLayer: View {
 
     var body: some View {
         GeometryReader { geo in
+            // No identifier on this container: a SwiftUI identifier set on a
+            // plain ZStack cascades onto every descendant element, clobbering
+            // the per-annotation and style-bar identifiers UI tests rely on.
             ZStack(alignment: .topLeading) {
                 ForEach(viewModel.annotations, id: \.id) { annotation in
                     AnnotationView(annotation: annotation,
@@ -25,7 +28,6 @@ struct AnnotationLayer: View {
                                   y: geo.size.height * annotation.unitY)
                 }
             }
-            .accessibilityIdentifier(AccessibilityIDs.annotationsLayer)
         }
     }
 }
