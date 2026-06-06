@@ -313,6 +313,11 @@ struct DayPageContent: View {
                 guard case let .second(true, drag) = value, let drag,
                       annotationLayerSize.width > 0, annotationLayerSize.height > 0
                 else { return }
+                // `startLocation`, intentionally: the annotation anchors where
+                // the press began, not wherever the finger drifted by lift-off.
+                // `annotationLayerSize` mirrors AnnotationLayer's geo.size (same
+                // node) — captured separately because this gesture fires outside
+                // the layer's GeometryReader scope.
                 let unit = CGPoint(x: drag.startLocation.x / annotationLayerSize.width,
                                    y: drag.startLocation.y / annotationLayerSize.height)
                 Task {
