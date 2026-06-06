@@ -20,6 +20,9 @@ final class DayPageViewModel {
     /// Monday-based day index within the week (0 = Mon … 6 = Sun).
     let dayIdx: Int
 
+    /// `"<weekOffset>:<dayIdx>"` — shared dayKey scheme.
+    var dayKey: String { Annotation.key(weekOffset: weekOffset, dayIdx: dayIdx) }
+
     /// Events scheduled for this day, sorted ascending by `start`.
     var events: [Event] = []
 
@@ -48,6 +51,8 @@ final class DayPageViewModel {
     private let eventStore: any EventStoring
     private let inboxStore: any InboxStoring
     private let taskStore: any TaskStoring
+    private let annotationStore: any AnnotationStoring
+    var annotations: [Annotation] = []
     private let orchestrator: StickyOrchestrator?
     private let modelContext: ModelContext?
     /// Read fresh on each `refresh()` to gate sticky-insight *generation*
@@ -79,6 +84,7 @@ final class DayPageViewModel {
          eventStore: any EventStoring,
          inboxStore: any InboxStoring,
          taskStore: any TaskStoring,
+         annotationStore: any AnnotationStoring = StubAnnotationStore(),
          orchestrator: StickyOrchestrator? = nil,
          modelContext: ModelContext? = nil,
          settingsStore: (any SettingsStoring)? = nil,
@@ -89,6 +95,7 @@ final class DayPageViewModel {
         self.eventStore = eventStore
         self.inboxStore = inboxStore
         self.taskStore = taskStore
+        self.annotationStore = annotationStore
         self.orchestrator = orchestrator
         self.modelContext = modelContext
         self.settingsStore = settingsStore
@@ -160,6 +167,9 @@ final class DayPageViewModel {
         } catch {
             loadError = error.localizedDescription
         }
+
+        // Phase 34: free-text annotations for this day cell.
+        annotations = (try? await annotationStore.annotations(dayKey: dayKey)) ?? []
 
         // Opt-in gate: AI sticky notes only *generate* when the user has
         // enabled them. Read fresh each refresh so a Settings toggle takes
@@ -303,6 +313,66 @@ final class DayPageViewModel {
             loadError = error.localizedDescription
         }
         await refresh()
+    }
+
+    // MARK: - Annotations (Phase 34)
+
+    @discardableResult
+    func addAnnotation(atUnit point: CGPoint) async -> Annotation? {
+        let clamped = Annotation.clampUnit(point)
+        let annotation = Annotation(dayKey: dayKey,
+                                    text: "",
+                                    colorToken: .ink,
+                                    isBold: false,
+                                    unitX: clamped.x,
+                                    unitY: clamped.y)
+        do {
+            try await annotationStore.upsert(annotation)
+            await refreshAnnotations()
+            return annotations.first(where: { $0.id == annotation.id })
+        } catch {
+            return nil
+        }
+    }
+
+    /// Commit edited text. Empty (trimmed) text deletes the annotation —
+    /// an abandoned draft must not leave an invisible row behind.
+    func commitAnnotationText(id: UUID, text: String) async {
+        guard let annotation = annotations.first(where: { $0.id == id }) else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            try? await annotationStore.delete(id: id)
+        } else {
+            annotation.text = trimmed
+            try? await annotationStore.upsert(annotation)
+        }
+        await refreshAnnotations()
+    }
+
+    func setAnnotationStyle(id: UUID, colorToken: InkColorToken? = nil, isBold: Bool? = nil) async {
+        guard let annotation = annotations.first(where: { $0.id == id }) else { return }
+        if let colorToken { annotation.colorToken = colorToken }
+        if let isBold { annotation.isBold = isBold }
+        try? await annotationStore.upsert(annotation)
+        await refreshAnnotations()
+    }
+
+    func moveAnnotation(id: UUID, toUnit point: CGPoint) async {
+        guard let annotation = annotations.first(where: { $0.id == id }) else { return }
+        let clamped = Annotation.clampUnit(point)
+        annotation.unitX = clamped.x
+        annotation.unitY = clamped.y
+        try? await annotationStore.upsert(annotation)
+        await refreshAnnotations()
+    }
+
+    func deleteAnnotation(id: UUID) async {
+        try? await annotationStore.delete(id: id)
+        await refreshAnnotations()
+    }
+
+    private func refreshAnnotations() async {
+        annotations = (try? await annotationStore.annotations(dayKey: dayKey)) ?? []
     }
 }
 
