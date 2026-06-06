@@ -2,7 +2,9 @@ import SwiftUI
 
 /// One free-text annotation: handwriting text in display mode (tap to
 /// edit, drag to move), a focused multiline field + `TextStyleBar` in
-/// edit mode. Commit-on-blur; empty text deletes (via the VM).
+/// edit mode. The draft commits whenever editorship ends — focus loss,
+/// another annotation taking over, or page teardown — and an empty
+/// draft deletes the row (via the VM).
 struct AnnotationView: View {
     let annotation: Annotation
     let layerSize: CGSize
