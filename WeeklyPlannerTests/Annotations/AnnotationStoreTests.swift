@@ -72,6 +72,33 @@ final class AnnotationStoreTests: XCTestCase {
         let clamped = Annotation.clampUnit(CGPoint(x: 1.4, y: -0.2))
         XCTAssertEqual(clamped.x, 1.0)
         XCTAssertEqual(clamped.y, 0.0)
+
+        let recovered = Annotation.clampUnit(CGPoint(x: CGFloat.nan, y: .infinity))
+        XCTAssertEqual(recovered.x, 0.5, "Non-finite coordinates must recover to center, not persist")
+        XCTAssertEqual(recovered.y, 0.5)
+    }
+
+    func testDeletePostsChangeNotification() async throws {
+        let a = Annotation(dayKey: "0:5", text: "x", colorToken: .ink, isBold: false, unitX: 0.5, unitY: 0.5)
+        try await store.upsert(a)
+        let exp = expectation(forNotification: .annotationStoreDidChange, object: nil)
+        try await store.delete(id: a.id)
+        await fulfillment(of: [exp], timeout: 1)
+    }
+
+    func testAnnotationsReturnedOldestFirst() async throws {
+        let early = Annotation(dayKey: "0:5", text: "first",
+                               colorToken: .ink, isBold: false, unitX: 0.1, unitY: 0.1,
+                               createdAt: Date(timeIntervalSinceReferenceDate: 1000),
+                               updatedAt: Date(timeIntervalSinceReferenceDate: 1000))
+        let late = Annotation(dayKey: "0:5", text: "second",
+                              colorToken: .ink, isBold: false, unitX: 0.2, unitY: 0.2,
+                              createdAt: Date(timeIntervalSinceReferenceDate: 2000),
+                              updatedAt: Date(timeIntervalSinceReferenceDate: 2000))
+        try await store.upsert(late)
+        try await store.upsert(early)
+        let result = try await store.annotations(dayKey: "0:5")
+        XCTAssertEqual(result.map(\.text), ["first", "second"], "Promised oldest-first z-order")
     }
 
     func testDayKeyHelperMatchesAppScheme() {

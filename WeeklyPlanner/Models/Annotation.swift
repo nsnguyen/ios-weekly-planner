@@ -51,6 +51,10 @@ extension Annotation {
     }
 
     static func clampUnit(_ point: CGPoint) -> CGPoint {
-        CGPoint(x: min(max(point.x, 0), 1), y: min(max(point.y, 0), 1))
+        // Non-finite input (NaN/inf from degenerate gesture geometry) would
+        // persist and strand the annotation off-screen — recover to center.
+        let x = point.x.isFinite ? min(max(point.x, 0), 1) : 0.5
+        let y = point.y.isFinite ? min(max(point.y, 0), 1) : 0.5
+        return CGPoint(x: x, y: y)
     }
 }
