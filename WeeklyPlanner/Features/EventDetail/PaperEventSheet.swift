@@ -202,6 +202,14 @@ struct PaperEventSheet: View {
     ///      the composed view.
     private var sheetCard: some View {
         cardContent
+            // Stretch the content to the card's full width / min height
+            // BEFORE laying the paper fill, so the opaque background covers
+            // the whole card silhouette. Previously the fill was sized to the
+            // intrinsic content and the `maxWidth`/`minHeight` stretch below
+            // left translucent side/bottom bands where the day page's ruled
+            // lines bled through (suggestion 41).
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: 360, alignment: .bottom)
             .background(paperBackground)
             .overlay(alignment: .top) {
                 TornEdgeShape()
@@ -224,8 +232,6 @@ struct PaperEventSheet: View {
                                                                                 bottomTrailing: 14,
                                                                                 topTrailing: 4)))
             .shadow(color: Color.black.opacity(0.5), radius: 15, x: 0, y: -8)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: 360, alignment: .bottom)
             .padding(EdgeInsets(top: 0, leading: 16, bottom: 32, trailing: 16))
             .offset(y: dragOffset)
             .gesture(dragGesture)

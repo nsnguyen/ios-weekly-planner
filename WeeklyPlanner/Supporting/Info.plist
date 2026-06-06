@@ -79,6 +79,10 @@
         <string>Kalam-Regular.ttf</string>
         <string>Kalam-Bold.ttf</string>
         <string>IndieFlower-Regular.ttf</string>
+        <string>PatrickHand-Regular.ttf</string>
+        <string>ShadowsIntoLight.ttf</string>
+        <string>GochiHand-Regular.ttf</string>
+        <string>NanumPenScript-Regular.ttf</string>
     </array>
 
     <!-- Google OAuth configuration. Secrets filled in from Secrets.xcconfig during Phase 17. -->

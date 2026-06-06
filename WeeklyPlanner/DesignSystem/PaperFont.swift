@@ -1,18 +1,23 @@
 import SwiftUI
 
-/// The four handwriting font families ship with the app. Users pick one in
+/// The handwriting font families that ship with the app. Users pick one in
 /// Settings; it is then injected via `@Environment(\.paperFont)` and used
 /// everywhere `Typography` returns a `.font(in:weight:)`.
 ///
 /// Caveat ships four weights as separate static instances (sliced from the
 /// upstream variable font). Kalam ships Light / Regular / Bold. Architects
-/// Daughter and Indie Flower are single-weight families — the requested
-/// `weight` is silently ignored.
+/// Daughter, Indie Flower, Patrick Hand, Shadows Into Light, Gochi Hand and
+/// Nanum Pen Script are single-weight families — the requested `weight` is
+/// silently ignored (a heavier `LegibilityWeight` maps back to regular).
 enum PaperFont: String, CaseIterable, Hashable, Codable {
     case caveat
     case architects
     case kalam
     case indie
+    case patrick
+    case shadows
+    case gochi
+    case nanum
 
     /// Human-readable label shown in Settings.
     var displayName: String {
@@ -21,6 +26,10 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
         case .architects: "Architects"
         case .kalam: "Kalam"
         case .indie: "Indie"
+        case .patrick: "Patrick Hand"
+        case .shadows: "Shadows"
+        case .gochi: "Gochi Hand"
+        case .nanum: "Nanum Pen"
         }
     }
 
@@ -29,9 +38,8 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     var fallbackPostScriptName: String {
         switch self {
         case .caveat: "Cochin"
-        case .architects: "Caveat-Regular"
-        case .kalam: "Caveat-Regular"
-        case .indie: "Caveat-Regular"
+        case .architects, .kalam, .indie,
+             .patrick, .shadows, .gochi, .nanum: "Caveat-Regular"
         }
     }
 
@@ -49,6 +57,10 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
         case .architects: "ArchitectsDaughter-Regular"
         case .kalam: kalamName(for: weight)
         case .indie: "IndieFlower-Regular"
+        case .patrick: "PatrickHand-Regular"
+        case .shadows: "ShadowsIntoLight"
+        case .gochi: "GochiHand-Regular"
+        case .nanum: "NanumPen-Regular"
         }
     }
 
@@ -61,15 +73,17 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     ///
     /// - Caveat: Regular → SemiBold
     /// - Kalam: Regular → Bold (family ships Light / Regular / Bold)
-    /// - Architects Daughter: Regular (single-weight family; no change)
-    /// - Indie Flower: Regular (single-weight family; no change)
+    /// - All other families (Architects Daughter, Indie Flower, Patrick
+    ///   Hand, Shadows Into Light, Gochi Hand, Nanum Pen): single-weight —
+    ///   Regular, no change.
     func weightFor(legibility: LegibilityWeight) -> Font.Weight {
         guard legibility == .bold else { return .regular }
         switch self {
         case .caveat:     return .semibold
         case .kalam:      return .bold
-        case .architects: return .regular
-        case .indie:      return .regular
+        case .architects, .indie,
+             .patrick, .shadows, .gochi, .nanum:
+            return .regular
         }
     }
 

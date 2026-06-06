@@ -30,9 +30,9 @@ final class PaperSettingsViewTests: XCTestCase {
         XCTAssertEqual(PaperThemeKey.allCases.count, 3)
     }
 
-    func testPaperFontCountIsFourSoFontCardsGridIsTwoFullRows() {
-        // FontCardsGrid is a 2-col grid; 4 fonts == 2 full rows.
-        XCTAssertEqual(PaperFont.allCases.count, 4)
+    func testPaperFontCountIsEightSoFontCardsGridIsFourFullRows() {
+        // FontCardsGrid is a 2-col grid; 8 fonts == 4 full rows.
+        XCTAssertEqual(PaperFont.allCases.count, 8)
     }
 
     func testPaperSizeCountIsThreeSoSizeSegmentedFits() {
