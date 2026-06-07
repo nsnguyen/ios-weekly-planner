@@ -64,7 +64,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 31 | Month Grid & Week-Picker Navigation                  | L                   | ✅     |
 | 32 | AI Surfaces & Review Cleanup                         | L                   | ✅     |
 | 33 | Notes Tab                                            | M — v1.1 Features   | ✅     |
-| 34 | Free-Text Annotations                                | M                   | 📋     |
+| 34 | Free-Text Annotations                                | M                   | ✅     |
 | 35 | Repeating Events                                     | M                   | ✅     |
 | 36 | Personalization Expansion (36a fonts/templates ✅ · 36b week-start 📋) | M | ⏳     |
 | 37 | Google Calendar Sync                                 | M                   | 📋     |
