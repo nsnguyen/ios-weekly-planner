@@ -22,6 +22,7 @@ struct WeeklyPlannerApp: App {
     @State private var inboxStore: any InboxStoring
     @State private var taskStore: any TaskStoring
     @State private var noteStore: any NoteStoring
+    @State private var annotationStore: any AnnotationStoring
     @State private var settingsStore: any SettingsStoring
     @State private var googleAuthService: any GoogleAuthService
     @State private var gmailClient: GmailClient
@@ -43,6 +44,7 @@ struct WeeklyPlannerApp: App {
         let baseEventStore = SwiftDataEventStore(context: container.mainContext)
         let taskStore = SwiftDataTaskStore(context: container.mainContext)
         let noteStore = SwiftDataNoteStore(context: container.mainContext)
+        let annotationStore = SwiftDataAnnotationStore(context: container.mainContext)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         let googleAuthService = LiveGoogleAuthService(
             config: .fromBundle(),
@@ -107,6 +109,7 @@ struct WeeklyPlannerApp: App {
         _inboxStore = State(initialValue: wiredInboxStore)
         _taskStore = State(initialValue: taskStore)
         _noteStore = State(initialValue: noteStore)
+        _annotationStore = State(initialValue: annotationStore)
         _settingsStore = State(initialValue: settingsStore)
         _googleAuthService = State(initialValue: googleAuthService)
         _gmailClient = State(initialValue: gmailClient)
@@ -129,6 +132,7 @@ struct WeeklyPlannerApp: App {
                 .environment(\.inboxStore, inboxStore)
                 .environment(\.taskStore, taskStore)
                 .environment(\.noteStore, noteStore)
+                .environment(\.annotationStore, annotationStore)
                 .environment(\.settingsStore, settingsStore)
                 .environment(\.googleAuthService, googleAuthService)
                 .environment(\.gmailClient, gmailClient)
