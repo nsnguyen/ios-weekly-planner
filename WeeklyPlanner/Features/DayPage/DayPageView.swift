@@ -144,7 +144,7 @@ struct DayPageContent: View {
                                 // events/notes area gains ~10pt of vertical
                                 // space (was 18).
                                 .padding(.top, 8)
-                                .padding(.leading, 44)
+                                .padding(.leading, DayPageLayout.pageMargin)
                                 .padding(.trailing, 18)
                                 .padding(.bottom, 18)
                                 // `minHeight`: on sparse days the content's
@@ -334,13 +334,16 @@ struct DayPageContent: View {
                 guard value.first == true, let drag = value.second,
                       annotationLayerSize.width > 0, annotationLayerSize.height > 0
                 else { return }
-                // `startLocation`, intentionally: the annotation anchors where
-                // the press began, not wherever the finger drifted by lift-off.
+                // X is column-aligned (not the press X): new notes line up at
+                // the event column. Y follows the press so the note starts on
+                // the line under the finger. `startLocation`, intentionally:
+                // anchored where the press began, not where the finger drifted.
                 // `annotationLayerSize` mirrors AnnotationLayer's geo.size (same
                 // node) — captured separately because this gesture fires outside
                 // the layer's GeometryReader scope.
-                let unit = CGPoint(x: drag.startLocation.x / annotationLayerSize.width,
-                                   y: drag.startLocation.y / annotationLayerSize.height)
+                let unit = DayPageLayout.annotationCreationUnit(
+                    pressY: drag.startLocation.y,
+                    layerSize: annotationLayerSize)
                 Task {
                     if let created = await viewModel?.addAnnotation(atUnit: unit) {
                         editingAnnotationID = created.id
@@ -368,7 +371,7 @@ struct DayPageContent: View {
                     commitPendingTaskIfAny()
                     creatingEventAt = weekDay.date
                 }
-                .padding(.leading, 44)
+                .padding(.leading, DayPageLayout.pageMargin)
                 .padding(.trailing, 18)
 
                 TodoBlock(tasks: viewModel.tasks,
@@ -385,7 +388,7 @@ struct DayPageContent: View {
                           onLongPress: { id in
                               editingTaskID = id
                           })
-                    .padding(.leading, 44)
+                    .padding(.leading, DayPageLayout.pageMargin)
                     .padding(.trailing, 18)
                     .padding(.bottom, 24)
             }
