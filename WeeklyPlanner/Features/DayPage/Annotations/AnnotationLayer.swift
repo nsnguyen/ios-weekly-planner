@@ -24,8 +24,14 @@ struct AnnotationLayer: View {
                                    layerSize: geo.size,
                                    editingID: $editingID,
                                    viewModel: viewModel)
-                        .position(x: geo.size.width * annotation.unitX,
-                                  y: geo.size.height * annotation.unitY)
+                        // Top-leading anchor: unitX/unitY address the note's
+                        // top-left corner (not its center), so its leading edge
+                        // lands exactly where the unit position maps. The host
+                        // ZStack is `.topLeading`, so each note starts at the
+                        // layer origin and this offset shifts its corner. Drag
+                        // is unaffected — `moveGesture` is translation-based.
+                        .offset(x: geo.size.width * annotation.unitX,
+                                y: geo.size.height * annotation.unitY)
                 }
             }
         }
