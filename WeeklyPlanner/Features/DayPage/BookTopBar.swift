@@ -15,9 +15,10 @@ import SwiftUI
 /// eyebrow color. Every callback is forwarded to the parent (`RootView`) which
 /// owns the actual navigation state — this view is purely chrome-and-layout.
 ///
-/// Outer padding matches the mock exactly:
-/// `top: 54 (statusbar/dynamic island clearance), leading: 26, trailing: 16,
-/// bottom: 8`.
+/// Outer padding: `top: 12, leading: 26, trailing: 16, bottom: 8`. The header
+/// lays out inside the safe area (only `BookCover` ignores it), so the status
+/// bar / Dynamic Island is already cleared — the `top` inset is just a small
+/// breathing margin below it, not island clearance.
 struct BookTopBar: View {
     /// Header metadata for the visible week. Drives the eyebrow's week-number
     /// suffix and the date range string rendered inside `DateRangePill`.
@@ -62,7 +63,7 @@ struct BookTopBar: View {
             topRow
             bottomRow
         }
-        .padding(EdgeInsets(top: 54, leading: 26, bottom: 8, trailing: 16))
+        .padding(EdgeInsets(top: 12, leading: 26, bottom: 8, trailing: 16))
     }
 
     // MARK: - Rows
