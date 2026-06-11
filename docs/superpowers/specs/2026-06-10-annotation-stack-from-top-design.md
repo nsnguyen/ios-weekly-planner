@@ -66,11 +66,14 @@ directly comparable to `annotationLayerSize`.
   is the header's bottom on an empty day and the events/inbox bottom otherwise —
   no per-row measurement needed. (The outer `minHeight` stretch happens on the
   parent frame node, not the VStack, so the VStack's own frame stays natural.)
-- **Annotation bottoms.** Each `AnnotationView` in `AnnotationLayer` reports its
-  rendered frame's `maxY` into a `@Binding var noteBottoms: [UUID: CGFloat]`
-  owned by `DayPageView` (entry removed on disappear). Real frames mean wrapped
-  text, bold, paper-size scaling, and dragged notes are all accounted for.
-  In-progress drag offsets settle on gesture end like any geometry change.
+- **Annotation heights.** Each `AnnotationView` in `AnnotationLayer` reports its
+  rendered **height** into a `@Binding var noteHeights: [UUID: CGFloat]` owned by
+  `DayPageView` (entry removed on disappear). At press time the gesture computes
+  each note's bottom as `layerHeight × unitY + height` from the live model.
+  Heights rather than frames on purpose: height is pure layout (wrapped text,
+  bold, paper-size scaling all measured), independent of the `.offset` render
+  transform, and reading `unitY` live means a note dragged a moment ago can
+  never contribute a stale bottom.
 
 ### 3. Pure stacking function in `DayPageLayout`
 
@@ -110,7 +113,7 @@ draft, open-editor-on-create — is untouched.
 |------|--------|
 | `Features/DayPage/DayPageLayout.swift` | `stackedAnnotationUnit` + constants; delete `annotationCreationUnit` |
 | `Features/DayPage/DayPageView.swift` | named coordinate space; `contentBottomY` state; gesture uses stacking function |
-| `Features/DayPage/Annotations/AnnotationLayer.swift` | per-annotation frame reporting |
+| `Features/DayPage/Annotations/AnnotationLayer.swift` | per-annotation height reporting |
 | `WeeklyPlannerTests/Annotations/DayPageLayoutTests.swift` | replace press-Y tests with stacking tests |
 
 ## Edge cases
