@@ -170,4 +170,43 @@ final class AnnotationsUITests: XCTestCase {
         navigateToTestDay(app)
         deleteAnnotationIfPresent(app, text: "drag me")
     }
+
+    @MainActor
+    func testNewNotesStackFromTopOfEmptyDay() {
+        let app = launchOnTestDayPage()
+        purgeGhostAnnotations(app)
+        // Unlike the sibling tests, the top-quarter assertion needs the WHOLE
+        // page empty: stacking correctly lands below any residue, so leftover
+        // notes from this test or aborted sibling runs would fail it. Sweep
+        // every known test text, not just our own.
+        for residue in ["stack one", "stack two", "call mom", "drag me"] {
+            deleteAnnotationIfPresent(app, text: residue)
+        }
+
+        // First note: pressed mid-page, must land in the top quarter — the
+        // press position is ignored and an empty day stacks from the top.
+        XCTAssertTrue(createAnnotation(in: app, text: "stack one"),
+                      "Annotation editor did not appear after long-press attempts")
+        app.buttons[ID.styleDone].tap()
+
+        let paper = app.scrollViews.firstMatch
+        let first = app.staticTexts["stack one"]
+        XCTAssertTrue(first.waitForExistence(timeout: 4), "First note not rendered")
+        XCTAssertLessThan(first.frame.minY,
+                          paper.frame.minY + paper.frame.height * 0.25,
+                          "First note on an empty day should land in the top quarter of the page")
+
+        // Second note: stacks below the first, never on top of it.
+        XCTAssertTrue(createAnnotation(in: app, text: "stack two"),
+                      "Annotation editor did not appear for the second note")
+        app.buttons[ID.styleDone].tap()
+        let second = app.staticTexts["stack two"]
+        XCTAssertTrue(second.waitForExistence(timeout: 4), "Second note not rendered")
+        XCTAssertGreaterThanOrEqual(second.frame.minY, first.frame.maxY,
+                                    "Second note should stack below the first")
+
+        // Cleanup (mandatory — the store is persistent).
+        deleteAnnotationIfPresent(app, text: "stack two")
+        deleteAnnotationIfPresent(app, text: "stack one")
+    }
 }
