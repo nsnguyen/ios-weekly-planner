@@ -82,7 +82,7 @@ static let stackSpacing: CGFloat = 12      // gap below the anchor; tune visuall
 static let bottomHeadroom: CGFloat = 60    // keep at least this much page below a new note
 
 static func stackedAnnotationUnit(contentBottom: CGFloat,
-                                  annotationBottoms: some Collection<CGFloat>,
+                                  annotationBottoms: [CGFloat],
                                   layerSize: CGSize) -> CGPoint
 ```
 
@@ -137,7 +137,7 @@ draft, open-editor-on-create — is untouched.
 - Degenerate layer size: no NaN (clampUnit path).
 
 `AnnotationsUITests` addition: on an empty day, long-press mid-page → the
-created note's frame sits in the top quarter of the page.
+created note's frame sits in the top third of the page (device-robust threshold).
 
 ## Verification
 
