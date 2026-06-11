@@ -32,15 +32,17 @@ struct AnnotationLayer: View {
                                    layerSize: geo.size,
                                    editingID: $editingID,
                                    viewModel: viewModel)
-                        // Measured inside the offset so the value is the
-                        // note's laid-out size, untouched by translation.
+                        // The note's laid-out size; the .offset below is a
+                        // render translation and never affects it. The id is
+                        // captured by value so teardown never reads an
+                        // attribute of a deleted SwiftData model.
                         .onGeometryChange(for: CGFloat.self) { proxy in
                             proxy.size.height
-                        } action: { height in
-                            noteHeights[annotation.id] = height
+                        } action: { [id = annotation.id] height in
+                            noteHeights[id] = height
                         }
-                        .onDisappear {
-                            noteHeights.removeValue(forKey: annotation.id)
+                        .onDisappear { [id = annotation.id] in
+                            noteHeights.removeValue(forKey: id)
                         }
                         // Top-leading anchor: unitX/unitY address the note's
                         // top-left corner (not its center), so its leading edge

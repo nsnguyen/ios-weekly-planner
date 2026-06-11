@@ -8,16 +8,6 @@ enum DayPageLayout {
     /// annotation column all begin.
     static let pageMargin: CGFloat = 44
 
-    /// Unit-space (0…1) position for a new long-press annotation: leading
-    /// edge snapped to the event column (`pageMargin`), vertical position at
-    /// the press point. Horizontal press position is intentionally ignored so
-    /// every new note lines up in the same column. `Annotation.clampUnit` is
-    /// the NaN/inf safety net for a degenerate (zero) layer size.
-    static func annotationCreationUnit(pressY: CGFloat, layerSize: CGSize) -> CGPoint {
-        Annotation.clampUnit(CGPoint(x: pageMargin / layerSize.width,
-                                     y: pressY / layerSize.height))
-    }
-
     /// Vertical gap between the stacking anchor (lowest existing content)
     /// and a new note's top edge. A visual breathing gap, intentionally
     /// smaller than the paper's 28 pt ruled-line rhythm — placement is
@@ -27,6 +17,9 @@ enum DayPageLayout {
     /// A new note's top edge never lands closer than this to the page
     /// bottom, so a note stacked onto a full page stays visibly on the
     /// paper (overlap down there is accepted as "the page is full").
+    /// For layers shorter than this (unreachable in production — the
+    /// layer is floored to the viewport height), the clamp target goes
+    /// negative and `clampUnit` floors the note to the page top.
     static let bottomHeadroom: CGFloat = 60
 
     /// Unit-space (0…1) position for a new long-press annotation: leading

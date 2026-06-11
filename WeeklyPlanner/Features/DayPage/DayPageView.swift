@@ -205,7 +205,7 @@ struct DayPageContent: View {
                                 // origin: this names the same node the
                                 // annotation layer overlays and
                                 // annotationLayerSize measures.
-                                .coordinateSpace(name: Self.layerSpaceName)
+                                .coordinateSpace(.named(Self.layerSpaceName))
                         }
                         .onScrollGeometryChange(for: CGFloat.self) { geometry in
                             geometry.containerSize.height
@@ -355,21 +355,27 @@ struct DayPageContent: View {
         LongPressGesture(minimumDuration: 0.45)
             .simultaneously(with: DragGesture(minimumDistance: 0, coordinateSpace: .local))
             .onEnded { value in
-                guard value.first == true, let drag = value.second,
-                      annotationLayerSize.width > 0, annotationLayerSize.height > 0
+                guard value.first == true, value.second != nil,
+                      annotationLayerSize.width > 0, annotationLayerSize.height > 0,
+                      contentBottomY > 0,
+                      let viewModel
                 else { return }
-                // X is column-aligned (not the press X): new notes line up at
-                // the event column. Y follows the press so the note starts on
-                // the line under the finger. `startLocation`, intentionally:
-                // anchored where the press began, not where the finger drifted.
-                // `annotationLayerSize` mirrors AnnotationLayer's geo.size (same
-                // node) — captured separately because this gesture fires outside
-                // the layer's GeometryReader scope.
-                let unit = DayPageLayout.annotationCreationUnit(
-                    pressY: drag.startLocation.y,
+                // Stack-from-top: the press location is ignored on both axes.
+                // The note lands one stackSpacing below the lowest existing
+                // content. Bottoms are computed here, at press time, from
+                // live unitY + measured height, so a note dragged or deleted
+                // a moment ago stacks against current reality. The drag half
+                // of the gesture remains only to make synthesized XCUI
+                // presses fire (see the recipe comment above).
+                let bottoms = viewModel.annotations.map {
+                    annotationLayerSize.height * CGFloat($0.unitY) + (noteHeights[$0.id] ?? 0)
+                }
+                let unit = DayPageLayout.stackedAnnotationUnit(
+                    contentBottom: contentBottomY,
+                    annotationBottoms: bottoms,
                     layerSize: annotationLayerSize)
                 Task {
-                    if let created = await viewModel?.addAnnotation(atUnit: unit) {
+                    if let created = await viewModel.addAnnotation(atUnit: unit) {
                         editingAnnotationID = created.id
                     }
                 }
