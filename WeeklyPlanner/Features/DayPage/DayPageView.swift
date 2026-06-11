@@ -345,8 +345,8 @@ struct DayPageContent: View {
     /// Long-press on empty paper creates an annotation stacked below existing content.
     /// `.simultaneousGesture` keeps scrolling and row taps working.
     /// `.simultaneously(with:)` (NOT `.sequenced(before:)`): the zero-distance
-    /// drag starts observing at touch-down, so its value is checked for non-nil
-    /// even for a perfectly still press — a sequenced drag sees no events
+    /// drag starts observing at touch-down, so its value is non-nil even
+    /// for a perfectly still press — a sequenced drag sees no events
     /// from a motionless finger and hands `.second(true, nil)` to `onEnded`
     /// (exactly what synthesized XCUI presses and simulator mouse clicks do).
     /// The long-press half still gates firing: moving early fails it, so
