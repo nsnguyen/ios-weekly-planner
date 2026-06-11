@@ -118,10 +118,20 @@ struct DayPageContent: View {
     @State private var editingTaskID: UUID?
 
     @State private var annotationLayerSize: CGSize = .zero
+    /// Bottom edge (max Y) of the content column (header → events → inbox)
+    /// in the annotation layer's coordinate space — the stacking anchor for
+    /// new notes. Zero until first layout; the creation gesture guards on it.
+    @State private var contentBottomY: CGFloat = .zero
+    /// Rendered note heights reported by AnnotationLayer (see its doc).
+    @State private var noteHeights: [UUID: CGFloat] = [:]
     /// Visible paper height; floors the scroll content so empty days are
     /// fully long-pressable (see the `minHeight` note on the content frame).
     @State private var scrollViewportHeight: CGFloat = .zero
     @State private var editingAnnotationID: UUID?
+
+    /// Names the padded content node's local space (the annotation layer's
+    /// frame) so the content column can be measured in layer coordinates.
+    private static let layerSpaceName = "dayPage.annotationLayer"
 
     var body: some View {
         let now = Date()
@@ -140,6 +150,14 @@ struct DayPageContent: View {
 
                         ScrollView {
                             content(weekDay: weekDay, weekMeta: weekMeta)
+                                // Stacking anchor: the content column's bottom
+                                // edge in layer space (named space includes the
+                                // top padding; no literal-8 coupling).
+                                .onGeometryChange(for: CGFloat.self) { proxy in
+                                    proxy.frame(in: .named(Self.layerSpaceName)).maxY
+                                } action: { maxY in
+                                    contentBottomY = maxY
+                                }
                                 // Phase 29 (7): header sits higher; the
                                 // events/notes area gains ~10pt of vertical
                                 // space (was 18).
@@ -162,7 +180,8 @@ struct DayPageContent: View {
                                 .overlay(alignment: .topLeading) {
                                     if let viewModel {
                                         AnnotationLayer(viewModel: viewModel,
-                                                        editingID: $editingAnnotationID)
+                                                        editingID: $editingAnnotationID,
+                                                        noteHeights: $noteHeights)
                                     }
                                 }
                                 .onGeometryChange(for: CGSize.self) { proxy in
@@ -182,6 +201,11 @@ struct DayPageContent: View {
                                     commitPendingTaskIfAny()
                                 }
                                 .simultaneousGesture(annotationCreationGesture)
+                                // Geometry-neutral modifiers don't shift the
+                                // origin: this names the same node the
+                                // annotation layer overlays and
+                                // annotationLayerSize measures.
+                                .coordinateSpace(name: Self.layerSpaceName)
                         }
                         .onScrollGeometryChange(for: CGFloat.self) { geometry in
                             geometry.containerSize.height

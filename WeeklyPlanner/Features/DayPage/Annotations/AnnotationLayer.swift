@@ -12,6 +12,14 @@ import SwiftUI
 struct AnnotationLayer: View {
     let viewModel: DayPageViewModel
     @Binding var editingID: UUID?
+    /// Rendered height of each note, keyed by id — written here (the only
+    /// place notes are measured), read by the creation gesture to stack
+    /// new notes below existing ones. Heights, not frames, on purpose:
+    /// height is pure layout (independent of the `.offset` render
+    /// transform below), and the gesture pairs it with live `unitY` at
+    /// press time, so a note dragged a moment ago never contributes a
+    /// stale bottom.
+    @Binding var noteHeights: [UUID: CGFloat]
 
     var body: some View {
         GeometryReader { geo in
@@ -24,6 +32,16 @@ struct AnnotationLayer: View {
                                    layerSize: geo.size,
                                    editingID: $editingID,
                                    viewModel: viewModel)
+                        // Measured inside the offset so the value is the
+                        // note's laid-out size, untouched by translation.
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.size.height
+                        } action: { height in
+                            noteHeights[annotation.id] = height
+                        }
+                        .onDisappear {
+                            noteHeights.removeValue(forKey: annotation.id)
+                        }
                         // Top-leading anchor: unitX/unitY address the note's
                         // top-left corner (not its center), so its leading edge
                         // lands exactly where the unit position maps. The host
