@@ -32,6 +32,9 @@ final class AnnotationsUITests: XCTestCase {
     private func launchOnTestDayPage() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += ["-UITestSeedEmptyStore"]
+        // Pin Dynamic Type: the stacking test's geometry assertion budgets
+        // against the header's rendered height.
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryL"]
         app.launch()
         navigateToTestDay(app)
         return app
@@ -77,6 +80,26 @@ final class AnnotationsUITests: XCTestCase {
         }
     }
 
+    /// Deletes every committed annotation on the current page (display
+    /// label "Annotation: <text>"), regardless of text. The stacking test
+    /// needs the WHOLE page empty: stacking correctly lands below any
+    /// residue, so leftovers from aborted runs — even with texts no test
+    /// claims — would read as placement failures. Generic by prefix so
+    /// unknown residue self-heals. Best-effort, never asserts.
+    @MainActor
+    private func purgeAllAnnotations(_ app: XCUIApplication) {
+        for _ in 0..<12 {
+            let note = app.buttons.matching(
+                NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
+            guard note.exists else { return }
+            note.tap()
+            let delete = app.buttons[ID.styleDelete]
+            guard delete.waitForExistence(timeout: 2) else { return }
+            delete.tap()
+            usleep(300_000) // let the layer settle before the next sweep
+        }
+    }
+
     /// Long-press empty paper until the annotation editor appears, then type
     /// `text`. Retries a few candidate spots: a press that lands on a row is
     /// swallowed by the row's context menu (rows use `.contextMenu`), so a
@@ -99,9 +122,11 @@ final class AnnotationsUITests: XCTestCase {
                 return true
             }
             if attempt < candidates.count - 1 {
-                // Dismiss a possible context menu; on empty paper this tap
-                // is inert (plain taps never create annotations).
-                paper.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.25)).tap()
+                // Dismiss a possible context menu with a bottom-trailing tap:
+                // that corner is never occupied (notes hug the leading margin
+                // and stack from the top), and plain taps never create
+                // annotations.
+                paper.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.9)).tap()
             }
         }
         return false
@@ -174,16 +199,9 @@ final class AnnotationsUITests: XCTestCase {
     @MainActor
     func testNewNotesStackFromTopOfEmptyDay() {
         let app = launchOnTestDayPage()
-        purgeGhostAnnotations(app)
-        // Unlike the sibling tests, the top-quarter assertion needs the WHOLE
-        // page empty: stacking correctly lands below any residue, so leftover
-        // notes from this test or aborted sibling runs would fail it. Sweep
-        // every known test text, not just our own.
-        for residue in ["stack one", "stack two", "call mom", "drag me"] {
-            deleteAnnotationIfPresent(app, text: residue)
-        }
+        purgeAllAnnotations(app) // whole page must be empty — see helper doc
 
-        // First note: pressed mid-page, must land in the top quarter — the
+        // First note: pressed mid-page, must land in the top third — the
         // press position is ignored and an empty day stacks from the top.
         XCTAssertTrue(createAnnotation(in: app, text: "stack one"),
                       "Annotation editor did not appear after long-press attempts")
@@ -192,9 +210,14 @@ final class AnnotationsUITests: XCTestCase {
         let paper = app.scrollViews.firstMatch
         let first = app.staticTexts["stack one"]
         XCTAssertTrue(first.waitForExistence(timeout: 4), "First note not rendered")
+        // Top third, not quarter: measured geometry puts the note's top at
+        // ≈106-128pt of a ≈592pt paper on iPhone 17, but the header is
+        // ~fixed-height while the threshold scales with the device. Every
+        // press candidate sits at ≥0.45 of the page, so top-third still
+        // proves the press position was ignored.
         XCTAssertLessThan(first.frame.minY,
-                          paper.frame.minY + paper.frame.height * 0.25,
-                          "First note on an empty day should land in the top quarter of the page")
+                          paper.frame.minY + paper.frame.height / 3,
+                          "First note on an empty day should land in the top third of the page")
 
         // Second note: stacks below the first, never on top of it.
         XCTAssertTrue(createAnnotation(in: app, text: "stack two"),
