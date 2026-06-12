@@ -6,6 +6,8 @@ import SwiftData
 /// changes to the schema show up in one place.
 @MainActor
 enum SwiftDataStack {
+    // New non-optional @Model fields MUST carry property-level defaults —
+    // lightweight migration reads the declaration, not the init (see 1d48e6d).
     static let allModels: [any PersistentModel.Type] = [
         Event.self,
         TaskItem.self,

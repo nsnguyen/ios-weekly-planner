@@ -16,8 +16,11 @@ final class Annotation {
     /// True while the note sits where the stacking gesture placed it — the
     /// machine may restack it when content grows underneath. A user drag
     /// clears it forever (the machine never moves what the user placed).
-    /// Defaults false so pre-feature rows decode as pinned.
-    var autoPlaced: Bool
+    /// The property-level `= false` is load-bearing: SwiftData lightweight
+    /// migration takes the schema default from the declaration (not the
+    /// init), so pre-feature rows decode as pinned instead of crashing the
+    /// container open (same lesson as AIInsight, commit 1d48e6d).
+    var autoPlaced: Bool = false
     var unitX: Double
     var unitY: Double
     var createdAt: Date
