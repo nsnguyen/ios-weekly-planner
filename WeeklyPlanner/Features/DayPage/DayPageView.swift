@@ -124,6 +124,13 @@ struct DayPageContent: View {
     @State private var contentBottomY: CGFloat = .zero
     /// Rendered note heights reported by AnnotationLayer (see its doc).
     @State private var noteHeights: [UUID: CGFloat] = [:]
+    /// Tallest annotation layer seen for this page — the keyboard-free
+    /// basis. Nudges are skipped while the live layer is shorter (keyboard
+    /// up): persisting unit positions against a shrunken basis would render
+    /// ~33% too low once the keyboard drops, and down-only makes that
+    /// permanent. Skipping is fail-safe (the next keyboard-free growth, or
+    /// the initial-layout fire after rotation, nudges correctly).
+    @State private var maxLayerHeight: CGFloat = 0
     /// Visible paper height; floors the scroll content so empty days are
     /// fully long-pressable (see the `minHeight` note on the content frame).
     @State private var scrollViewportHeight: CGFloat = .zero
@@ -188,6 +195,7 @@ struct DayPageContent: View {
                                     proxy.size
                                 } action: { newSize in
                                     annotationLayerSize = newSize
+                                    maxLayerHeight = max(maxLayerHeight, newSize.height)
                                 }
                                 // Tap on empty paper *between* events /
                                 // inbox rows commits the pending to-do.
@@ -213,9 +221,15 @@ struct DayPageContent: View {
                                     // shrinking never pulls notes back up.
                                     // The initial 0 → first-layout fire is
                                     // harmless: notes below the content
-                                    // bottom don't collide, and an actually
-                                    // overlapped note self-heals on appear.
-                                    guard newValue > oldValue, let viewModel else { return }
+                                    // bottom don't collide.
+                                    // A note left overlapped by content that
+                                    // grew between sessions settles on the
+                                    // next growth event or drag, not on the
+                                    // appear-time fire (annotations may not
+                                    // be loaded yet when it lands).
+                                    guard newValue > oldValue, let viewModel,
+                                          annotationLayerSize.height >= maxLayerHeight
+                                    else { return }
                                     let layer = annotationLayerSize
                                     let heights = noteHeights
                                     let editing = editingAnnotationID

@@ -397,6 +397,10 @@ final class DayPageViewModel {
                 annotations.first(where: { $0.id == nudge.id })?.unitY = nudge.unitY
             }
         }
+        // Upsert re-inserts unknown ids; that can't resurrect a concurrently
+        // deleted note today only because deletes flow through the editor and
+        // editing notes are excluded from plans. If a non-editor delete path
+        // ever appears, give nudges an update-only store call.
         for nudge in nudges {
             if let annotation = annotations.first(where: { $0.id == nudge.id }) {
                 try? await annotationStore.upsert(annotation)

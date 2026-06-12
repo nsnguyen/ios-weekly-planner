@@ -53,6 +53,8 @@ enum DayPageLayout {
     /// a note whose target isn't strictly below its current top is left in place,
     /// so a settled page emits no nudges.
     /// Pinned (user-dragged), editing, and below-content notes never move.
+    /// Mid-drag notes are deliberately NOT excluded: a drag holds position in
+    /// gesture state only, and its end-commit overwrites any nudge — drag wins.
     /// Pure: plain values in, nudges out — unit-testable without SwiftUI.
     static func nudgesForContentGrowth(notes: [(id: UUID, unitY: Double, autoPlaced: Bool)],
                                        editingID: UUID?,
