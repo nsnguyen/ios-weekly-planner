@@ -124,13 +124,6 @@ struct DayPageContent: View {
     @State private var contentBottomY: CGFloat = .zero
     /// Rendered note heights reported by AnnotationLayer (see its doc).
     @State private var noteHeights: [UUID: CGFloat] = [:]
-    /// Tallest annotation layer seen for this page, retained for diagnostic
-    /// use and potential future overflow-guard logic. The live
-    /// `annotationLayerSize.height` is used for both collision detection and
-    /// new-unitY computation in the nudge path: it is the same basis the
-    /// `AnnotationLayer` GeometryReader uses to render notes, so positions
-    /// are always consistent regardless of keyboard or safe-area state.
-    @State private var maxLayerHeight: CGFloat = 0
     /// Visible paper height; floors the scroll content so empty days are
     /// fully long-pressable (see the `minHeight` note on the content frame).
     @State private var scrollViewportHeight: CGFloat = .zero
@@ -195,7 +188,6 @@ struct DayPageContent: View {
                                     proxy.size
                                 } action: { newSize in
                                     annotationLayerSize = newSize
-                                    maxLayerHeight = max(maxLayerHeight, newSize.height)
                                 }
                                 // Tap on empty paper *between* events /
                                 // inbox rows commits the pending to-do.
@@ -228,18 +220,20 @@ struct DayPageContent: View {
                                     // appear-time fire (annotations may not
                                     // be loaded yet when it lands).
                                     guard newValue > oldValue, let viewModel else { return }
-                                    // Use the live layer size for both collision
-                                    // detection and new-position computation.
-                                    // The layer size tracks the scroll viewport
-                                    // (minHeight floor), which shrinks when the
-                                    // keyboard is up. Both collision and the
-                                    // stored unitY must use the same basis as
-                                    // the AnnotationLayer's GeometryReader so
-                                    // the note's rendered position is correct.
-                                    // maxLayerHeight captured an initial
-                                    // full-height measurement before
-                                    // bottomAffordances rendered and is not a
-                                    // stable rendering basis — see maxLayerHeight.
+                                    // Live layer for both collision and the new
+                                    // unitY — the same basis AnnotationLayer
+                                    // renders against, so positions are always
+                                    // self-consistent. Known residual: a growth
+                                    // event landing while the keyboard shrinks
+                                    // the layer (background sync during typing)
+                                    // writes a slightly-low position for the
+                                    // keyboard-free render — bounded by the
+                                    // headroom clamp, downward-only, and
+                                    // drag-fixable. Accepted: every "stable
+                                    // basis" candidate measured here proved to
+                                    // be a pre-layout transient (591.7pt before
+                                    // the bottom affordances inset the
+                                    // viewport to ~447pt steady state).
                                     let layer = annotationLayerSize
                                     let heights = noteHeights
                                     let editing = editingAnnotationID
