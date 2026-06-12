@@ -380,16 +380,24 @@ final class DayPageViewModel {
     /// into (note first, event second — the event would overlap the note).
     /// Persists via upsert WITHOUT touching `autoPlaced`: only a user drag
     /// pins a note; a nudge must leave it nudgeable for the next growth.
+    ///
+    /// `layerSize`: the keyboard-free basis — used for computing the new unitY
+    /// so stored positions are stable after the keyboard dismisses.
+    /// `renderHeight`: the live layer height — used for collision detection so
+    /// a note that visually overlaps content while the keyboard is up is
+    /// correctly detected. Defaults to `layerSize.height` (keyboard-free case).
     func nudgeAutoPlacedNotes(contentBottom: CGFloat,
                               layerSize: CGSize,
                               noteHeights: [UUID: CGFloat],
-                              editingID: UUID?) async {
+                              editingID: UUID?,
+                              renderHeight: CGFloat? = nil) async {
         let nudges = DayPageLayout.nudgesForContentGrowth(
             notes: annotations.map { (id: $0.id, unitY: $0.unitY, autoPlaced: $0.autoPlaced) },
             editingID: editingID,
             contentBottom: contentBottom,
             noteHeights: noteHeights,
-            layerSize: layerSize)
+            layerSize: layerSize,
+            renderHeight: renderHeight)
         guard !nudges.isEmpty else { return }
         // Animated so the restack reads as deliberate, not a glitch.
         withAnimation {

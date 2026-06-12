@@ -242,6 +242,20 @@ final class AnnotationsUITests: XCTestCase {
         _ = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Annotation: "))
             .firstMatch.waitForExistence(timeout: 3)
         purgeAllAnnotations(app) // whole page must be empty (handles any "nudge me" residue)
+        // Residue events from aborted runs change the content bottom and
+        // accumulate forever — sweep any leftover "nudge event" rows first.
+        for _ in 0..<6 {
+            let leftover = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label CONTAINS %@", "nudge event")).firstMatch
+            guard leftover.waitForExistence(timeout: 2) else { break }
+            leftover.tap()
+            let del = app.buttons["eventsheet.delete"]
+            guard del.waitForExistence(timeout: 3) else { break }
+            del.tap()
+            let confirm = app.buttons["Delete"].firstMatch
+            if confirm.waitForExistence(timeout: 2) { confirm.tap() }
+            usleep(500_000)
+        }
 
         XCTAssertTrue(createAnnotation(in: app, text: "nudge me"),
                       "Annotation editor did not appear after long-press attempts")

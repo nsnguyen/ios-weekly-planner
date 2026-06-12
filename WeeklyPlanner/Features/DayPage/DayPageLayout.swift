@@ -56,15 +56,30 @@ enum DayPageLayout {
     /// Mid-drag notes are deliberately NOT excluded: a drag holds position in
     /// gesture state only, and its end-commit overwrites any nudge — drag wins.
     /// Pure: plain values in, nudges out — unit-testable without SwiftUI.
+    ///
+    /// `renderHeight`: live layer height used to determine whether a note's
+    /// *current rendered position* collides with `contentBottom`. This may
+    /// differ from `layerSize.height` when the keyboard is up — the layer is
+    /// keyboard-shrunken while the note still renders against that shrunken
+    /// height. `layerSize.height` is the keyboard-free basis used for the
+    /// new unitY computation so saved positions are stable once the keyboard
+    /// drops. Pass `annotationLayerSize.height` for `renderHeight` and
+    /// `max(annotationLayerSize.height, maxLayerHeight)` for `layerSize.height`.
     static func nudgesForContentGrowth(notes: [(id: UUID, unitY: Double, autoPlaced: Bool)],
                                        editingID: UUID?,
                                        contentBottom: CGFloat,
                                        noteHeights: [UUID: CGFloat],
-                                       layerSize: CGSize) -> [AnnotationNudge] {
+                                       layerSize: CGSize,
+                                       renderHeight: CGFloat? = nil) -> [AnnotationNudge] {
         guard layerSize.width > 0, layerSize.height > 0 else { return [] }
+        // Collision uses the live rendered height so a keyboard-shrunken note
+        // that visually overlaps the content bottom is correctly detected.
+        // Position computation uses layerSize (the keyboard-free basis) so the
+        // stored unitY renders consistently once the keyboard is dismissed.
+        let collisionHeight = renderHeight ?? layerSize.height
         let colliding = notes
             .filter { $0.autoPlaced && $0.id != editingID
-                && CGFloat($0.unitY) * layerSize.height < contentBottom }
+                && CGFloat($0.unitY) * collisionHeight < contentBottom }
             .sorted { $0.unitY < $1.unitY }
         guard !colliding.isEmpty else { return [] }
 
@@ -78,7 +93,7 @@ enum DayPageLayout {
             let unit = stackedAnnotationUnit(contentBottom: contentBottom,
                                              annotationBottoms: bottoms,
                                              layerSize: layerSize)
-            let currentTop = CGFloat(note.unitY) * layerSize.height
+            let currentTop = CGFloat(note.unitY) * collisionHeight
             let newTop = CGFloat(unit.y) * layerSize.height
             if newTop > currentTop {
                 nudges.append(AnnotationNudge(id: note.id, unitY: unit.y))
