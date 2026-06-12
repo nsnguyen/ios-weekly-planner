@@ -232,4 +232,66 @@ final class AnnotationsUITests: XCTestCase {
         deleteAnnotationIfPresent(app, text: "stack two")
         deleteAnnotationIfPresent(app, text: "stack one")
     }
+
+    @MainActor
+    func testEventCreatedAfterNoteNudgesNoteBelowIt() {
+        let app = launchOnTestDayPage()
+        // Give the annotation layer time to render before purging residue
+        // (purgeAllAnnotations uses .exists which is synchronous — without a
+        // settle wait it exits immediately if the layer hasn't appeared yet).
+        _ = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Annotation: "))
+            .firstMatch.waitForExistence(timeout: 3)
+        purgeAllAnnotations(app) // whole page must be empty (handles any "nudge me" residue)
+
+        XCTAssertTrue(createAnnotation(in: app, text: "nudge me"),
+                      "Annotation editor did not appear after long-press attempts")
+        app.buttons[ID.styleDone].tap()
+        let note = app.staticTexts["nudge me"]
+        XCTAssertTrue(note.waitForExistence(timeout: 4), "Note not rendered")
+        let topBefore = note.frame.minY
+
+        // Create an event on the same day — the content column grows into
+        // the band the note occupies (same recipe as EventCreateFlowUITests).
+        let addLink = app.buttons["daypage.events.addRow"]
+        XCTAssertTrue(addLink.waitForExistence(timeout: 5))
+        addLink.tap()
+        let titleField = app.textFields.firstMatch
+        XCTAssertTrue(titleField.waitForExistence(timeout: 3))
+        titleField.tap()
+        _ = app.keyboards.firstMatch.waitForExistence(timeout: 2)
+        titleField.typeText("nudge event")
+        if app.keyboards.firstMatch.exists {
+            app.keyboards.buttons["Return"].tap()
+            _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 2)
+        }
+        let save = app.buttons["paperEventSheet.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: 2))
+        save.tap()
+        _ = save.waitForNonExistence(timeout: 5)
+
+        let eventRow = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "nudge event")).firstMatch
+        XCTAssertTrue(eventRow.waitForExistence(timeout: 5), "Event row not visible")
+        sleep(1) // let the nudge animation settle before reading frames
+
+        // The note must have moved below the event row — no overlap.
+        XCTAssertTrue(note.waitForExistence(timeout: 4), "Note vanished after event creation")
+        XCTAssertGreaterThanOrEqual(note.frame.minY, eventRow.frame.maxY,
+                                    "Note should be nudged below the event row")
+        XCTAssertGreaterThan(note.frame.minY, topBefore,
+                             "Note should have moved down from its pre-event position")
+
+        // Cleanup (mandatory — persistent store): note first, then the event
+        // via its row → sheet delete (confirmation dialog may appear).
+        deleteAnnotationIfPresent(app, text: "nudge me")
+        if eventRow.exists {
+            eventRow.tap()
+            let del = app.buttons["eventsheet.delete"]
+            if del.waitForExistence(timeout: 3) {
+                del.tap()
+                let confirm = app.buttons["Delete"].firstMatch
+                if confirm.waitForExistence(timeout: 2) { confirm.tap() }
+            }
+        }
+    }
 }
