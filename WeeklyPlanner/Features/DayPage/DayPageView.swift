@@ -206,6 +206,27 @@ struct DayPageContent: View {
                                 // annotation layer overlays and
                                 // annotationLayerSize measures.
                                 .coordinateSpace(.named(Self.layerSpaceName))
+                                .onChange(of: contentBottomY) { oldValue, newValue in
+                                    // Content column grew (event/inbox row
+                                    // arrived): restack machine-placed notes
+                                    // it now overlaps. Growth only — content
+                                    // shrinking never pulls notes back up.
+                                    // The initial 0 → first-layout fire is
+                                    // harmless: notes below the content
+                                    // bottom don't collide, and an actually
+                                    // overlapped note self-heals on appear.
+                                    guard newValue > oldValue, let viewModel else { return }
+                                    let layer = annotationLayerSize
+                                    let heights = noteHeights
+                                    let editing = editingAnnotationID
+                                    Task {
+                                        await viewModel.nudgeAutoPlacedNotes(
+                                            contentBottom: newValue,
+                                            layerSize: layer,
+                                            noteHeights: heights,
+                                            editingID: editing)
+                                    }
+                                }
                         }
                         .onScrollGeometryChange(for: CGFloat.self) { geometry in
                             geometry.containerSize.height

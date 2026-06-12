@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SwiftData
+import SwiftUI
 
 /// Drives the Paper Day page for a single `(weekOffset, dayIdx)` cell.
 ///
@@ -327,6 +328,7 @@ final class DayPageViewModel {
                                     text: "",
                                     colorToken: .ink,
                                     isBold: false,
+                                    autoPlaced: true,
                                     unitX: clamped.x,
                                     unitY: clamped.y)
         do {
@@ -367,7 +369,39 @@ final class DayPageViewModel {
         let clamped = Annotation.clampUnit(point)
         annotation.unitX = clamped.x
         annotation.unitY = clamped.y
+        // A drag pins the note: the user placed it, so content growth must
+        // never auto-move it again (autoPlaced gates nudgesForContentGrowth).
+        annotation.autoPlaced = false
         try? await annotationStore.upsert(annotation)
+        await refreshAnnotations()
+    }
+
+    /// Auto-nudge: restack machine-placed notes the content column has grown
+    /// into (note first, event second — the event would overlap the note).
+    /// Persists via upsert WITHOUT touching `autoPlaced`: only a user drag
+    /// pins a note; a nudge must leave it nudgeable for the next growth.
+    func nudgeAutoPlacedNotes(contentBottom: CGFloat,
+                              layerSize: CGSize,
+                              noteHeights: [UUID: CGFloat],
+                              editingID: UUID?) async {
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: annotations.map { (id: $0.id, unitY: $0.unitY, autoPlaced: $0.autoPlaced) },
+            editingID: editingID,
+            contentBottom: contentBottom,
+            noteHeights: noteHeights,
+            layerSize: layerSize)
+        guard !nudges.isEmpty else { return }
+        // Animated so the restack reads as deliberate, not a glitch.
+        withAnimation {
+            for nudge in nudges {
+                annotations.first(where: { $0.id == nudge.id })?.unitY = nudge.unitY
+            }
+        }
+        for nudge in nudges {
+            if let annotation = annotations.first(where: { $0.id == nudge.id }) {
+                try? await annotationStore.upsert(annotation)
+            }
+        }
         await refreshAnnotations()
     }
 
