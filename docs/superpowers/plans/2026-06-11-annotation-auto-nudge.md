@@ -420,7 +420,7 @@ import SwiftUI
                                     // The initial 0 → first-layout fire is
                                     // harmless: notes below the content
                                     // bottom don't collide, and an actually
-                                    // overlapped note self-heals on appear.
+                                    // overlapped note settles on the next growth event or drag.
                                     guard newValue > oldValue, let viewModel else { return }
                                     let layer = annotationLayerSize
                                     let heights = noteHeights
