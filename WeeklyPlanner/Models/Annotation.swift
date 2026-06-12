@@ -13,6 +13,11 @@ final class Annotation {
     /// `InkColorToken` raw value (stable token, never a raw platform color).
     var colorTokenRaw: String
     var isBold: Bool
+    /// True while the note sits where the stacking gesture placed it — the
+    /// machine may restack it when content grows underneath. A user drag
+    /// clears it forever (the machine never moves what the user placed).
+    /// Defaults false so pre-feature rows decode as pinned.
+    var autoPlaced: Bool
     var unitX: Double
     var unitY: Double
     var createdAt: Date
@@ -23,6 +28,7 @@ final class Annotation {
          text: String,
          colorToken: InkColorToken = .ink,
          isBold: Bool = false,
+         autoPlaced: Bool = false,
          unitX: Double,
          unitY: Double,
          createdAt: Date = .init(),
@@ -33,6 +39,7 @@ final class Annotation {
         self.text = text
         colorTokenRaw = colorToken.rawValue
         self.isBold = isBold
+        self.autoPlaced = autoPlaced
         self.unitX = unitX
         self.unitY = unitY
         self.createdAt = createdAt

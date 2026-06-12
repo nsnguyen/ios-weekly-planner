@@ -34,6 +34,7 @@ final class SwiftDataAnnotationStore: AnnotationStoring {
             existing.text = annotation.text
             existing.colorTokenRaw = annotation.colorTokenRaw
             existing.isBold = annotation.isBold
+            existing.autoPlaced = annotation.autoPlaced
             existing.unitX = annotation.unitX
             existing.unitY = annotation.unitY
             existing.updatedAt = .init()

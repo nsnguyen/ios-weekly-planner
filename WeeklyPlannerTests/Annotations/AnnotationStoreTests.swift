@@ -105,4 +105,26 @@ final class AnnotationStoreTests: XCTestCase {
         XCTAssertEqual(Annotation.key(weekOffset: 0, dayIdx: 5), "0:5")
         XCTAssertEqual(Annotation.key(weekOffset: -2, dayIdx: 0), "-2:0")
     }
+
+    func testAutoPlacedFlagRoundTrips() async throws {
+        let a = Annotation(dayKey: "0:5", text: "stacked", colorToken: .ink,
+                           isBold: false, autoPlaced: true, unitX: 0.1, unitY: 0.2)
+        try await store.upsert(a)
+
+        let fetched = try await store.annotations(dayKey: "0:5").first
+        XCTAssertEqual(fetched?.autoPlaced, true)
+    }
+
+    func testUpsertExistingUpdatesAutoPlaced() async throws {
+        let id = UUID()
+        try await store.upsert(Annotation(id: id, dayKey: "0:5", text: "v1", colorToken: .ink,
+                                          isBold: false, autoPlaced: true, unitX: 0.5, unitY: 0.5))
+        // Drag-commit path writes the same row with the flag cleared — the
+        // store's field-by-field update copy must include it.
+        try await store.upsert(Annotation(id: id, dayKey: "0:5", text: "v1", colorToken: .ink,
+                                          isBold: false, autoPlaced: false, unitX: 0.5, unitY: 0.6))
+
+        let fetched = try await store.annotations(dayKey: "0:5").first
+        XCTAssertEqual(fetched?.autoPlaced, false)
+    }
 }
