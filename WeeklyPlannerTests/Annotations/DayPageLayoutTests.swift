@@ -138,4 +138,35 @@ final class DayPageLayoutTests: XCTestCase {
             noteHeights: [id: 20], layerSize: .zero)
         XCTAssertTrue(nudges.isEmpty)
     }
+
+    func testCollidingNoteNearPageBottomClampsToHeadroom() {
+        let id = UUID()
+        // contentBottom deep in the page: target = min(760 + 12, 740) = 740.
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(id, unitY: 0.5)], editingID: nil, contentBottom: 760,
+            noteHeights: [id: 20], layerSize: CGSize(width: 400, height: 800))
+        XCTAssertEqual(nudges.map(\.id), [id])
+        XCTAssertEqual(nudges[0].unitY * 800, 800 - DayPageLayout.bottomHeadroom, accuracy: 0.0001)
+    }
+
+    func testReapplyingPlanYieldsNoFurtherNudges() {
+        let a = UUID(), b = UUID()
+        let layer = CGSize(width: 400, height: 800)
+        let heights: [UUID: CGFloat] = [a: 20, b: 20]
+        // Content fills past the headroom line: both notes pile at the clamp.
+        let first = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(a, unitY: 0.05), note(b, unitY: 0.15)],
+            editingID: nil, contentBottom: 750, noteHeights: heights, layerSize: layer)
+        XCTAssertEqual(first.count, 2, "both notes should move down to the clamp")
+
+        // Apply the plan, then re-run at the same contentBottom: a settled
+        // page must emit nothing — no perpetual no-op nudges (each would
+        // become a pointless SwiftData write at the call site).
+        var moved: [UUID: Double] = [a: 0.05, b: 0.15]
+        for nudge in first { moved[nudge.id] = nudge.unitY }
+        let second = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(a, unitY: moved[a]!), note(b, unitY: moved[b]!)],
+            editingID: nil, contentBottom: 750, noteHeights: heights, layerSize: layer)
+        XCTAssertTrue(second.isEmpty)
+    }
 }

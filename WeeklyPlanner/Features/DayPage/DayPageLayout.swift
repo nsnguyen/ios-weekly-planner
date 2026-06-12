@@ -48,7 +48,10 @@ enum DayPageLayout {
     /// Restack plan for content growth: machine-placed (`autoPlaced`) notes
     /// whose tops the content column has grown past are restacked below it —
     /// in their current vertical order, each clearing the content, every
-    /// pinned/editing/non-colliding note, and every note already restacked.
+    /// pinned/editing/non-colliding note, and every note already restacked
+    /// (page-full headroom pile-ups excepted, as at creation). Down-nudge only:
+    /// a note whose target isn't strictly below its current top is left in place,
+    /// so a settled page emits no nudges.
     /// Pinned (user-dragged), editing, and below-content notes never move.
     /// Pure: plain values in, nudges out — unit-testable without SwiftUI.
     static func nudgesForContentGrowth(notes: [(id: UUID, unitY: Double, autoPlaced: Bool)],
@@ -73,8 +76,19 @@ enum DayPageLayout {
             let unit = stackedAnnotationUnit(contentBottom: contentBottom,
                                              annotationBottoms: bottoms,
                                              layerSize: layerSize)
-            nudges.append(AnnotationNudge(id: note.id, unitY: unit.y))
-            bottoms.append(CGFloat(unit.y) * layerSize.height + (noteHeights[note.id] ?? 0))
+            let currentTop = CGFloat(note.unitY) * layerSize.height
+            let newTop = CGFloat(unit.y) * layerSize.height
+            if newTop > currentTop {
+                nudges.append(AnnotationNudge(id: note.id, unitY: unit.y))
+                bottoms.append(newTop + (noteHeights[note.id] ?? 0))
+            } else {
+                // Down-nudge only: at the page-full headroom clamp (or after
+                // a layer resize) the target isn't below the note — leave it
+                // where it is, emit nothing, and stack later notes against
+                // its actual position. Keeps repeated growth events no-op
+                // once the page has settled.
+                bottoms.append(currentTop + (noteHeights[note.id] ?? 0))
+            }
         }
         return nudges
     }
