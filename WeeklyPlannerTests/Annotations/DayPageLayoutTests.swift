@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import XCTest
 @testable import WeeklyPlanner
 
@@ -60,5 +61,81 @@ final class DayPageLayoutTests: XCTestCase {
                                                        layerSize: .zero)
         XCTAssertTrue(unit.x.isFinite && unit.x >= 0 && unit.x <= 1)
         XCTAssertTrue(unit.y.isFinite && unit.y >= 0 && unit.y <= 1)
+    }
+
+    // MARK: - Auto-nudge on content growth
+
+    private func note(_ id: UUID, unitY: Double, autoPlaced: Bool = true)
+        -> (id: UUID, unitY: Double, autoPlaced: Bool)
+    {
+        (id: id, unitY: unitY, autoPlaced: autoPlaced)
+    }
+
+    func testNoCollisionsYieldsNoNudges() {
+        let id = UUID()
+        // Note top (0.5 × 800 = 400) is below the content bottom (200).
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(id, unitY: 0.5)], editingID: nil, contentBottom: 200,
+            noteHeights: [id: 20], layerSize: CGSize(width: 400, height: 800))
+        XCTAssertTrue(nudges.isEmpty)
+    }
+
+    func testPinnedCollidingNoteIsNotNudged() {
+        let id = UUID()
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(id, unitY: 0.1, autoPlaced: false)], editingID: nil,
+            contentBottom: 200, noteHeights: [id: 20],
+            layerSize: CGSize(width: 400, height: 800))
+        XCTAssertTrue(nudges.isEmpty)
+    }
+
+    func testEditingNoteIsNotNudged() {
+        let id = UUID()
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(id, unitY: 0.1)], editingID: id, contentBottom: 200,
+            noteHeights: [id: 20], layerSize: CGSize(width: 400, height: 800))
+        XCTAssertTrue(nudges.isEmpty)
+    }
+
+    func testCollidingNoteRestacksBelowContent() {
+        let id = UUID()
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(id, unitY: 0.1)], editingID: nil, contentBottom: 200,
+            noteHeights: [id: 20], layerSize: CGSize(width: 400, height: 800))
+        XCTAssertEqual(nudges.map(\.id), [id])
+        XCTAssertEqual(nudges[0].unitY * 800, 200 + DayPageLayout.stackSpacing, accuracy: 0.0001)
+    }
+
+    func testMultipleCollidingNotesRestackInVerticalOrder() {
+        let a = UUID(), b = UUID()
+        // Passed b-first to prove ordering comes from unitY, not input order.
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(b, unitY: 0.15), note(a, unitY: 0.05)], editingID: nil,
+            contentBottom: 200, noteHeights: [a: 20, b: 20],
+            layerSize: CGSize(width: 400, height: 800))
+        XCTAssertEqual(nudges.map(\.id), [a, b])
+        XCTAssertEqual(nudges[0].unitY * 800, 212, accuracy: 0.0001) // 200 + 12
+        XCTAssertEqual(nudges[1].unitY * 800, 244, accuracy: 0.0001) // 212 + 20 + 12
+    }
+
+    func testNudgedNoteLandsBelowPinnedNoteUnderTheContent() {
+        let moving = UUID(), pinned = UUID()
+        // Pinned note sits below the content (top 320, bottom 340) — the
+        // nudged note must clear it, not just the content bottom.
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(moving, unitY: 0.1), note(pinned, unitY: 0.4, autoPlaced: false)],
+            editingID: nil, contentBottom: 200,
+            noteHeights: [moving: 20, pinned: 20],
+            layerSize: CGSize(width: 400, height: 800))
+        XCTAssertEqual(nudges.map(\.id), [moving])
+        XCTAssertEqual(nudges[0].unitY * 800, 340 + DayPageLayout.stackSpacing, accuracy: 0.0001)
+    }
+
+    func testDegenerateLayerYieldsNoNudges() {
+        let id = UUID()
+        let nudges = DayPageLayout.nudgesForContentGrowth(
+            notes: [note(id, unitY: 0.1)], editingID: nil, contentBottom: 200,
+            noteHeights: [id: 20], layerSize: .zero)
+        XCTAssertTrue(nudges.isEmpty)
     }
 }

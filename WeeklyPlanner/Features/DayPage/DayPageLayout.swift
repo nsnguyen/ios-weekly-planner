@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 /// Day-page geometry shared between the page chrome and the annotation
 /// creation gesture, so the annotation column can never drift from the
@@ -36,5 +37,45 @@ enum DayPageLayout {
         let y = min(anchor + stackSpacing, layerSize.height - bottomHeadroom)
         return Annotation.clampUnit(CGPoint(x: pageMargin / layerSize.width,
                                             y: y / layerSize.height))
+    }
+
+    /// One computed auto-nudge: move note `id` so its top sits at `unitY`.
+    struct AnnotationNudge: Equatable {
+        let id: UUID
+        let unitY: Double
+    }
+
+    /// Restack plan for content growth: machine-placed (`autoPlaced`) notes
+    /// whose tops the content column has grown past are restacked below it —
+    /// in their current vertical order, each clearing the content, every
+    /// pinned/editing/non-colliding note, and every note already restacked.
+    /// Pinned (user-dragged), editing, and below-content notes never move.
+    /// Pure: plain values in, nudges out — unit-testable without SwiftUI.
+    static func nudgesForContentGrowth(notes: [(id: UUID, unitY: Double, autoPlaced: Bool)],
+                                       editingID: UUID?,
+                                       contentBottom: CGFloat,
+                                       noteHeights: [UUID: CGFloat],
+                                       layerSize: CGSize) -> [AnnotationNudge] {
+        guard layerSize.width > 0, layerSize.height > 0 else { return [] }
+        let colliding = notes
+            .filter { $0.autoPlaced && $0.id != editingID
+                && CGFloat($0.unitY) * layerSize.height < contentBottom }
+            .sorted { $0.unitY < $1.unitY }
+        guard !colliding.isEmpty else { return [] }
+
+        let collidingIDs = Set(colliding.map(\.id))
+        var bottoms = notes
+            .filter { !collidingIDs.contains($0.id) }
+            .map { CGFloat($0.unitY) * layerSize.height + (noteHeights[$0.id] ?? 0) }
+
+        var nudges: [AnnotationNudge] = []
+        for note in colliding {
+            let unit = stackedAnnotationUnit(contentBottom: contentBottom,
+                                             annotationBottoms: bottoms,
+                                             layerSize: layerSize)
+            nudges.append(AnnotationNudge(id: note.id, unitY: unit.y))
+            bottoms.append(CGFloat(unit.y) * layerSize.height + (noteHeights[note.id] ?? 0))
+        }
+        return nudges
     }
 }
