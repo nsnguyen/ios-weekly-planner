@@ -226,14 +226,13 @@ struct DayPageContent: View {
                                     // self-consistent. Known residual: a growth
                                     // event landing while the keyboard shrinks
                                     // the layer (background sync during typing)
-                                    // writes a slightly-low position for the
-                                    // keyboard-free render — bounded by the
-                                    // headroom clamp, downward-only, and
-                                    // drag-fixable. Accepted: every "stable
-                                    // basis" candidate measured here proved to
-                                    // be a pre-layout transient (591.7pt before
-                                    // the bottom affordances inset the
-                                    // viewport to ~447pt steady state).
+                                    // writes a proportionally-low position —
+                                    // up to ~1.5-1.8× the intended offset,
+                                    // ~120-150pt on a ~447pt layer — for the
+                                    // keyboard-dismissed render. Bounded
+                                    // on-page by the headroom clamp, strictly
+                                    // downward (order-preserving, so overlap
+                                    // can never be created), and drag-fixable.
                                     let layer = annotationLayerSize
                                     let heights = noteHeights
                                     let editing = editingAnnotationID

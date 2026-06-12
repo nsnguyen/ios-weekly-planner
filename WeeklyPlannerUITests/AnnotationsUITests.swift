@@ -88,6 +88,11 @@ final class AnnotationsUITests: XCTestCase {
     /// unknown residue self-heals. Best-effort, never asserts.
     @MainActor
     private func purgeAllAnnotations(_ app: XCUIApplication) {
+        // The annotation layer renders a beat after navigation; a synchronous
+        // .exists probe would exit before residue is visible.
+        _ = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
+            .waitForExistence(timeout: 3)
         for _ in 0..<12 {
             let note = app.buttons.matching(
                 NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
@@ -97,6 +102,24 @@ final class AnnotationsUITests: XCTestCase {
             guard delete.waitForExistence(timeout: 2) else { return }
             delete.tap()
             usleep(300_000) // let the layer settle before the next sweep
+        }
+    }
+
+    /// Sweep leftover "nudge event" rows from aborted runs — they change the
+    /// content bottom and accumulate forever. Best-effort, never asserts.
+    @MainActor
+    private func purgeNudgeEvents(_ app: XCUIApplication) {
+        for _ in 0..<6 {
+            let leftover = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label CONTAINS %@", "nudge event")).firstMatch
+            guard leftover.waitForExistence(timeout: 2) else { return }
+            leftover.tap()
+            let del = app.buttons["eventsheet.delete"]
+            guard del.waitForExistence(timeout: 3) else { return }
+            del.tap()
+            let confirm = app.buttons["Delete"].firstMatch
+            if confirm.waitForExistence(timeout: 2) { confirm.tap() }
+            usleep(500_000)
         }
     }
 
@@ -200,6 +223,7 @@ final class AnnotationsUITests: XCTestCase {
     func testNewNotesStackFromTopOfEmptyDay() {
         let app = launchOnTestDayPage()
         purgeAllAnnotations(app) // whole page must be empty — see helper doc
+        purgeNudgeEvents(app) // isolated runs must also start content-clean
 
         // First note: pressed mid-page, must land in the top third — the
         // press position is ignored and an empty day stacks from the top.
@@ -236,26 +260,8 @@ final class AnnotationsUITests: XCTestCase {
     @MainActor
     func testEventCreatedAfterNoteNudgesNoteBelowIt() {
         let app = launchOnTestDayPage()
-        // Give the annotation layer time to render before purging residue
-        // (purgeAllAnnotations uses .exists which is synchronous — without a
-        // settle wait it exits immediately if the layer hasn't appeared yet).
-        _ = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Annotation: "))
-            .firstMatch.waitForExistence(timeout: 3)
         purgeAllAnnotations(app) // whole page must be empty (handles any "nudge me" residue)
-        // Residue events from aborted runs change the content bottom and
-        // accumulate forever — sweep any leftover "nudge event" rows first.
-        for _ in 0..<6 {
-            let leftover = app.descendants(matching: .any)
-                .matching(NSPredicate(format: "label CONTAINS %@", "nudge event")).firstMatch
-            guard leftover.waitForExistence(timeout: 2) else { break }
-            leftover.tap()
-            let del = app.buttons["eventsheet.delete"]
-            guard del.waitForExistence(timeout: 3) else { break }
-            del.tap()
-            let confirm = app.buttons["Delete"].firstMatch
-            if confirm.waitForExistence(timeout: 2) { confirm.tap() }
-            usleep(500_000)
-        }
+        purgeNudgeEvents(app) // sweep leftover events that change content bottom
 
         XCTAssertTrue(createAnnotation(in: app, text: "nudge me"),
                       "Annotation editor did not appear after long-press attempts")
@@ -281,7 +287,7 @@ final class AnnotationsUITests: XCTestCase {
         let save = app.buttons["paperEventSheet.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 2))
         save.tap()
-        _ = save.waitForNonExistence(timeout: 5)
+        XCTAssertTrue(save.waitForNonExistence(timeout: 5), "Event sheet did not dismiss after save")
 
         let eventRow = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "nudge event")).firstMatch
