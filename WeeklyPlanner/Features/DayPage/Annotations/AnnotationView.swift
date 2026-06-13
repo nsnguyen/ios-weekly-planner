@@ -80,19 +80,26 @@ struct AnnotationView: View {
     private var moveGesture: some Gesture {
         DragGesture(minimumDistance: 6)
             .updating($dragOffset) { value, state, _ in
-                state = value.translation
+                // Vertical-only: drop the horizontal component so the note
+                // tracks the finger up/down and never drifts off its column.
+                state = CGSize(width: 0, height: value.translation.height)
             }
             .updating($isDragging) { _, state, _ in
                 state = true
             }
             .onEnded { value in
                 guard layerSize.width > 0, layerSize.height > 0 else { return }
-                let newUnit = Annotation.clampUnit(CGPoint(
-                    x: annotation.unitX + value.translation.width / layerSize.width,
-                    y: annotation.unitY + value.translation.height / layerSize.height))
-                // Commit the position to the live model in the same render
-                // transaction that resets `dragOffset`, so the view never
-                // flashes back to its pre-drag spot while persistence runs.
+                // Vertical-only: leading edge stays on the margin, only Y moves.
+                // Re-bases on the live (possibly nudged) unitY plus the
+                // translation, so the on-screen release position wins.
+                let newUnit = DayPageLayout.verticalDragUnit(
+                    currentUnitY: annotation.unitY,
+                    translationHeight: value.translation.height,
+                    layerSize: layerSize)
+                // Commit to the live model in the same render transaction that
+                // resets `dragOffset`, so the view never flashes back to its
+                // pre-drag spot while persistence runs. Writing the margin X
+                // here also self-heals any stale stored unitX on first drag.
                 annotation.unitX = newUnit.x
                 annotation.unitY = newUnit.y
                 Task { await viewModel.moveAnnotation(id: annotation.id, toUnit: newUnit) }
