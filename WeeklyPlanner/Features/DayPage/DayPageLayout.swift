@@ -49,9 +49,8 @@ enum DayPageLayout {
     static func verticalDragUnit(currentUnitY: Double,
                                  translationHeight: CGFloat,
                                  layerSize: CGSize) -> CGPoint {
-        Annotation.clampUnit(CGPoint(
-            x: pageMargin / layerSize.width,
-            y: CGFloat(currentUnitY) + translationHeight / layerSize.height))
+        Annotation.clampUnit(CGPoint(x: pageMargin / layerSize.width,
+                                     y: CGFloat(currentUnitY) + translationHeight / layerSize.height))
     }
 
     /// One computed auto-nudge: move note `id` so its top sits at `unitY`.
