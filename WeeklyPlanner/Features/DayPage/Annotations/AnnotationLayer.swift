@@ -44,13 +44,14 @@ struct AnnotationLayer: View {
                         .onDisappear { [id = annotation.id] in
                             noteHeights.removeValue(forKey: id)
                         }
-                        // Top-leading anchor: unitX/unitY address the note's
-                        // top-left corner (not its center), so its leading edge
-                        // lands exactly where the unit position maps. The host
-                        // ZStack is `.topLeading`, so each note starts at the
-                        // layer origin and this offset shifts its corner. Drag
-                        // is unaffected — `moveGesture` is translation-based.
-                        .offset(x: geo.size.width * annotation.unitX,
+                        // Vertical-only, left-locked: the leading edge is pinned
+                        // to the page margin so every note forms one left-aligned
+                        // column. Stored `unitX` no longer drives X — a note
+                        // dragged off-column under the old free-2D behavior snaps
+                        // back here, and the value self-heals to the margin on its
+                        // next drag (see verticalDragUnit). `unitY` still addresses
+                        // the note's top edge against the `.topLeading` host ZStack.
+                        .offset(x: DayPageLayout.pageMargin,
                                 y: geo.size.height * annotation.unitY)
                 }
             }
