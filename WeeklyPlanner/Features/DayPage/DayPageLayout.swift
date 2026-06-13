@@ -39,6 +39,21 @@ enum DayPageLayout {
                                             y: y / layerSize.height))
     }
 
+    /// Unit-space destination for a vertical-only note drag: the leading
+    /// edge stays locked to the page margin (notes form a single
+    /// left-aligned column), and only the top's Y moves by the drag
+    /// translation. The starting X is intentionally not a parameter — it is
+    /// always the margin. `Annotation.clampUnit` keeps the note on the page
+    /// and is the NaN/inf safety net for a degenerate (zero) layer size,
+    /// mirroring `stackedAnnotationUnit`.
+    static func verticalDragUnit(currentUnitY: Double,
+                                 translationHeight: CGFloat,
+                                 layerSize: CGSize) -> CGPoint {
+        Annotation.clampUnit(CGPoint(
+            x: pageMargin / layerSize.width,
+            y: CGFloat(currentUnitY) + translationHeight / layerSize.height))
+    }
+
     /// One computed auto-nudge: move note `id` so its top sits at `unitY`.
     struct AnnotationNudge: Equatable {
         let id: UUID

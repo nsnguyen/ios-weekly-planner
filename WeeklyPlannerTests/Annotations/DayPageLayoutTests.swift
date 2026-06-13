@@ -169,4 +169,56 @@ final class DayPageLayoutTests: XCTestCase {
             editingID: nil, contentBottom: 750, noteHeights: heights, layerSize: layer)
         XCTAssertTrue(second.isEmpty)
     }
+
+    // MARK: - Vertical-only drag destination
+
+    func testVerticalDragKeepsLeadingEdgeOnTheMargin() {
+        let layer = CGSize(width: 400, height: 800)
+        let unit = DayPageLayout.verticalDragUnit(currentUnitY: 0.5,
+                                                  translationHeight: 0,
+                                                  layerSize: layer)
+        // X always lands on the page margin — the helper takes no starting X.
+        XCTAssertEqual(unit.x * layer.width, DayPageLayout.pageMargin, accuracy: 0.0001)
+        XCTAssertEqual(unit.y, 0.5, accuracy: 0.0001)
+    }
+
+    func testVerticalDragMovesYByTranslationOnly() {
+        let layer = CGSize(width: 400, height: 800)
+        // Start at 400pt (0.5), drag down 80pt → 480pt; X stays on the margin.
+        let unit = DayPageLayout.verticalDragUnit(currentUnitY: 0.5,
+                                                  translationHeight: 80,
+                                                  layerSize: layer)
+        XCTAssertEqual(unit.y * layer.height, 480, accuracy: 0.0001)
+        XCTAssertEqual(unit.x * layer.width, DayPageLayout.pageMargin, accuracy: 0.0001)
+    }
+
+    func testVerticalDragUpwardClampsAtPageTop() {
+        let layer = CGSize(width: 400, height: 800)
+        // From 80pt (0.1), drag up 200pt → −120pt, floored to the top.
+        let unit = DayPageLayout.verticalDragUnit(currentUnitY: 0.1,
+                                                  translationHeight: -200,
+                                                  layerSize: layer)
+        XCTAssertEqual(unit.y, 0, accuracy: 0.0001)
+        XCTAssertEqual(unit.x * layer.width, DayPageLayout.pageMargin, accuracy: 0.0001)
+    }
+
+    func testVerticalDragDownwardClampsAtPageBottom() {
+        let layer = CGSize(width: 400, height: 800)
+        // From 720pt (0.9), drag down 200pt → 920pt (1.15), clamped to 1.
+        let unit = DayPageLayout.verticalDragUnit(currentUnitY: 0.9,
+                                                  translationHeight: 200,
+                                                  layerSize: layer)
+        XCTAssertEqual(unit.y, 1, accuracy: 0.0001)
+        XCTAssertEqual(unit.x * layer.width, DayPageLayout.pageMargin, accuracy: 0.0001)
+    }
+
+    func testVerticalDragDegenerateLayerStaysInUnitRange() {
+        // Guarded out in the gesture, but the helper must stay finite on a
+        // zero layer — mirrors testDegenerateLayerSizeStaysInUnitRangeForStacking.
+        let unit = DayPageLayout.verticalDragUnit(currentUnitY: 0.5,
+                                                  translationHeight: 40,
+                                                  layerSize: .zero)
+        XCTAssertTrue(unit.x.isFinite && unit.x >= 0 && unit.x <= 1)
+        XCTAssertTrue(unit.y.isFinite && unit.y >= 0 && unit.y <= 1)
+    }
 }
