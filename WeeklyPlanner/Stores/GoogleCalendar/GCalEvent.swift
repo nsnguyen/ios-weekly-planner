@@ -5,6 +5,20 @@ struct GCalEventsListResponse: Decodable {
     var items: [GCalEvent]
     var nextPageToken: String?
     var nextSyncToken: String?
+
+    init(items: [GCalEvent], nextPageToken: String?, nextSyncToken: String?) {
+        self.items = items
+        self.nextPageToken = nextPageToken
+        self.nextSyncToken = nextSyncToken
+    }
+
+    private enum CodingKeys: String, CodingKey { case items, nextPageToken, nextSyncToken }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        items = try c.decodeIfPresent([GCalEvent].self, forKey: .items) ?? []
+        nextPageToken = try c.decodeIfPresent(String.self, forKey: .nextPageToken)
+        nextSyncToken = try c.decodeIfPresent(String.self, forKey: .nextSyncToken)
+    }
 }
 
 struct GCalEvent: Decodable {

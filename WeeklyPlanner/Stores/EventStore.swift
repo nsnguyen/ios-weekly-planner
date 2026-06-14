@@ -86,6 +86,7 @@ final class SwiftDataEventStore: EventStoring {
             existing.gmailMessageID = event.gmailMessageID
             existing.gmailFrom = event.gmailFrom
             existing.gmailSubject = event.gmailSubject
+            existing.googleEventID = event.googleEventID
             existing.reminders = event.reminders
             existing.recurrence = event.recurrence
             existing.isRecurring = event.recurrence != nil

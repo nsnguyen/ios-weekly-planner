@@ -19,6 +19,14 @@ final class GCalEventDecodingTests: XCTestCase {
         XCTAssertNil(resp.items.first?.start.date)
     }
 
+    func testDecodesIncrementalResponseWithNoItemsKey() throws {
+        // Google omits `items` on a no-change incremental sync.
+        let json = #"{"nextSyncToken":"TOK"}"#.data(using: .utf8)!
+        let resp = try JSONDecoder().decode(GCalEventsListResponse.self, from: json)
+        XCTAssertEqual(resp.items.count, 0)
+        XCTAssertEqual(resp.nextSyncToken, "TOK")
+    }
+
     func testDecodesAllDayAndCancelled() throws {
         let json = #"""
         {"items":[{"id":"e2","status":"cancelled","start":{"date":"2026-06-20"},
