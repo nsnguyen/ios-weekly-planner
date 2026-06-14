@@ -103,6 +103,7 @@
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
         <string>com.weeklyplanner.WeeklyPlanner.gmailRefresh</string>
+        <string>com.weeklyplanner.WeeklyPlanner.gcalRefresh</string>
     </array>
 </dict>
 </plist>
