@@ -44,6 +44,11 @@ final class DayPageViewModel {
     /// time (stable z-order). Phase 34.
     var annotations: [Annotation] = []
 
+    /// Bumped whenever the note set changes or a drag asks the day view to
+    /// re-pack the stack (the view owns the measured contentBottom / layerSize /
+    /// noteHeights, so it runs the compaction in response).
+    private(set) var compactionRequest = 0
+
     /// Localized description of the most recent fetch failure, if any.
     /// Cleared when a refresh succeeds.
     var loadError: String?
@@ -172,8 +177,9 @@ final class DayPageViewModel {
             loadError = error.localizedDescription
         }
 
-        // Phase 34: free-text annotations for this day cell.
-        annotations = (try? await annotationStore.annotations(dayKey: dayKey)) ?? []
+        // Phase 34: free-text annotations for this day cell. Routes through the
+        // helper so the appear/event-change path also bumps the compaction token.
+        await refreshAnnotations()
 
         // Opt-in gate: AI sticky notes only *generate* when the user has
         // enabled them. Read fresh each refresh so a Settings toggle takes
@@ -409,6 +415,44 @@ final class DayPageViewModel {
         await refreshAnnotations()
     }
 
+    /// Ask the day view to re-compact (it holds the measured anchors). Bumped
+    /// on a drag release; the view observes it and calls `compactNotes`.
+    func requestCompaction() { compactionRequest &+= 1 }
+
+    /// Pack notes into a gapless stack below the content, in current vertical
+    /// (`unitY`) order. Persists ONLY the notes whose position changed (>0.5pt);
+    /// a settled stack writes nothing. Deferred while a note is being edited —
+    /// the open editor must not be yanked; it re-runs when editing ends.
+    /// Mutates the live models in place (no refresh → no token loop).
+    func compactNotes(contentBottom: CGFloat,
+                      layerSize: CGSize,
+                      noteHeights: [UUID: CGFloat],
+                      editingID: UUID?) async {
+        guard editingID == nil, layerSize.width > 0, layerSize.height > 0, contentBottom > 0
+        else { return }
+        let placements = DayPageLayout.compactedStack(
+            notes: annotations.map { (id: $0.id, unitY: $0.unitY, height: noteHeights[$0.id] ?? 0) },
+            contentBottom: contentBottom,
+            layerSize: layerSize)
+        let target = Dictionary(uniqueKeysWithValues: placements.map { ($0.id, $0.unitY) })
+        let threshold = 0.5 / Double(layerSize.height)
+        let moved = annotations.filter { note in
+            guard let t = target[note.id] else { return false }
+            return abs(t - note.unitY) > threshold
+        }
+        guard !moved.isEmpty else { return }
+        // Animate so the re-pack reads as a deliberate snap, not a glitch.
+        withAnimation {
+            for note in moved { note.unitY = target[note.id] ?? note.unitY }
+        }
+        // Upsert re-inserts unknown ids; safe here for the same reason as the
+        // old nudge — deletes flow through the editor and editing defers
+        // compaction, so a concurrently-deleted note can't be resurrected.
+        for note in moved {
+            try? await annotationStore.upsert(note)
+        }
+    }
+
     func deleteAnnotation(id: UUID) async {
         try? await annotationStore.delete(id: id)
         await refreshAnnotations()
@@ -416,6 +460,7 @@ final class DayPageViewModel {
 
     private func refreshAnnotations() async {
         annotations = (try? await annotationStore.annotations(dayKey: dayKey)) ?? []
+        compactionRequest &+= 1
     }
 }
 

@@ -126,4 +126,44 @@ final class AnnotationLayerTests: XCTestCase {
 
         XCTAssertTrue(vm.annotations.isEmpty)
     }
+
+    func testCompactNotesPacksGapBelowContent() async throws {
+        try await annotationStore.upsert(
+            Annotation(dayKey: "0:5", text: "a", unitX: 0.1, unitY: 0.3))
+        try await annotationStore.upsert(
+            Annotation(dayKey: "0:5", text: "b", unitX: 0.1, unitY: 0.6))
+        let vm = makeViewModel()
+        await vm.refresh()
+        let heights = Dictionary(uniqueKeysWithValues: vm.annotations.map { ($0.id, CGFloat(20)) })
+
+        await vm.compactNotes(contentBottom: 100,
+                              layerSize: CGSize(width: 400, height: 800),
+                              noteHeights: heights, editingID: nil)
+
+        let sorted = vm.annotations.sorted { $0.unitY < $1.unitY }
+        XCTAssertEqual(sorted[0].unitY * 800, 112, accuracy: 0.5) // 100 + 12
+        XCTAssertEqual(sorted[1].unitY * 800, 144, accuracy: 0.5) // 112 + 20 + 12
+    }
+
+    func testCompactNotesDefersWhileEditing() async throws {
+        try await annotationStore.upsert(
+            Annotation(dayKey: "0:5", text: "a", unitX: 0.1, unitY: 0.3))
+        let vm = makeViewModel()
+        await vm.refresh()
+        let id = vm.annotations[0].id
+        let before = vm.annotations[0].unitY
+
+        await vm.compactNotes(contentBottom: 100,
+                              layerSize: CGSize(width: 400, height: 800),
+                              noteHeights: [id: 20], editingID: id)
+
+        XCTAssertEqual(vm.annotations[0].unitY, before, accuracy: 0.0001) // deferred: unchanged
+    }
+
+    func testRequestCompactionBumpsToken() async throws {
+        let vm = makeViewModel()
+        let before = vm.compactionRequest
+        vm.requestCompaction()
+        XCTAssertNotEqual(vm.compactionRequest, before)
+    }
 }
