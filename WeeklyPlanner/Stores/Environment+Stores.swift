@@ -76,6 +76,10 @@ extension EnvironmentValues {
     /// init and injected into every DayPageContent so the cascade can
     /// be cached + invalidated consistently across page flips.
     @Entry var stickyOrchestrator: StickyOrchestrator? = nil
+
+    /// Phase 37a — the live `GCalSyncEngine`. Nil in previews/tests means
+    /// connect/disconnect still works but purge is a no-op.
+    @Entry var gcalSyncEngine: GCalSyncEngine? = nil
 }
 
 // MARK: - Stubs

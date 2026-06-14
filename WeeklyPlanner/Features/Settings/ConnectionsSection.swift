@@ -12,6 +12,7 @@ struct ConnectionsSection: View {
     @Environment(\.googleAuthService) private var auth
     @Environment(\.settingsStore) private var settingsStore
     @Environment(\.inboxStore) private var inboxStore
+    @Environment(\.gcalSyncEngine) private var gcalSyncEngine
 
     @Environment(\.notificationCenter) private var notificationCenter
     @Environment(\.scenePhase) private var scenePhase
@@ -19,6 +20,7 @@ struct ConnectionsSection: View {
 
     @State private var viewModel: ConnectionsViewModel?
     @State private var showDisconnectConfirm = false
+    @State private var showDisconnectCalendarConfirm = false
 
     var body: some View {
         // The SECTION TITLE for "Connections" is rendered by `PaperSettingsView`
@@ -36,7 +38,8 @@ struct ConnectionsSection: View {
                 viewModel = ConnectionsViewModel(
                     settingsStore: settingsStore,
                     inboxStore: inboxStore,
-                    auth: auth
+                    auth: auth,
+                    gcalSyncEngine: gcalSyncEngine
                 )
             }
         }
@@ -59,6 +62,16 @@ struct ConnectionsSection: View {
             Button("Cancel", role: .cancel) { viewModel?.refreshFromSettings() }
         } message: {
             Text("Pending inbox suggestions for this account will be removed.")
+        }
+        .confirmationDialog(
+            "Disconnect Google Calendar?",
+            isPresented: $showDisconnectCalendarConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Disconnect", role: .destructive) { Task { await viewModel?.disconnectGoogleCalendar() } }
+            Button("Cancel", role: .cancel) { viewModel?.refreshFromSettings() }
+        } message: {
+            Text("Imported calendar events will be removed from your planner.")
         }
     }
 
@@ -138,9 +151,8 @@ struct ConnectionsSection: View {
         ConnectionRow(
             logo: { GoogleCalLogo() },
             label: "Google Calendar",
-            detail: "Coming soon",
-            isOn: .constant(false),
-            isEnabled: false
+            detail: googleCalDetail,
+            isOn: googleCalToggleBinding
         )
     }
 
@@ -162,6 +174,27 @@ struct ConnectionsSection: View {
                     Task { await vm.connectGmail(presenter: topPresenter()) }
                 } else if newValue == false, vm.isGmailConnected {
                     showDisconnectConfirm = true
+                }
+            }
+        )
+    }
+
+    private var googleCalDetail: String {
+        if let vm = viewModel, vm.isGoogleCalendarConnected, let email = vm.googleCalendarAccountEmail {
+            return "\(email) · syncing events"
+        }
+        return "Tap to connect — imports events from your Google Calendar"
+    }
+
+    private var googleCalToggleBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.isGoogleCalendarConnected ?? false },
+            set: { newValue in
+                guard let vm = viewModel else { return }
+                if newValue, vm.isGoogleCalendarConnected == false {
+                    Task { await vm.connectGoogleCalendar(presenter: topPresenter()) }
+                } else if newValue == false, vm.isGoogleCalendarConnected {
+                    showDisconnectCalendarConfirm = true
                 }
             }
         )

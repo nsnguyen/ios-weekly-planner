@@ -27,6 +27,7 @@ struct WeeklyPlannerApp: App {
     @State private var googleAuthService: any GoogleAuthService
     @State private var gmailClient: GmailClient
     @State private var inboxSyncEngine: InboxSyncEngine
+    @State private var gcalSyncEngine: GCalSyncEngine
     @State private var bgRefreshScheduler: BackgroundRefreshScheduler
     @State private var eventKitAuth: EventKitAuthorization
 
@@ -90,6 +91,13 @@ struct WeeklyPlannerApp: App {
             inboxStore: wiredInboxStore,
             deltaSync: GmailDeltaSync(settingsStore: settingsStore)
         )
+        let gcalDeltaSync = GCalDeltaSync(settingsStore: settingsStore)
+        let gcalClient = GoogleCalendarClient(auth: googleAuthService, session: URLSession.shared)
+        let gcalEngine = GCalSyncEngine(
+            client: gcalClient,
+            eventStore: eventStore,
+            deltaSync: gcalDeltaSync
+        )
         let scheduler = BackgroundRefreshScheduler(engine: syncEngine)
         scheduler.registerHandler()
         let location = LiveLocationManager()
@@ -114,6 +122,7 @@ struct WeeklyPlannerApp: App {
         _googleAuthService = State(initialValue: googleAuthService)
         _gmailClient = State(initialValue: gmailClient)
         _inboxSyncEngine = State(initialValue: syncEngine)
+        _gcalSyncEngine = State(initialValue: gcalEngine)
         _bgRefreshScheduler = State(initialValue: scheduler)
         _eventKitAuth = State(initialValue: eventKitAuth)
         _notificationCenter = State(initialValue: center)
@@ -137,6 +146,7 @@ struct WeeklyPlannerApp: App {
                 .environment(\.googleAuthService, googleAuthService)
                 .environment(\.gmailClient, gmailClient)
                 .environment(\.inboxSyncEngine, inboxSyncEngine)
+                .environment(\.gcalSyncEngine, gcalSyncEngine)
                 .environment(\.notificationCenter, notificationCenter)
                 .environment(\.eventNotificationScheduler, eventScheduler)
                 .environment(\.taskNotificationScheduler, taskScheduler)
