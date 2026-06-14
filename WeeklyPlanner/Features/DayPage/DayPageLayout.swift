@@ -53,6 +53,36 @@ enum DayPageLayout {
                                      y: CGFloat(currentUnitY) + translationHeight / layerSize.height))
     }
 
+    /// One note's computed slot in the compacted stack.
+    struct AnnotationPlacement: Equatable {
+        let id: UUID
+        let unitY: Double
+    }
+
+    /// Pack every note into a gapless column directly below the content, in
+    /// current vertical (`unitY`) order — the order key, so a note dropped
+    /// between two others sorts into that slot. Bidirectional (closes gaps
+    /// above and below) and idempotent (a settled stack returns identical
+    /// positions, so the caller writes nothing). Page-full notes pile at the
+    /// `bottomHeadroom` clamp, exactly as creation/auto-stacking do.
+    /// `Annotation.clampUnit` keeps each slot on the page (NaN/inf net for a
+    /// degenerate layer). Pure: plain values in, placements out.
+    static func compactedStack(notes: [(id: UUID, unitY: Double, height: CGFloat)],
+                               contentBottom: CGFloat,
+                               layerSize: CGSize) -> [AnnotationPlacement] {
+        guard layerSize.width > 0, layerSize.height > 0 else { return [] }
+        let ordered = notes.sorted { $0.unitY < $1.unitY }
+        var placements: [AnnotationPlacement] = []
+        var cursor = contentBottom
+        for note in ordered {
+            let top = min(cursor + stackSpacing, layerSize.height - bottomHeadroom)
+            let unitY = Annotation.clampUnit(CGPoint(x: 0, y: top / layerSize.height)).y
+            placements.append(AnnotationPlacement(id: note.id, unitY: unitY))
+            cursor = top + note.height
+        }
+        return placements
+    }
+
     /// One computed auto-nudge: move note `id` so its top sits at `unitY`.
     struct AnnotationNudge: Equatable {
         let id: UUID

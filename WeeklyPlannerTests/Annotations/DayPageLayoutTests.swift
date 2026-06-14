@@ -221,4 +221,70 @@ final class DayPageLayoutTests: XCTestCase {
         XCTAssertTrue(unit.x.isFinite && unit.x >= 0 && unit.x <= 1)
         XCTAssertTrue(unit.y.isFinite && unit.y >= 0 && unit.y <= 1)
     }
+
+    // MARK: - Compact-reorder stack
+
+    func testCompactPacksTwoNotesTightBelowContent() {
+        let a = UUID(), b = UUID()
+        let layer = CGSize(width: 400, height: 800)
+        let placements = DayPageLayout.compactedStack(
+            notes: [(id: a, unitY: 0.3, height: 20), (id: b, unitY: 0.6, height: 20)],
+            contentBottom: 100, layerSize: layer)
+        XCTAssertEqual(placements.map(\.id), [a, b])
+        XCTAssertEqual(placements[0].unitY * 800, 112, accuracy: 0.0001) // 100 + stackSpacing(12)
+        XCTAssertEqual(placements[1].unitY * 800, 144, accuracy: 0.0001) // 112 + 20 + 12
+    }
+
+    func testCompactIsIdempotent() {
+        let a = UUID(), b = UUID()
+        let layer = CGSize(width: 400, height: 800)
+        let first = DayPageLayout.compactedStack(
+            notes: [(id: a, unitY: 0.3, height: 20), (id: b, unitY: 0.6, height: 20)],
+            contentBottom: 100, layerSize: layer)
+        let second = DayPageLayout.compactedStack(
+            notes: first.map { (id: $0.id, unitY: $0.unitY, height: CGFloat(20)) },
+            contentBottom: 100, layerSize: layer)
+        XCTAssertEqual(first, second)
+    }
+
+    func testCompactOrdersByUnitYNotInputOrder() {
+        let a = UUID(), b = UUID(), c = UUID()
+        let layer = CGSize(width: 400, height: 800)
+        // Input order b, a, c; unitY says a(0.1) < c(0.5) < b(0.9) → packed a, c, b.
+        let placements = DayPageLayout.compactedStack(
+            notes: [(id: b, unitY: 0.9, height: 20),
+                    (id: a, unitY: 0.1, height: 20),
+                    (id: c, unitY: 0.5, height: 20)],
+            contentBottom: 100, layerSize: layer)
+        XCTAssertEqual(placements.map(\.id), [a, c, b])
+    }
+
+    func testCompactReordersNoteDroppedBetweenTwo() {
+        let a = UUID(), b = UUID(), moved = UUID()
+        let layer = CGSize(width: 400, height: 800)
+        // a(0.14), b(0.18); `moved` dropped at 0.16 (between) → a, moved, b.
+        let placements = DayPageLayout.compactedStack(
+            notes: [(id: a, unitY: 0.14, height: 20),
+                    (id: b, unitY: 0.18, height: 20),
+                    (id: moved, unitY: 0.16, height: 20)],
+            contentBottom: 100, layerSize: layer)
+        XCTAssertEqual(placements.map(\.id), [a, moved, b])
+    }
+
+    func testCompactClampsTallStackAtPageBottom() {
+        let a = UUID(), b = UUID()
+        let layer = CGSize(width: 400, height: 800)
+        // contentBottom deep: both clamp at 800 - bottomHeadroom(60) = 740.
+        let placements = DayPageLayout.compactedStack(
+            notes: [(id: a, unitY: 0.95, height: 20), (id: b, unitY: 0.97, height: 20)],
+            contentBottom: 760, layerSize: layer)
+        XCTAssertEqual(placements[0].unitY * 800, 740, accuracy: 0.0001)
+        XCTAssertEqual(placements[1].unitY * 800, 740, accuracy: 0.0001)
+    }
+
+    func testCompactDegenerateLayerReturnsEmpty() {
+        XCTAssertTrue(DayPageLayout.compactedStack(
+            notes: [(id: UUID(), unitY: 0.5, height: 20)],
+            contentBottom: 100, layerSize: .zero).isEmpty)
+    }
 }
