@@ -53,6 +53,7 @@ final class FindEventsToolTests: XCTestCase {
                 struct Boom: Error {}
                 throw Boom()
             }
+            func events(source _: EventSource) async throws -> [Event] { [] }
         }
         let tool = FindEventsTool(store: ThrowingStore())
         let results = try await tool.run(query: EventQuery(

@@ -108,6 +108,7 @@ final class StubEventStore: EventStoring {
     func delete(id _: UUID) async throws {}
     func deleteOccurrence(eventID _: UUID, occurrenceStart _: Date) async throws {}
     func events(matching _: EventQuery) async throws -> [Event] { [] }
+    func events(source _: EventSource) async throws -> [Event] { [] }
 }
 
 /// No-op `InboxStoring` companion to `StubEventStore`. Same semantics:

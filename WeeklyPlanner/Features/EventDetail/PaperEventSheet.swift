@@ -556,4 +556,8 @@ private final class PreviewSeededStore: EventStoring {
     func events(matching _: EventQuery) async throws -> [Event] {
         stored.map { [$0] } ?? []
     }
+
+    func events(source: EventSource) async throws -> [Event] {
+        stored.map { $0.source == source ? [$0] : [] } ?? []
+    }
 }

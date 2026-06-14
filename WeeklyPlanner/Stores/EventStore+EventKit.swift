@@ -78,6 +78,10 @@ final class EventKitMirroringEventStore: EventStoring {
         try await base.events(matching: query)
     }
 
+    func events(source: EventSource) async throws -> [Event] {
+        try await base.events(source: source)
+    }
+
     // MARK: - EventKit side effects (best-effort — failures don't roll back)
 
     private func mirrorToEventKit(_ event: Event) async throws {

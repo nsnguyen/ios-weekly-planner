@@ -20,6 +20,10 @@ protocol EventStoring: AnyObject {
     /// layer (Phase 13) so the model can ask narrower questions than
     /// `events(forWeekOffset:)`.
     func events(matching query: EventQuery) async throws -> [Event]
+
+    /// Returns all events whose `source` matches `source`. Used by
+    /// `GCalSyncEngine.purge()` to remove only Google-Calendar-sourced events.
+    func events(source: EventSource) async throws -> [Event]
 }
 
 // View-side observation: SwiftUI views read events via `@Query` directly
@@ -135,6 +139,15 @@ final class SwiftDataEventStore: EventStoring {
             }
             return true
         }
+    }
+
+    func events(source: EventSource) async throws -> [Event] {
+        let raw = source.rawValue
+        let descriptor = FetchDescriptor<Event>(
+            predicate: #Predicate<Event> { $0.sourceRaw == raw },
+            sortBy: [SortDescriptor(\.start, order: .forward)]
+        )
+        return try context.fetch(descriptor)
     }
 
     // MARK: - Week bounds helper
