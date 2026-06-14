@@ -105,18 +105,6 @@ final class AnnotationLayerTests: XCTestCase {
         XCTAssertEqual(persisted?.isBold, true)
     }
 
-    func testMoveClampsAndPersists() async throws {
-        let vm = makeViewModel()
-        let created = await vm.addAnnotation(atUnit: CGPoint(x: 0.5, y: 0.5))
-        let id = try XCTUnwrap(created?.id)
-
-        await vm.moveAnnotation(id: id, toUnit: CGPoint(x: 2.0, y: 0.7))
-
-        let persisted = try await annotationStore.annotations(dayKey: "0:5").first
-        XCTAssertEqual(persisted?.unitX ?? -1, 1.0, accuracy: 0.0001)
-        XCTAssertEqual(persisted?.unitY ?? -1, 0.7, accuracy: 0.0001)
-    }
-
     func testDeleteRemovesAnnotation() async throws {
         let vm = makeViewModel()
         let created = await vm.addAnnotation(atUnit: CGPoint(x: 0.5, y: 0.5))

@@ -370,51 +370,6 @@ final class DayPageViewModel {
         await refreshAnnotations()
     }
 
-    func moveAnnotation(id: UUID, toUnit point: CGPoint) async {
-        guard let annotation = annotations.first(where: { $0.id == id }) else { return }
-        let clamped = Annotation.clampUnit(point)
-        annotation.unitX = clamped.x
-        annotation.unitY = clamped.y
-        // A drag pins the note: the user placed it, so content growth must
-        // never auto-move it again (autoPlaced gates nudgesForContentGrowth).
-        annotation.autoPlaced = false
-        try? await annotationStore.upsert(annotation)
-        await refreshAnnotations()
-    }
-
-    /// Auto-nudge: restack machine-placed notes the content column has grown
-    /// into (note first, event second — the event would overlap the note).
-    /// Persists via upsert WITHOUT touching `autoPlaced`: only a user drag
-    /// pins a note; a nudge must leave it nudgeable for the next growth.
-    func nudgeAutoPlacedNotes(contentBottom: CGFloat,
-                              layerSize: CGSize,
-                              noteHeights: [UUID: CGFloat],
-                              editingID: UUID?) async {
-        let nudges = DayPageLayout.nudgesForContentGrowth(
-            notes: annotations.map { (id: $0.id, unitY: $0.unitY, autoPlaced: $0.autoPlaced) },
-            editingID: editingID,
-            contentBottom: contentBottom,
-            noteHeights: noteHeights,
-            layerSize: layerSize)
-        guard !nudges.isEmpty else { return }
-        // Animated so the restack reads as deliberate, not a glitch.
-        withAnimation {
-            for nudge in nudges {
-                annotations.first(where: { $0.id == nudge.id })?.unitY = nudge.unitY
-            }
-        }
-        // Upsert re-inserts unknown ids; that can't resurrect a concurrently
-        // deleted note today only because deletes flow through the editor and
-        // editing notes are excluded from plans. If a non-editor delete path
-        // ever appears, give nudges an update-only store call.
-        for nudge in nudges {
-            if let annotation = annotations.first(where: { $0.id == nudge.id }) {
-                try? await annotationStore.upsert(annotation)
-            }
-        }
-        await refreshAnnotations()
-    }
-
     /// Ask the day view to re-compact (it holds the measured anchors). Bumped
     /// on a drag release; the view observes it and calls `compactNotes`.
     func requestCompaction() { compactionRequest &+= 1 }
