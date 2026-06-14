@@ -17,6 +17,8 @@ final class LiveGoogleAuthService: GoogleAuthService {
     private let scopes = [
         "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/userinfo.email",
+        // Phase 37: read+write primary-calendar events (read used in 37a, write in 37b).
+        "https://www.googleapis.com/auth/calendar.events",
     ]
     private static let refreshLeeway: TimeInterval = 5 * 60 // refresh when <5 min remain
 
