@@ -89,20 +89,19 @@ struct AnnotationView: View {
             }
             .onEnded { value in
                 guard layerSize.width > 0, layerSize.height > 0 else { return }
-                // Vertical-only: leading edge stays on the margin, only Y moves.
-                // Re-bases on the live (possibly nudged) unitY plus the
-                // translation, so the on-screen release position wins.
+                // Vertical-only: leading edge on the margin, only Y moves. Write
+                // the drop position to the live model in the same render
+                // transaction that resets `dragOffset` (no flash-back), then
+                // request a compaction: the note re-sorts into its slot by unitY
+                // and the stack re-packs gapless. Persistence flows through the
+                // compaction (it writes every note's final slot).
                 let newUnit = DayPageLayout.verticalDragUnit(
                     currentUnitY: annotation.unitY,
                     translationHeight: value.translation.height,
                     layerSize: layerSize)
-                // Commit to the live model in the same render transaction that
-                // resets `dragOffset`, so the view never flashes back to its
-                // pre-drag spot while persistence runs. Writing the margin X
-                // here also self-heals any stale stored unitX on first drag.
                 annotation.unitX = newUnit.x
                 annotation.unitY = newUnit.y
-                Task { await viewModel.moveAnnotation(id: annotation.id, toUnit: newUnit) }
+                viewModel.requestCompaction()
             }
     }
 

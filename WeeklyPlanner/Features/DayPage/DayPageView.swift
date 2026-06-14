@@ -206,43 +206,18 @@ struct DayPageContent: View {
                                 // annotation layer overlays and
                                 // annotationLayerSize measures.
                                 .coordinateSpace(.named(Self.layerSpaceName))
-                                .onChange(of: contentBottomY) { oldValue, newValue in
-                                    // Content column grew (event/inbox row
-                                    // arrived): restack machine-placed notes
-                                    // it now overlaps. Growth only — content
-                                    // shrinking never pulls notes back up.
-                                    // The initial 0 → first-layout fire is
-                                    // harmless: notes below the content
-                                    // bottom don't collide.
-                                    // A note left overlapped by content that
-                                    // grew between sessions settles on the
-                                    // next growth event or drag, not on the
-                                    // appear-time fire (annotations may not
-                                    // be loaded yet when it lands).
-                                    guard newValue > oldValue, let viewModel else { return }
-                                    // Live layer for both collision and the new
-                                    // unitY — the same basis AnnotationLayer
-                                    // renders against, so positions are always
-                                    // self-consistent. Known residual: a growth
-                                    // event landing while the keyboard shrinks
-                                    // the layer (background sync during typing)
-                                    // writes a proportionally-low position —
-                                    // up to ~1.5-1.8× the intended offset,
-                                    // ~120-150pt on a ~447pt layer — for the
-                                    // keyboard-dismissed render. Bounded
-                                    // on-page by the headroom clamp, strictly
-                                    // downward (order-preserving, so overlap
-                                    // can never be created), and drag-fixable.
-                                    let layer = annotationLayerSize
-                                    let heights = noteHeights
-                                    let editing = editingAnnotationID
-                                    Task {
-                                        await viewModel.nudgeAutoPlacedNotes(
-                                            contentBottom: newValue,
-                                            layerSize: layer,
-                                            noteHeights: heights,
-                                            editingID: editing)
-                                    }
+                                .onChange(of: contentBottomY) { _, _ in
+                                    // Content grew or shrank: re-pack the note
+                                    // stack tight below it (bidirectional —
+                                    // closes gaps both ways). `compactNotes` is a
+                                    // no-op when nothing moved or while editing.
+                                    runCompaction()
+                                }
+                                .onChange(of: viewModel?.compactionRequest) { _, _ in
+                                    // A drag (or a note load / add / commit /
+                                    // delete via `refreshAnnotations`) asked for
+                                    // a re-pack.
+                                    runCompaction()
                                 }
                         }
                         .onScrollGeometryChange(for: CGFloat.self) { geometry in
@@ -378,6 +353,23 @@ struct DayPageContent: View {
     private func commitPendingTaskIfAny() {
         guard viewModel?.taskComposer.isComposing == true else { return }
         viewModel?.taskComposer.requestBlur()
+    }
+
+    /// Re-pack the annotation stack using the currently measured anchors.
+    /// Reads live `contentBottomY` (already updated when an `.onChange` fires).
+    /// `compactNotes` is a no-op while editing or when nothing moved.
+    private func runCompaction() {
+        guard let viewModel else { return }
+        let bottom = contentBottomY
+        let layer = annotationLayerSize
+        let heights = noteHeights
+        let editing = editingAnnotationID
+        Task {
+            await viewModel.compactNotes(contentBottom: bottom,
+                                         layerSize: layer,
+                                         noteHeights: heights,
+                                         editingID: editing)
+        }
     }
 
     /// Long-press on empty paper creates an annotation stacked below existing content.
