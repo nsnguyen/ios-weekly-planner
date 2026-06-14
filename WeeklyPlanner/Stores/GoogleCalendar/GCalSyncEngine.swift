@@ -36,13 +36,12 @@ final class GCalSyncEngine {
             syncLog.info("GCalSync skipped — already running")
             return
         }
-        isRunning = true
-        defer { isRunning = false }
+        isRunning = true; defer { isRunning = false }
 
         // Mutable locals so the 410-restart path can reset without recursion.
         var token: String? = deltaSync.currentToken()
         var full = (token == nil)
-        var pageToken: String? = nil
+        var pageToken: String?
 
         syncLog.info("GCalSync start token=\(token ?? "nil", privacy: .public) full=\(full, privacy: .public)")
 
@@ -78,17 +77,7 @@ final class GCalSyncEngine {
 
                 // Process items — per-item isolation so one bad item can't kill the batch.
                 for item in page.items {
-                    do {
-                        if item.status == "cancelled" {
-                            let id = GCalMapper.deterministicID(for: item.id)
-                            try await eventStore.delete(id: id)
-                            syncLog.info("GCalSync deleted \(item.id, privacy: .public)")
-                        } else if let event = GCalMapper.event(from: item) {
-                            try await eventStore.upsert(event)
-                            syncLog.info("GCalSync upserted \(item.id, privacy: .public) title=\(event.title, privacy: .public)")
-                        }
-                        // else: mapper returned nil for non-cancelled item (missing dates) → skip
-                    } catch {
+                    do { try await apply(item) } catch {
                         syncLog.error("GCalSync item \(item.id, privacy: .public) error: \(String(describing: error), privacy: .public)")
                         continue
                     }
@@ -108,6 +97,20 @@ final class GCalSyncEngine {
         } while true
 
         syncLog.info("GCalSync done token=\(self.deltaSync.currentToken() ?? "nil", privacy: .public)")
+    }
+
+    // MARK: - Per-item apply
+
+    private func apply(_ item: GCalEvent) async throws {
+        if item.status == "cancelled" {
+            let id = GCalMapper.deterministicID(for: item.id)
+            try await eventStore.delete(id: id)
+            syncLog.info("GCalSync deleted \(item.id, privacy: .public)")
+        } else if let event = GCalMapper.event(from: item) {
+            try await eventStore.upsert(event)
+            syncLog.info("GCalSync upserted \(item.id, privacy: .public) title=\(event.title, privacy: .public)")
+        }
+        // else: mapper returned nil for non-cancelled item (missing dates) → skip
     }
 
     // MARK: - Purge

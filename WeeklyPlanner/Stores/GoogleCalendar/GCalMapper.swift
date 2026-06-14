@@ -18,7 +18,7 @@ enum GCalMapper {
         guard g.status != "cancelled" else { return nil }
         guard let start = parse(g.start), let end = parse(g.end) else { return nil }
         return Event(id: deterministicID(for: g.id),
-                     title: (g.summary?.isEmpty == false ? g.summary! : "(no title)"),
+                     title: g.summary.flatMap { $0.isEmpty ? nil : $0 } ?? "(no title)",
                      start: start,
                      end: max(end, start),
                      location: g.location,
