@@ -40,6 +40,11 @@ final class UserSettings {
     /// run, or after `history?` returned 404 because the cursor aged out).
     var gmailLastHistoryId: String?
 
+    // MARK: Google Calendar sync (Phase 37)
+
+    var gcalSyncToken: String? = nil
+    var googleCalendarAccountEmail: String? = nil
+
     // Style
     var styleRaw: String
     var modernViewRaw: String
@@ -65,6 +70,8 @@ final class UserSettings {
          googleCalendarConnected: Bool = false,
          appleMailConnected: Bool = true,
          gmailLastHistoryId: String? = nil,
+         gcalSyncToken: String? = nil,
+         googleCalendarAccountEmail: String? = nil,
          style: AppStyle = .paper,
          modernView: ModernView = .day,
          paperView: PaperView = .day,
@@ -85,6 +92,8 @@ final class UserSettings {
         self.googleCalendarConnected = googleCalendarConnected
         self.appleMailConnected = appleMailConnected
         self.gmailLastHistoryId = gmailLastHistoryId
+        self.gcalSyncToken = gcalSyncToken
+        self.googleCalendarAccountEmail = googleCalendarAccountEmail
         styleRaw = style.rawValue
         modernViewRaw = modernView.rawValue
         paperViewRaw = paperView.rawValue

@@ -44,6 +44,10 @@ final class Event {
     var gmailFrom: String?
     var gmailSubject: String?
 
+    // MARK: Google Calendar provenance (Phase 37)
+
+    var googleEventID: String? = nil
+
     /// Reminders attached to this event. Stored as a JSON-encoded blob by
     /// SwiftData because `Reminder` is a Codable enum with associated values.
     var reminders: [Reminder]
@@ -73,6 +77,7 @@ final class Event {
          gmailMessageID: String? = nil,
          gmailFrom: String? = nil,
          gmailSubject: String? = nil,
+         googleEventID: String? = nil,
          reminders: [Reminder] = [],
          recurrence: Recurrence? = nil,
          excludedOccurrenceStarts: [Date] = [],
@@ -93,6 +98,7 @@ final class Event {
         self.gmailMessageID = gmailMessageID
         self.gmailFrom = gmailFrom
         self.gmailSubject = gmailSubject
+        self.googleEventID = googleEventID
         self.reminders = reminders
         self.recurrence = recurrence
         isRecurring = recurrence != nil
@@ -121,6 +127,7 @@ extension Event {
                      gmailMessageID: gmailMessageID,
                      gmailFrom: gmailFrom,
                      gmailSubject: gmailSubject,
+                     googleEventID: googleEventID,
                      reminders: reminders,
                      recurrence: recurrence,
                      excludedOccurrenceStarts: excludedOccurrenceStarts,
