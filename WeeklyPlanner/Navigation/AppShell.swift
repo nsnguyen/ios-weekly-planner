@@ -24,6 +24,7 @@ struct AppShell: View {
     @Environment(\.taskStore) private var taskStore
     @Environment(\.inboxStore) private var inboxStore
     @Environment(\.inboxSyncEngine) private var inboxSyncEngine
+    @Environment(\.gcalSyncEngine) private var gcalSyncEngine
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.deepLinkRouter) private var deepLinkRouter
 
@@ -112,6 +113,12 @@ struct AppShell: View {
             let engine = inboxSyncEngine
             Task { @MainActor in
                 _ = try? await engine?.sync(now: Date())
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .googleCalendarDidConnect)) { _ in
+            let engine = gcalSyncEngine
+            Task { @MainActor in
+                await engine?.sync()
             }
         }
         .onChange(of: deepLinkRouter.pending) { _, new in

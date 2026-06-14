@@ -100,6 +100,9 @@ struct WeeklyPlannerApp: App {
         )
         let scheduler = BackgroundRefreshScheduler(engine: syncEngine)
         scheduler.registerHandler()
+        scheduler.registerGCalHandler {
+            await gcalEngine.sync()
+        }
         let location = LiveLocationManager()
         let locationMgr = LocationReminderManager(location: location, center: center)
         let eventSched = EventNotificationScheduler(center: center,
