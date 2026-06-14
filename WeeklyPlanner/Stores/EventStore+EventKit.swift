@@ -31,16 +31,25 @@ final class EventKitMirroringEventStore: EventStoring {
     }
 
     func upsert(_ event: Event) async throws {
+        // Phase 37: Google-sourced events are read-only imports that live only in
+        // SwiftData (and Google). Never mirror them to iOS Calendar — that would
+        // loop back through the EventKit reconciler. One source of truth per source.
+        guard event.source != .googleCalendar else { try await base.upsert(event); return }
         try await base.upsert(event)
         try? await mirrorToEventKit(event)
     }
 
     func delete(id: UUID) async throws {
-        if let event = try await base.event(id: id), let identifier = event.eventKitIdentifier {
-            // Recurring deletes are anchored at the master, so `.futureEvents`
-            // removes the whole series; singles use `.thisEvent`.
-            let span: EKSpan = event.recurrence != nil ? .futureEvents : .thisEvent
-            removeFromEventKit(identifier: identifier, span: span)
+        if let event = try await base.event(id: id) {
+            // Phase 37: Google-sourced events have no EKEvent to remove.
+            // Delegate to base and return immediately to prevent any gateway call.
+            guard event.source != .googleCalendar else { try await base.delete(id: id); return }
+            if let identifier = event.eventKitIdentifier {
+                // Recurring deletes are anchored at the master, so `.futureEvents`
+                // removes the whole series; singles use `.thisEvent`.
+                let span: EKSpan = event.recurrence != nil ? .futureEvents : .thisEvent
+                removeFromEventKit(identifier: identifier, span: span)
+            }
         }
         try await base.delete(id: id)
     }
