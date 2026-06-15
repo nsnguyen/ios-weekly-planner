@@ -35,6 +35,14 @@ final class RealGIDSigningClient: GIDSigningClient {
     }
 
     func signIn(presenting: UIViewController, scopes: [String]) async throws -> GoogleAccountInfo {
+        // Already signed in (e.g. Gmail connected first)? Re-running a full
+        // signIn(...) just to pick up more scopes leaves the SDK's callback
+        // unfired after the user taps Allow — the checked continuation then
+        // leaks and the call hangs forever (observed connecting Google Calendar
+        // after Gmail). Use the SDK's supported incremental-authorization path.
+        if let current = GIDSignIn.sharedInstance.currentUser {
+            return try await addScopes(scopes, to: current, presenting: presenting)
+        }
         // kGIDSignInErrorCodeCanceled = -5; compared numerically because the
         // NS_ERROR_ENUM Swift type alias is not reliably importable by name.
         let canceledCode = -5
@@ -77,6 +85,49 @@ final class RealGIDSigningClient: GIDSigningClient {
                     // fabricated future timestamp.
                     expiresAt: user.accessToken.expirationDate ?? .distantPast
                 )
+                continuation.resume(returning: info)
+            }
+        }
+    }
+
+    /// Incrementally add `scopes` to an already-signed-in user (the SDK's
+    /// supported path when a Google account is already connected). Scopes the
+    /// user has already granted are skipped — if none are missing, returns the
+    /// current snapshot with no UI. Every callback path resumes the
+    /// continuation, so this can't leak/hang the way a re-run signIn(...) does.
+    private func addScopes(_ scopes: [String],
+                           to user: GIDGoogleUser,
+                           presenting: UIViewController) async throws -> GoogleAccountInfo {
+        let granted = Set(user.grantedScopes ?? [])
+        let missing = scopes.filter { !granted.contains($0) }
+        guard !missing.isEmpty else { return try snapshot(from: user) }
+        let canceledCode = -5
+        return try await withCheckedThrowingContinuation { continuation in
+            user.addScopes(missing, presenting: presenting) { result, error in
+                // SDK callbacks are dispatched on the main queue.
+                if let error = error as NSError? {
+                    if error.domain == kGIDSignInErrorDomain && error.code == canceledCode {
+                        continuation.resume(throwing: GoogleAuthError.userCancelled)
+                    } else {
+                        continuation.resume(throwing: GoogleAuthError.network(error.localizedDescription))
+                    }
+                    return
+                }
+                guard let updated = result?.user else {
+                    continuation.resume(throwing: GoogleAuthError.network("addScopes result missing user"))
+                    return
+                }
+                // Extract Sendable values inline (as signIn does) — don't pass the
+                // non-Sendable GIDGoogleUser across the isolation boundary.
+                guard let email = updated.profile?.email else {
+                    continuation.resume(throwing: GoogleAuthError.network("Missing email on Google profile"))
+                    return
+                }
+                let info = GoogleAccountInfo(
+                    email: email,
+                    accessToken: updated.accessToken.tokenString,
+                    refreshToken: updated.refreshToken.tokenString,
+                    expiresAt: updated.accessToken.expirationDate ?? .distantPast)
                 continuation.resume(returning: info)
             }
         }
