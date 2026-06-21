@@ -4,7 +4,7 @@ import Foundation
 /// visible alerts; the `notConfigured` case fires when `Secrets.xcconfig`
 /// hasn't been filled in (intentional graceful-degradation rather than a
 /// crash so the rest of the app keeps running for non-Gmail features).
-enum GoogleAuthError: Error, Equatable {
+enum GoogleAuthError: Error, Equatable, Sendable {
     /// `Bundle.main`'s `GoogleClientID` key is missing or empty.
     case notConfigured
     /// User dismissed the OAuth sheet.

@@ -35,18 +35,18 @@ final class RealGIDSigningClient: GIDSigningClient {
     }
 
     func signIn(presenting: UIViewController, scopes: [String]) async throws -> GoogleAccountInfo {
-        // Already signed in (e.g. Gmail connected first)? Re-running a full
-        // signIn(...) just to pick up more scopes leaves the SDK's callback
-        // unfired after the user taps Allow — the checked continuation then
-        // leaks and the call hangs forever (observed connecting Google Calendar
-        // after Gmail). Use the SDK's supported incremental-authorization path.
+        // Already signed in (e.g. Gmail connected first)? Use the SDK's
+        // incremental addScopes path instead of a fresh full sign-in. Both paths
+        // run through `withCancellableContinuation`, so a cancelled sign-in Task
+        // resumes with CancellationError rather than leaking its continuation and
+        // hanging forever (the GIDSignIn callback never fires on task cancel).
         if let current = GIDSignIn.sharedInstance.currentUser {
             return try await addScopes(scopes, to: current, presenting: presenting)
         }
         // kGIDSignInErrorCodeCanceled = -5; compared numerically because the
         // NS_ERROR_ENUM Swift type alias is not reliably importable by name.
         let canceledCode = -5
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withCancellableContinuation { completion in
             GIDSignIn.sharedInstance.signIn(
                 withPresenting: presenting,
                 hint: nil,
@@ -56,26 +56,24 @@ final class RealGIDSigningClient: GIDSigningClient {
                 // safe to read GIDGoogleUser properties here.
                 if let error = error as NSError? {
                     if error.domain == kGIDSignInErrorDomain && error.code == canceledCode {
-                        continuation.resume(throwing: GoogleAuthError.userCancelled)
+                        completion(.failure(GoogleAuthError.userCancelled))
                     } else {
-                        continuation.resume(throwing: GoogleAuthError.network(error.localizedDescription))
+                        completion(.failure(GoogleAuthError.network(error.localizedDescription)))
                     }
                     return
                 }
                 guard let user = result?.user else {
-                    continuation.resume(throwing: GoogleAuthError.network("Sign-in result missing user"))
+                    completion(.failure(GoogleAuthError.network("Sign-in result missing user")))
                     return
                 }
                 // Extract all Sendable values (String, Date) before leaving
                 // the callback — avoids passing a non-Sendable GIDGoogleUser
                 // across isolation boundaries.
                 guard let email = user.profile?.email else {
-                    continuation.resume(
-                        throwing: GoogleAuthError.network("Missing email on Google profile")
-                    )
+                    completion(.failure(GoogleAuthError.network("Missing email on Google profile")))
                     return
                 }
-                let info = GoogleAccountInfo(
+                completion(.success(GoogleAccountInfo(
                     email: email,
                     accessToken: user.accessToken.tokenString,
                     refreshToken: user.refreshToken.tokenString,
@@ -83,10 +81,32 @@ final class RealGIDSigningClient: GIDSigningClient {
                     // treats the token as already-expired and proactively
                     // refreshes on next accessToken() rather than trusting a
                     // fabricated future timestamp.
-                    expiresAt: user.accessToken.expirationDate ?? .distantPast
-                )
-                continuation.resume(returning: info)
+                    expiresAt: user.accessToken.expirationDate ?? .distantPast)))
             }
+        }
+    }
+
+    /// Bridges a GIDSignIn-style callback into async/await with cancellation
+    /// safety: if the surrounding Task is cancelled, the continuation resumes
+    /// with `CancellationError` instead of leaking. `start` kicks off the SDK
+    /// call and must invoke `completion` exactly once (on the main queue);
+    /// `OneShotResult` keeps delivery one-shot, so a late SDK callback after a
+    /// cancellation (or vice versa) is ignored and the continuation never
+    /// double-resumes.
+    private func withCancellableContinuation<T: Sendable>(
+        _ start: (@escaping (Result<T, GoogleAuthError>) -> Void) -> Void
+    ) async throws -> T {
+        let oneShot = OneShotResult<T, GoogleAuthError>()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
+                oneShot.onReady { continuation.resume(with: $0.mapError { $0 as Error }) }
+                start { oneShot.deliver($0) }
+            }
+        } onCancel: {
+            // Task cancelled mid-sign-in: resume gracefully as a cancellation
+            // (the UI treats userCancelled as a silent stop) instead of leaving
+            // the continuation suspended forever.
+            oneShot.deliver(.failure(.userCancelled))
         }
     }
 
@@ -102,33 +122,32 @@ final class RealGIDSigningClient: GIDSigningClient {
         let missing = scopes.filter { !granted.contains($0) }
         guard !missing.isEmpty else { return try snapshot(from: user) }
         let canceledCode = -5
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withCancellableContinuation { completion in
             user.addScopes(missing, presenting: presenting) { result, error in
                 // SDK callbacks are dispatched on the main queue.
                 if let error = error as NSError? {
                     if error.domain == kGIDSignInErrorDomain && error.code == canceledCode {
-                        continuation.resume(throwing: GoogleAuthError.userCancelled)
+                        completion(.failure(GoogleAuthError.userCancelled))
                     } else {
-                        continuation.resume(throwing: GoogleAuthError.network(error.localizedDescription))
+                        completion(.failure(GoogleAuthError.network(error.localizedDescription)))
                     }
                     return
                 }
                 guard let updated = result?.user else {
-                    continuation.resume(throwing: GoogleAuthError.network("addScopes result missing user"))
+                    completion(.failure(GoogleAuthError.network("addScopes result missing user")))
                     return
                 }
                 // Extract Sendable values inline (as signIn does) — don't pass the
                 // non-Sendable GIDGoogleUser across the isolation boundary.
                 guard let email = updated.profile?.email else {
-                    continuation.resume(throwing: GoogleAuthError.network("Missing email on Google profile"))
+                    completion(.failure(GoogleAuthError.network("Missing email on Google profile")))
                     return
                 }
-                let info = GoogleAccountInfo(
+                completion(.success(GoogleAccountInfo(
                     email: email,
                     accessToken: updated.accessToken.tokenString,
                     refreshToken: updated.refreshToken.tokenString,
-                    expiresAt: updated.accessToken.expirationDate ?? .distantPast)
-                continuation.resume(returning: info)
+                    expiresAt: updated.accessToken.expirationDate ?? .distantPast)))
             }
         }
     }
@@ -137,31 +156,27 @@ final class RealGIDSigningClient: GIDSigningClient {
         guard let user = GIDSignIn.sharedInstance.currentUser else {
             throw GoogleAuthError.reauthenticationRequired
         }
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withCancellableContinuation { completion in
             user.refreshTokensIfNeeded { updatedUser, error in
                 // SDK callbacks are dispatched on the main queue.
                 if error != nil {
-                    continuation.resume(throwing: GoogleAuthError.reauthenticationRequired)
+                    completion(.failure(GoogleAuthError.reauthenticationRequired))
                     return
                 }
                 guard let updatedUser else {
-                    continuation.resume(throwing: GoogleAuthError.reauthenticationRequired)
+                    completion(.failure(GoogleAuthError.reauthenticationRequired))
                     return
                 }
                 guard let email = updatedUser.profile?.email else {
-                    continuation.resume(
-                        throwing: GoogleAuthError.network("Missing email on Google profile")
-                    )
+                    completion(.failure(GoogleAuthError.network("Missing email on Google profile")))
                     return
                 }
-                let info = GoogleAccountInfo(
+                completion(.success(GoogleAccountInfo(
                     email: email,
                     accessToken: updatedUser.accessToken.tokenString,
                     refreshToken: updatedUser.refreshToken.tokenString,
                     // See signIn() rationale: nil expiration → force re-refresh.
-                    expiresAt: updatedUser.accessToken.expirationDate ?? .distantPast
-                )
-                continuation.resume(returning: info)
+                    expiresAt: updatedUser.accessToken.expirationDate ?? .distantPast)))
             }
         }
     }
