@@ -1,4 +1,11 @@
 import Foundation
+import os
+
+/// Subsystem logger for the Calendar REST client. Mirrors `GCalSyncEngine`'s
+/// `syncLog` so API failures are diagnosable — in particular a 403/4xx body,
+/// which names the exact cause (API-not-enabled vs insufficient-scope) and is
+/// otherwise discarded.
+private let clientLog = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", category: "GCalClient")
 
 @MainActor
 protocol GoogleCalendarClientProtocol: AnyObject {
@@ -95,6 +102,12 @@ final class GoogleCalendarClient {
                 continue
 
             default:
+                // Surface the API error body — Google's 4xx JSON names the exact
+                // reason (e.g. "accessNotConfigured" + an enable URL, or
+                // "ACCESS_TOKEN_SCOPE_INSUFFICIENT"). Without this it's an opaque
+                // status code.
+                let body = String(data: data, encoding: .utf8) ?? "<\(data.count) bytes, non-utf8>"
+                clientLog.error("GCal API \(http.statusCode, privacy: .public) at \(url.path, privacy: .public): \(body, privacy: .public)")
                 throw GoogleCalendarClientError.http(status: http.statusCode)
             }
         }
