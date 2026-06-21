@@ -1,5 +1,12 @@
 # Phase 37 — Google Calendar Sync
 
+> **Status (2026-06-20):** **37a — Read/import: SHIPPED to `main` and verified
+> on-device.** Connect imports primary-calendar events into Day/Week; incremental
+> re-sync, dedup, disconnect-purge, EventKit-loop prevention all working. Commits
+> `02afcdf..485de80` (feature) + `234f058`/`1e28006`/`4be8243` (sign-in hardening
+> & API error logging). **37b — Write-back + conflict resolution: not started.**
+> Design: `docs/superpowers/specs/2026-06-14-phase-37a-google-calendar-import-design.md`.
+
 > **Milestone M (v1.1 Features).** Post-submission. Covers `docs/suggestions.md`
 > line 5: *"Google Calendar sync not working."* Reclassified bug → feature: the
 > connections row has always been "Coming soon, disabled" (Phase 17) — nothing

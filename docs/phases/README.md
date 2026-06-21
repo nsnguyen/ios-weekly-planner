@@ -67,7 +67,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 34 | Free-Text Annotations                                | M                   | ✅     |
 | 35 | Repeating Events                                     | M                   | ✅     |
 | 36 | Personalization Expansion (36a fonts/templates ✅ · 36b week-start 📋) | M | ⏳     |
-| 37 | Google Calendar Sync                                 | M                   | 📋     |
+| 37 | Google Calendar Sync (37a import ✅ on-device · 37b write-back 📋) | M | ⏳     |
 | 38 | Localization & Real Translations                     | N — Future          | 💤     |
 | 39 | Voice Memos                                          | N — Future          | 💤     |
 | 40 | Final Polish, App Icon, Launch Screen, Privacy       | O — Ship (final)    | ⏳     |
