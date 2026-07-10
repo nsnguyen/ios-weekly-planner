@@ -182,9 +182,14 @@ final class EventDetailViewModel {
     func save() async {
         guard let composer, composer.canSave else { return }
         let built = composer.build(id: event?.id ?? UUID())
-        // Preserve eventKitIdentifier on edit so the mirror updates the
-        // existing iOS calendar row instead of inserting a duplicate.
+        // Preserve external identities on edit so mirrors update existing
+        // calendar rows instead of inserting duplicates.
         built.eventKitIdentifier = event?.eventKitIdentifier
+        built.googleEventID = event?.googleEventID
+        built.googleEtag = event?.googleEtag
+        if let source = event?.source {
+            built.source = source
+        }
         do {
             try await eventStore.upsert(built)
             event = try await eventStore.event(id: built.id)

@@ -71,29 +71,14 @@ final class SwiftDataEventStore: EventStoring {
 
     func upsert(_ event: Event) async throws {
         let id = event.id
-        let existing = try context.fetch(FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.id == id })).first
+        var existing = try context.fetch(FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.id == id })).first
+
+        if existing == nil, let googleEventID = event.googleEventID {
+            existing = try context.fetch(FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.googleEventID == googleEventID })).first
+        }
 
         if let existing {
-            existing.title = event.title
-            existing.start = event.start
-            existing.end = event.end
-            existing.location = event.location
-            existing.notes = event.notes
-            existing.categoryRaw = event.categoryRaw
-            existing.attendeesCount = event.attendeesCount
-            existing.travelMinutes = event.travelMinutes
-            existing.sourceRaw = event.sourceRaw
-            existing.gmailMessageID = event.gmailMessageID
-            existing.gmailFrom = event.gmailFrom
-            existing.gmailSubject = event.gmailSubject
-            existing.googleEventID = event.googleEventID
-            existing.googleEtag = event.googleEtag
-            existing.reminders = event.reminders
-            existing.recurrence = event.recurrence
-            existing.isRecurring = event.recurrence != nil
-            existing.excludedOccurrenceStarts = event.excludedOccurrenceStarts
-            existing.eventKitIdentifier = event.eventKitIdentifier
-            existing.updatedAt = event.updatedAt
+            existing.copyFields(from: event)
         } else {
             context.insert(event)
         }
@@ -167,6 +152,32 @@ final class SwiftDataEventStore: EventStoring {
         let weekday = calendar.component(.weekday, from: startOfDay)
         let daysSinceMonday = (weekday + 5) % 7
         return calendar.date(byAdding: .day, value: -daysSinceMonday, to: startOfDay) ?? startOfDay
+    }
+}
+
+private extension Event {
+    func copyFields(from event: Event) {
+        eventKitIdentifier = event.eventKitIdentifier
+        title = event.title
+        start = event.start
+        end = event.end
+        location = event.location
+        notes = event.notes
+        categoryRaw = event.categoryRaw
+        attendeesCount = event.attendeesCount
+        travelMinutes = event.travelMinutes
+        sourceRaw = event.sourceRaw
+        gmailMessageID = event.gmailMessageID
+        gmailFrom = event.gmailFrom
+        gmailSubject = event.gmailSubject
+        googleEventID = event.googleEventID
+        googleEtag = event.googleEtag
+        reminders = event.reminders
+        recurrence = event.recurrence
+        isRecurring = event.recurrence != nil
+        excludedOccurrenceStarts = event.excludedOccurrenceStarts
+        createdAt = event.createdAt
+        updatedAt = event.updatedAt
     }
 }
 

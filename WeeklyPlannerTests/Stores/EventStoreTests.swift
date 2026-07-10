@@ -90,6 +90,43 @@ final class EventStoreTests: XCTestCase {
         XCTAssertEqual(refreshed?.updatedAt, updatedAt)
     }
 
+    func testUpsertExistingGoogleEventUpdatesInPlaceByGoogleEventID() async throws {
+        let originalID = UUID()
+        let importedID = UUID()
+        let original = Event(id: originalID,
+                             title: "Local write-back",
+                             start: Self.may16_2026(hour: 9),
+                             end: Self.may16_2026(hour: 10),
+                             category: .work,
+                             source: .googleCalendar,
+                             googleEventID: "gid1",
+                             googleEtag: "\"old\"")
+        try await store.upsert(original)
+
+        let updatedAt = Date(timeIntervalSince1970: 2_345)
+        let imported = Event(id: importedID,
+                             title: "Imported update",
+                             start: Self.may16_2026(hour: 11),
+                             end: Self.may16_2026(hour: 12),
+                             category: .personal,
+                             source: .googleCalendar,
+                             googleEventID: "gid1",
+                             googleEtag: "\"new\"",
+                             updatedAt: updatedAt)
+        try await store.upsert(imported)
+
+        let all = try container.mainContext.fetch(FetchDescriptor<Event>())
+        let matching = all.filter { $0.googleEventID == "gid1" }
+        XCTAssertEqual(matching.count, 1, "Upsert should not duplicate rows that share googleEventID")
+        let fetched = try XCTUnwrap(matching.first)
+        XCTAssertEqual(fetched.id, originalID)
+        XCTAssertEqual(fetched.title, "Imported update")
+        XCTAssertEqual(fetched.googleEtag, "\"new\"")
+        XCTAssertEqual(fetched.updatedAt, updatedAt)
+        let insertedByImportedID = try await store.event(id: importedID)
+        XCTAssertNil(insertedByImportedID)
+    }
+
     func testFetchByWeekOffsetReturnsEventsInRange() async throws {
         let thisWeek = Event(title: "This week",
                              start: Self.may16_2026(hour: 9),

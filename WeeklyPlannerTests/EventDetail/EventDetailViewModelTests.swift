@@ -149,6 +149,30 @@ final class EventDetailViewModelTests: XCTestCase {
         XCTAssertNil(vm.composer, "composer should clear after a successful save")
     }
 
+    func testSaveInEditModePreservesGoogleIdentity() async throws {
+        let event = Event(title: "Imported event",
+                          start: Date(timeIntervalSince1970: 1_780_000_000),
+                          end: Date(timeIntervalSince1970: 1_780_003_600),
+                          category: .work,
+                          source: .googleCalendar,
+                          googleEventID: "gid-edit-1",
+                          googleEtag: "\"etag-before\"")
+        try await eventStore.upsert(event)
+
+        let vm = EventDetailViewModel(eventID: event.id, eventStore: eventStore, geocoder: fakeGeocoder)
+        await vm.load()
+        vm.beginEditing()
+
+        vm.composer?.title = "Edited imported event"
+        await vm.save()
+
+        let reloaded = try await eventStore.event(id: event.id)
+        XCTAssertEqual(reloaded?.title, "Edited imported event")
+        XCTAssertEqual(reloaded?.googleEventID, "gid-edit-1")
+        XCTAssertEqual(reloaded?.googleEtag, "\"etag-before\"")
+        XCTAssertEqual(reloaded?.source, .googleCalendar)
+    }
+
     func testSaveInCreateModeUpsertsBrandNewEvent() async throws {
         let vm = EventDetailViewModel(eventID: UUID(),
                                       eventStore: eventStore,
