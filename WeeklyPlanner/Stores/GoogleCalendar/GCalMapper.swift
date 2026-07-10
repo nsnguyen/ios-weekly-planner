@@ -25,7 +25,25 @@ enum GCalMapper {
                      notes: g.description,
                      category: .personal,
                      source: .googleCalendar,
-                     googleEventID: g.id)
+                     googleEventID: g.id,
+                     googleEtag: g.etag,
+                     updatedAt: parseUpdated(g.updated) ?? Date())
+    }
+
+    static func writeBody(from event: Event) -> GCalEventWriteBody {
+        if isAllDay(event) {
+            return GCalEventWriteBody(summary: event.title,
+                                      location: event.location,
+                                      description: event.notes,
+                                      start: GCalDateTime(date: dayString(from: event.start), dateTime: nil),
+                                      end: GCalDateTime(date: dayString(from: event.end), dateTime: nil))
+        }
+
+        return GCalEventWriteBody(summary: event.title,
+                                  location: event.location,
+                                  description: event.notes,
+                                  start: GCalDateTime(date: nil, dateTime: iso.string(from: event.start)),
+                                  end: GCalDateTime(date: nil, dateTime: iso.string(from: event.end)))
     }
 
     private nonisolated(unsafe) static let iso = ISO8601DateFormatter()
@@ -37,6 +55,22 @@ enum GCalMapper {
         f.dateFormat = "yyyy-MM-dd"
         return f
     }()
+
+    private static func isAllDay(_ event: Event) -> Bool {
+        let calendar = Calendar.current
+        return event.end > event.start
+            && event.start == calendar.startOfDay(for: event.start)
+            && event.end == calendar.startOfDay(for: event.end)
+    }
+
+    private static func dayString(from date: Date) -> String {
+        day.string(from: date)
+    }
+
+    private static func parseUpdated(_ value: String?) -> Date? {
+        guard let value else { return nil }
+        return iso.date(from: value)
+    }
 
     private static func parse(_ dt: GCalDateTime) -> Date? {
         if let s = dt.dateTime { return iso.date(from: s) }
