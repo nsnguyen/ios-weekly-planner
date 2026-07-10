@@ -50,7 +50,18 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     }
 
     func delete(id: UUID) async throws {
-        // Task 7 owns remote cancellation. For now deletes remain local passthrough.
+        if let event = try await base.event(id: id),
+           shouldWriteBack(event),
+           let googleEventID = event.googleEventID {
+            do {
+                try await client.cancelEvent(id: googleEventID)
+            } catch GoogleCalendarClientError.notFound {
+                // The remote is already gone; local deletion should still win.
+            } catch {
+                reportWriteBackFailure(error, event: event)
+            }
+        }
+
         try await base.delete(id: id)
     }
 

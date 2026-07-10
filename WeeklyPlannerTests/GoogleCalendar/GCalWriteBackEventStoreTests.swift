@@ -224,9 +224,91 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:02:00.500Z")))
     }
 
+    func testDeleteCancelsRemoteThenRemovesLocal() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = true
+            $0.googleCalendarAccountEmail = "planner@example.com"
+        }
+        let event = makeLocalEvent(
+            source: .googleCalendar,
+            googleEventID: "remote-delete-1",
+            googleEtag: "\"delete-etag\""
+        )
+        try await swiftDataStore.upsert(event)
+
+        try await store.delete(id: event.id)
+
+        XCTAssertEqual(client.cancelledIDs, ["remote-delete-1"])
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        XCTAssertNil(storedEvent)
+    }
+
+    func testDeleteNotFoundStillDeletesLocal() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = true
+            $0.googleCalendarAccountEmail = "planner@example.com"
+        }
+        let event = makeLocalEvent(
+            source: .googleCalendar,
+            googleEventID: "already-gone",
+            googleEtag: "\"delete-etag\""
+        )
+        try await swiftDataStore.upsert(event)
+        client.throwOnWrite = GoogleCalendarClientError.notFound
+
+        try await store.delete(id: event.id)
+
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        XCTAssertNil(storedEvent)
+    }
+
+    func testPurgeDoesNotCancelRemote() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = true
+            $0.googleCalendarAccountEmail = "planner@example.com"
+        }
+        let event = makeLocalEvent(
+            source: .googleCalendar,
+            googleEventID: "remote-purge-1",
+            googleEtag: "\"purge-etag\""
+        )
+        try await swiftDataStore.upsert(event)
+
+        try await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
+            try await store.delete(id: event.id)
+        }
+
+        XCTAssertTrue(client.cancelledIDs.isEmpty)
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        XCTAssertNil(storedEvent)
+    }
+
+    func testSyncUpsertDoesNotEchoCreate() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = true
+            $0.googleCalendarAccountEmail = "planner@example.com"
+        }
+        let event = makeLocalEvent(
+            source: .googleCalendar,
+            googleEventID: "remote-import-1",
+            googleEtag: "\"import-etag\""
+        )
+
+        try await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
+            try await store.upsert(event)
+        }
+
+        XCTAssertTrue(client.created.isEmpty)
+        XCTAssertTrue(client.updated.isEmpty)
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        let fetched = try XCTUnwrap(storedEvent)
+        XCTAssertEqual(fetched.googleEventID, "remote-import-1")
+    }
+
     private func makeLocalEvent(
         title: String = "Write-back meeting",
         eventKitIdentifier: String? = nil,
+        source: EventSource = .manual,
         googleEventID: String? = nil,
         googleEtag: String? = nil,
         updatedAt: Date = .init(),
@@ -240,7 +322,7 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             location: "Conference Room",
             notes: "Discuss calendar write-back",
             category: .work,
-            source: .manual,
+            source: source,
             googleEventID: googleEventID,
             googleEtag: googleEtag,
             recurrence: recurrence,
