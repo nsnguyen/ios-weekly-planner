@@ -63,6 +63,33 @@ final class EventStoreTests: XCTestCase {
         XCTAssertEqual(refreshed?.title, "New")
     }
 
+    func testUpsertExistingEventPreservesGoogleEtagAndUpdatedAt() async throws {
+        let id = UUID()
+        let original = Event(id: id,
+                             title: "Old",
+                             start: Self.may16_2026(hour: 9),
+                             end: Self.may16_2026(hour: 10),
+                             category: .work,
+                             googleEventID: "gid",
+                             googleEtag: "\"old\"")
+        try await store.upsert(original)
+
+        let updatedAt = Date(timeIntervalSince1970: 1234)
+        let updated = Event(id: id,
+                            title: "New",
+                            start: Self.may16_2026(hour: 9),
+                            end: Self.may16_2026(hour: 11),
+                            category: .work,
+                            googleEventID: "gid",
+                            googleEtag: "\"new\"",
+                            updatedAt: updatedAt)
+        try await store.upsert(updated)
+
+        let refreshed = try await store.event(id: id)
+        XCTAssertEqual(refreshed?.googleEtag, "\"new\"")
+        XCTAssertEqual(refreshed?.updatedAt, updatedAt)
+    }
+
     func testFetchByWeekOffsetReturnsEventsInRange() async throws {
         let thisWeek = Event(title: "This week",
                              start: Self.may16_2026(hour: 9),
