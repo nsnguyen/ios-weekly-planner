@@ -1,0 +1,157 @@
+import SwiftData
+import XCTest
+@testable import WeeklyPlanner
+
+@MainActor
+final class GCalWriteBackEventStoreTests: XCTestCase {
+    private var container: ModelContainer!
+    private var swiftDataStore: SwiftDataEventStore!
+    private var settingsStore: SwiftDataSettingsStore!
+    private var gateway: FakeEventKitGateway!
+    private var client: FakeGoogleCalendarClient!
+    private var store: GoogleCalendarWriteBackEventStore!
+
+    private let start = Date(timeIntervalSince1970: 1_749_895_200)
+    private let end = Date(timeIntervalSince1970: 1_749_898_800)
+
+    override func setUp() async throws {
+        try await super.setUp()
+        container = try SwiftDataStack.inMemoryContainer()
+        swiftDataStore = SwiftDataEventStore(context: container.mainContext)
+        settingsStore = SwiftDataSettingsStore(context: container.mainContext)
+        gateway = FakeEventKitGateway()
+        client = FakeGoogleCalendarClient()
+
+        let eventKitStore = EventKitMirroringEventStore(
+            base: swiftDataStore,
+            gateway: gateway,
+            calendarManager: CategoryCalendarManager(gateway: gateway)
+        )
+        store = GoogleCalendarWriteBackEventStore(
+            base: eventKitStore,
+            client: client,
+            settingsStore: settingsStore
+        )
+    }
+
+    override func tearDown() async throws {
+        store = nil
+        client = nil
+        gateway = nil
+        settingsStore = nil
+        swiftDataStore = nil
+        container = nil
+        try await super.tearDown()
+    }
+
+    func testCreateWhileConnectedPostsAndFlipsSource() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = true
+            $0.googleCalendarAccountEmail = "planner@example.com"
+        }
+        client.createResult = makeRemoteEvent(
+            id: "remote-created-1",
+            etag: "\"remote-etag\"",
+            updated: "2026-06-14T12:34:56.789Z"
+        )
+        let event = makeLocalEvent(eventKitIdentifier: "ek-local-id")
+
+        try await store.upsert(event)
+
+        XCTAssertEqual(client.created.count, 1)
+        XCTAssertEqual(client.created[0].summary, "Write-back meeting")
+        XCTAssertTrue(gateway.savedEvents.isEmpty, "Google-sourced event must not be mirrored back into EventKit")
+
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        let fetched = try XCTUnwrap(storedEvent)
+        XCTAssertEqual(fetched.googleEventID, "remote-created-1")
+        XCTAssertEqual(fetched.googleEtag, "\"remote-etag\"")
+        XCTAssertEqual(fetched.source, .googleCalendar)
+        XCTAssertNil(fetched.eventKitIdentifier)
+        XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T12:34:56.789Z")))
+
+        XCTAssertEqual(event.googleEventID, "remote-created-1", "Event is a class, so the decorator should mutate in place")
+        XCTAssertEqual(event.source, .googleCalendar)
+    }
+
+    func testCreateWhileDisconnectedSkipsGoogle() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = false
+            $0.googleCalendarAccountEmail = nil
+        }
+        let event = makeLocalEvent()
+
+        try await store.upsert(event)
+
+        XCTAssertTrue(client.created.isEmpty)
+        XCTAssertFalse(gateway.savedEvents.isEmpty, "Disconnected manual writes should continue through EventKit mirroring")
+
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        let fetched = try XCTUnwrap(storedEvent)
+        XCTAssertNil(fetched.googleEventID)
+        XCTAssertNil(fetched.googleEtag)
+        XCTAssertEqual(fetched.source, .manual)
+    }
+
+    func testRecurringCreateDoesNotPush() async throws {
+        try settingsStore.update {
+            $0.googleCalendarConnected = true
+            $0.googleCalendarAccountEmail = "planner@example.com"
+        }
+        let event = makeLocalEvent(
+            recurrence: Recurrence(frequency: .weekly, interval: 1, end: .never)
+        )
+
+        try await store.upsert(event)
+
+        XCTAssertTrue(client.created.isEmpty)
+
+        let storedEvent = try await swiftDataStore.event(id: event.id)
+        let fetched = try XCTUnwrap(storedEvent)
+        XCTAssertNil(fetched.googleEventID)
+        XCTAssertEqual(fetched.source, .manual)
+        XCTAssertEqual(fetched.recurrence, Recurrence(frequency: .weekly, interval: 1, end: .never))
+    }
+
+    private func makeLocalEvent(
+        eventKitIdentifier: String? = nil,
+        recurrence: Recurrence? = nil
+    ) -> Event {
+        Event(
+            eventKitIdentifier: eventKitIdentifier,
+            title: "Write-back meeting",
+            start: start,
+            end: end,
+            location: "Conference Room",
+            notes: "Discuss calendar write-back",
+            category: .work,
+            source: .manual,
+            recurrence: recurrence
+        )
+    }
+
+    private func makeRemoteEvent(
+        id: String,
+        etag: String?,
+        updated: String?
+    ) -> GCalEvent {
+        GCalEvent(
+            id: id,
+            status: "confirmed",
+            summary: "Write-back meeting",
+            location: "Conference Room",
+            description: "Discuss calendar write-back",
+            start: GCalDateTime(date: nil, dateTime: Self.iso.string(from: start)),
+            end: GCalDateTime(date: nil, dateTime: Self.iso.string(from: end)),
+            etag: etag,
+            updated: updated
+        )
+    }
+
+    private nonisolated(unsafe) static let iso = ISO8601DateFormatter()
+    private nonisolated(unsafe) static let isoWithFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+}
