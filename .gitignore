@@ -46,3 +46,6 @@ Secrets.xcconfig
 # Auto-generated per-session memory context (claude-mem writes this)
 AGENTS.md
 build-run/
+
+# Git worktrees (isolated feature checkouts)
+.worktrees/
