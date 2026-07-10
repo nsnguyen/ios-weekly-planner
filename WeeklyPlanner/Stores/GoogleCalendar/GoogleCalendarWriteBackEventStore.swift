@@ -5,9 +5,9 @@ private let writeBackLog = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", 
 
 /// Decorates the local event store with Google Calendar write-back.
 ///
-/// Create-only for Task 5: new, non-recurring local events are POSTed to Google
-/// when Calendar is connected. The returned remote identity is applied before
-/// persistence so the EventKit mirror sees `.googleCalendar` and skips the loop.
+/// New, non-recurring local events are POSTed to Google when Calendar is
+/// connected. Existing Google-backed events use last-write-wins update
+/// semantics before local persistence.
 @MainActor
 final class GoogleCalendarWriteBackEventStore: EventStoring {
     private let base: any EventStoring
@@ -33,17 +33,16 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     }
 
     func upsert(_ event: Event) async throws {
-        if event.googleEventID == nil, shouldWriteBack(event) {
+        if shouldWriteBack(event) {
             do {
-                let remote = try await client.createEvent(GCalMapper.writeBody(from: event))
-                applyRemoteIdentity(remote, to: event)
+                if let googleEventID = event.googleEventID {
+                    try await pushUpdate(event, googleEventID: googleEventID, allowRetry: true)
+                } else {
+                    let remote = try await client.createEvent(GCalMapper.writeBody(from: event))
+                    applyRemoteIdentity(remote, to: event)
+                }
             } catch {
-                writeBackLog.error("GCal create write-back failed for event \(event.id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
-                NotificationCenter.default.post(
-                    name: .googleCalendarWriteBackDidFail,
-                    object: event,
-                    userInfo: ["error": error]
-                )
+                reportWriteBackFailure(error, event: event)
             }
         }
 
@@ -77,6 +76,30 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
         (try? settingsStore.current().googleCalendarConnected) == true
     }
 
+    private func pushUpdate(_ event: Event, googleEventID: String, allowRetry: Bool) async throws {
+        let remote = try await client.getEvent(id: googleEventID)
+        if remoteIsNewer(remote, than: event) {
+            applyMappedRemote(remote, to: event)
+            return
+        }
+
+        do {
+            let updated = try await client.updateEvent(
+                id: googleEventID,
+                body: GCalMapper.writeBody(from: event),
+                etag: remote.etag ?? event.googleEtag
+            )
+            applyRemoteIdentity(updated, to: event)
+        } catch GoogleCalendarClientError.preconditionFailed where allowRetry {
+            let fresh = try await client.getEvent(id: googleEventID)
+            if remoteIsNewer(fresh, than: event) {
+                applyMappedRemote(fresh, to: event)
+            } else {
+                try await pushUpdate(event, googleEventID: googleEventID, allowRetry: false)
+            }
+        }
+    }
+
     private func applyRemoteIdentity(_ remote: GCalEvent, to event: Event) {
         event.googleEventID = remote.id
         event.googleEtag = remote.etag
@@ -85,6 +108,34 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
         if let updatedAt = Self.parseUpdated(remote.updated) {
             event.updatedAt = updatedAt
         }
+    }
+
+    private func applyMappedRemote(_ remote: GCalEvent, to event: Event) {
+        guard let mapped = GCalMapper.event(from: remote) else { return }
+        event.title = mapped.title
+        event.start = mapped.start
+        event.end = mapped.end
+        event.location = mapped.location
+        event.notes = mapped.notes
+        event.googleEventID = mapped.googleEventID
+        event.googleEtag = mapped.googleEtag
+        event.source = .googleCalendar
+        event.eventKitIdentifier = nil
+        event.updatedAt = mapped.updatedAt
+    }
+
+    private func remoteIsNewer(_ remote: GCalEvent, than event: Event) -> Bool {
+        guard let remoteUpdatedAt = Self.parseUpdated(remote.updated) else { return false }
+        return remoteUpdatedAt > event.updatedAt
+    }
+
+    private func reportWriteBackFailure(_ error: Error, event: Event) {
+        writeBackLog.error("GCal write-back failed for event \(event.id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
+        NotificationCenter.default.post(
+            name: .googleCalendarWriteBackDidFail,
+            object: event,
+            userInfo: ["error": error]
+        )
     }
 
     private nonisolated(unsafe) static let iso = ISO8601DateFormatter()

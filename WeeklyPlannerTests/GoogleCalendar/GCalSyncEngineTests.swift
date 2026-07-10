@@ -24,6 +24,7 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
     var getResponses: [String: GCalEvent] = [:]
     var createResult: GCalEvent?
     var updateResult: GCalEvent?
+    var updateBehavior: [Result<GCalEvent, Error>] = []
     var throwOnWrite: Error?
 
     private var pageIndex = 0
@@ -77,6 +78,9 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
     func updateEvent(id: String, body: GCalEventWriteBody, etag: String?) async throws -> GCalEvent {
         if let throwOnWrite { throw throwOnWrite }
         updated.append((id: id, body: body, etag: etag))
+        if !updateBehavior.isEmpty {
+            return try updateBehavior.removeFirst().get()
+        }
         return updateResult ?? GCalEvent(
             id: id,
             status: "confirmed",
