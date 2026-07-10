@@ -10,6 +10,7 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
     private var gateway: FakeEventKitGateway!
     private var client: FakeGoogleCalendarClient!
     private var store: GoogleCalendarWriteBackEventStore!
+    private var unlinkedEventKitIdentifiers: [String] = []
 
     private let start = Date(timeIntervalSince1970: 1_749_895_200)
     private let end = Date(timeIntervalSince1970: 1_749_898_800)
@@ -21,16 +22,23 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         gateway = FakeEventKitGateway()
         client = FakeGoogleCalendarClient()
+        unlinkedEventKitIdentifiers = []
 
         let eventKitStore = EventKitMirroringEventStore(
             base: swiftDataStore,
             gateway: gateway,
             calendarManager: CategoryCalendarManager(gateway: gateway)
         )
+        let settingsStore = settingsStore!
         store = GoogleCalendarWriteBackEventStore(
             base: eventKitStore,
             client: client,
-            settingsStore: settingsStore
+            isConnected: {
+                (try? settingsStore.current().googleCalendarConnected) ?? false
+            },
+            unlinkEventKitIdentifier: { [weak self] identifier in
+                self?.unlinkedEventKitIdentifiers.append(identifier)
+            }
         )
     }
 
@@ -68,6 +76,7 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         XCTAssertEqual(fetched.googleEtag, "\"remote-etag\"")
         XCTAssertEqual(fetched.source, .googleCalendar)
         XCTAssertNil(fetched.eventKitIdentifier)
+        XCTAssertEqual(unlinkedEventKitIdentifiers, ["ek-local-id"])
         XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T12:34:56.789Z")))
 
         XCTAssertEqual(event.googleEventID, "remote-created-1", "Event is a class, so the decorator should mutate in place")

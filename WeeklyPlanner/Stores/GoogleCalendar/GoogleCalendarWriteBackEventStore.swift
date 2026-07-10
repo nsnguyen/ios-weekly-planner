@@ -12,16 +12,19 @@ private let writeBackLog = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", 
 final class GoogleCalendarWriteBackEventStore: EventStoring {
     private let base: any EventStoring
     private let client: any GoogleCalendarClientProtocol
-    private let settingsStore: any SettingsStoring
+    private let isConnected: @MainActor () -> Bool
+    private let unlinkEventKitIdentifier: @MainActor (String) -> Void
 
     init(
         base: any EventStoring,
         client: any GoogleCalendarClientProtocol,
-        settingsStore: any SettingsStoring
+        isConnected: @escaping @MainActor () -> Bool,
+        unlinkEventKitIdentifier: @escaping @MainActor (String) -> Void
     ) {
         self.base = base
         self.client = client
-        self.settingsStore = settingsStore
+        self.isConnected = isConnected
+        self.unlinkEventKitIdentifier = unlinkEventKitIdentifier
     }
 
     func events(forWeekOffset offset: Int, today: Date) async throws -> [Event] {
@@ -78,13 +81,9 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     }
 
     private func shouldWriteBack(_ event: Event) -> Bool {
-        isConnected &&
+        isConnected() &&
             !GCalWriteBackContext.suppressWriteBack &&
             event.recurrence == nil
-    }
-
-    private var isConnected: Bool {
-        (try? settingsStore.current().googleCalendarConnected) == true
     }
 
     private func pushUpdate(_ event: Event, googleEventID: String, allowRetry: Bool) async throws {
@@ -114,8 +113,7 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     private func applyRemoteIdentity(_ remote: GCalEvent, to event: Event) {
         event.googleEventID = remote.id
         event.googleEtag = remote.etag
-        event.source = .googleCalendar
-        event.eventKitIdentifier = nil
+        flipToGoogleCalendarSource(event)
         if let updatedAt = Self.parseUpdated(remote.updated) {
             event.updatedAt = updatedAt
         }
@@ -130,9 +128,17 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
         event.notes = mapped.notes
         event.googleEventID = mapped.googleEventID
         event.googleEtag = mapped.googleEtag
+        flipToGoogleCalendarSource(event)
+        event.updatedAt = mapped.updatedAt
+    }
+
+    private func flipToGoogleCalendarSource(_ event: Event) {
+        let eventKitIdentifier = event.eventKitIdentifier
         event.source = .googleCalendar
         event.eventKitIdentifier = nil
-        event.updatedAt = mapped.updatedAt
+        if let eventKitIdentifier {
+            unlinkEventKitIdentifier(eventKitIdentifier)
+        }
     }
 
     private func remoteIsNewer(_ remote: GCalEvent, than event: Event) -> Bool {
