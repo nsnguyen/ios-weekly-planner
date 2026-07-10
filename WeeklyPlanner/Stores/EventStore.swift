@@ -87,12 +87,13 @@ final class SwiftDataEventStore: EventStoring {
             existing.gmailFrom = event.gmailFrom
             existing.gmailSubject = event.gmailSubject
             existing.googleEventID = event.googleEventID
+            existing.googleEtag = event.googleEtag
             existing.reminders = event.reminders
             existing.recurrence = event.recurrence
             existing.isRecurring = event.recurrence != nil
             existing.excludedOccurrenceStarts = event.excludedOccurrenceStarts
             existing.eventKitIdentifier = event.eventKitIdentifier
-            existing.updatedAt = .init()
+            existing.updatedAt = event.updatedAt
         } else {
             context.insert(event)
         }
