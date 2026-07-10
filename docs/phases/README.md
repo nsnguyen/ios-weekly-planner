@@ -72,6 +72,11 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 39 | Voice Memos                                          | N — Future          | 💤     |
 | 40 | Final Polish, App Icon, Launch Screen, Privacy       | O — Ship (final)    | ⏳     |
 | 41 | App Store Submission & TestFlight                    | O — Ship (final)    | ⏳     |
+| 42 | Event Sheet Overhaul                                 | P — Feedback R2     | 📋     |
+| 43 | Sticky Notes v3 — Grounded & Movable                 | P                   | 📋     |
+| 44 | Typography & Paper Expansion                         | P                   | 📋     |
+| 45 | Chrome & Navigation Simplification                   | P                   | 📋     |
+| 46 | Ask the Planner — Search Overhaul                    | P                   | 📋     |
 
 **Legend:** ✅ done · ⏳ in progress · 📋 scope doc written, not started · 💤 outline only · 🗄️ archived.
 
@@ -104,6 +109,19 @@ with **Phase 40 (Final Polish)** and **Phase 41 (App Store Submission)** as
 the literal final two phases — submission ships last, after all the feedback
 work. AI Sticky Notes stay opt-in (only the swipe-lock is fixed — see
 `[[ai-sticky-notes-opt-in]]`).
+
+**Milestone P — Feedback Round 2 (added 2026-07-07):** a second round of
+user feedback (`docs/suggestions-round-2.md`, items #56–#85) is triaged in
+`docs/superpowers/specs/2026-07-07-feedback-round-2-roadmap-design.md` and
+decomposed into Phases **42–46** (plan docs written same day under
+`docs/superpowers/plans/`). Part of the feedback reinforces existing
+phases rather than creating new ones: week-start options + tabs-don't-change
+(#60/#64/#65/#80) = **Phase 36b** (its TDD plan already exists — execute it
+first in this milestone); logo (#56) = Phase 40; language (#84) = Phase 38;
+voice memos (#85) = Phase 39. Recommended execution order:
+**36b → 45 → 42 → 44 → 43 → 46**, all before Phases 40/41 (which remain the
+final two). Feedback #75 deliberately reverses round-1 #28 (empty week days
+go back to blank).
 
 ## Reading a Phase Doc
 
