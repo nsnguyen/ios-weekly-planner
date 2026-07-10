@@ -47,6 +47,11 @@ enum GCalMapper {
     }
 
     private nonisolated(unsafe) static let iso = ISO8601DateFormatter()
+    private nonisolated(unsafe) static let isoWithFractionalSeconds: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
     private nonisolated(unsafe) static let day: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
@@ -69,7 +74,7 @@ enum GCalMapper {
 
     private static func parseUpdated(_ value: String?) -> Date? {
         guard let value else { return nil }
-        return iso.date(from: value)
+        return isoWithFractionalSeconds.date(from: value) ?? iso.date(from: value)
     }
 
     private static func parse(_ dt: GCalDateTime) -> Date? {

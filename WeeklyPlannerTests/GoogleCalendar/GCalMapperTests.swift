@@ -60,6 +60,16 @@ final class GCalMapperTests: XCTestCase {
         XCTAssertEqual(e.updatedAt, ISO8601DateFormatter().date(from: "2026-06-14T12:00:00Z"))
     }
 
+    func testImportParsesFractionalSecondUpdatedAt() throws {
+        let expected = ISO8601DateFormatter().date(from: "2026-06-14T12:00:00Z")
+        let g = gcal("e1",
+                     startDT: "2026-06-14T12:00:00Z",
+                     endDT: "2026-06-14T13:00:00Z",
+                     updated: "2026-06-14T12:00:00.000Z")
+        let e = try XCTUnwrap(GCalMapper.event(from: g))
+        XCTAssertEqual(e.updatedAt, expected)
+    }
+
     func testWriteBodyTimedEvent() {
         let start = ISO8601DateFormatter().date(from: "2026-07-09T18:00:00Z")!
         let end = start.addingTimeInterval(3600)
