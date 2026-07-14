@@ -35,8 +35,17 @@ struct GCalEvent: Decodable {
     let updated: String?
 }
 
+/// Request body for create/update. Only fields we author.
+struct GCalEventWriteBody: Encodable, Equatable {
+    var summary: String
+    var location: String?
+    var description: String?
+    var start: GCalDateTime
+    var end: GCalDateTime
+}
+
 /// Google sends EITHER `date` (all-day, "yyyy-MM-dd") OR `dateTime` (RFC3339).
-struct GCalDateTime: Decodable {
+struct GCalDateTime: Codable, Equatable {
     let date: String?
     let dateTime: String?
 }

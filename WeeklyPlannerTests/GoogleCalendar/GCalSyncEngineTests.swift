@@ -17,6 +17,15 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
     var throwSyncTokenExpiredOnFirstCall = false
     /// All recorded calls.
     var calls: [Call] = []
+    /// Write-side calls recorded for Phase 37b tests.
+    var created: [GCalEventWriteBody] = []
+    var updated: [(id: String, body: GCalEventWriteBody, etag: String?)] = []
+    var cancelledIDs: [String] = []
+    var getResponses: [String: GCalEvent] = [:]
+    var createResult: GCalEvent?
+    var updateResult: GCalEvent?
+    var updateBehavior: [Result<GCalEvent, Error>] = []
+    var throwOnWrite: Error?
 
     private var pageIndex = 0
 
@@ -40,6 +49,54 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
         let page = pages[pageIndex]
         pageIndex += 1
         return page
+    }
+
+    func getEvent(id: String) async throws -> GCalEvent {
+        if let throwOnWrite { throw throwOnWrite }
+        guard let event = getResponses[id] else {
+            throw GoogleCalendarClientError.notFound
+        }
+        return event
+    }
+
+    func createEvent(_ body: GCalEventWriteBody) async throws -> GCalEvent {
+        if let throwOnWrite { throw throwOnWrite }
+        created.append(body)
+        return createResult ?? GCalEvent(
+            id: "created-\(created.count)",
+            status: "confirmed",
+            summary: body.summary,
+            location: body.location,
+            description: body.description,
+            start: body.start,
+            end: body.end,
+            etag: "\"new\"",
+            updated: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+
+    func updateEvent(id: String, body: GCalEventWriteBody, etag: String?) async throws -> GCalEvent {
+        if let throwOnWrite { throw throwOnWrite }
+        updated.append((id: id, body: body, etag: etag))
+        if !updateBehavior.isEmpty {
+            return try updateBehavior.removeFirst().get()
+        }
+        return updateResult ?? GCalEvent(
+            id: id,
+            status: "confirmed",
+            summary: body.summary,
+            location: body.location,
+            description: body.description,
+            start: body.start,
+            end: body.end,
+            etag: "\"upd\"",
+            updated: ISO8601DateFormatter().string(from: Date())
+        )
+    }
+
+    func cancelEvent(id: String) async throws {
+        if let throwOnWrite { throw throwOnWrite }
+        cancelledIDs.append(id)
     }
 }
 

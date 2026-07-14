@@ -1,3 +1,4 @@
+import EventKit
 import SwiftData
 import SwiftUI
 import UserNotifications
@@ -54,17 +55,33 @@ struct WeeklyPlannerApp: App {
                 serviceID: "com.weeklyplanner.WeeklyPlanner.google"
             )
         )
-        // Wire the Phase 04 EventKit decorator. SystemEventKitGateway wraps
-        // EKEventStore; the decorator mirrors every write into the user's iOS
-        // Calendar once permission is granted. Without this, accept-flow
-        // writes land in SwiftData only — not visible in Calendar.app.
+        // Build the write stack as Google write-back outside EventKit mirroring.
+        // Successful Google pushes flip the event source before the EventKit
+        // mirror sees it, which prevents duplicate iOS Calendar entries.
         let eventKitGateway = SystemEventKitGateway()
         let calendarManager = CategoryCalendarManager(gateway: eventKitGateway)
         let eventKitAuth = EventKitAuthorization(gateway: eventKitGateway)
-        let eventStore: any EventStoring = EventKitMirroringEventStore(
+        let mirroredStore = EventKitMirroringEventStore(
             base: baseEventStore,
             gateway: eventKitGateway,
             calendarManager: calendarManager
+        )
+        let gcalClient = GoogleCalendarClient(auth: googleAuthService, session: URLSession.shared)
+        let eventStore: any EventStoring = GoogleCalendarWriteBackEventStore(
+            base: mirroredStore,
+            client: gcalClient,
+            isConnected: { [settingsStore] in
+                (try? settingsStore.current().googleCalendarConnected) ?? false
+            },
+            unlinkEventKitIdentifier: { [eventKitGateway] identifier in
+                guard eventKitGateway.eventsAuthStatus.isFullAccess else { return }
+                let from = Calendar.current.date(byAdding: .day, value: -365, to: Date()) ?? Date()
+                let to = Calendar.current.date(byAdding: .day, value: 365, to: Date()) ?? Date()
+                let window = eventKitGateway.fetchEvents(from: from, to: to, calendars: nil)
+                if let match = window.first(where: { $0.eventIdentifier == identifier }) {
+                    try? eventKitGateway.remove(match, span: .thisEvent)
+                }
+            }
         )
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
@@ -92,7 +109,6 @@ struct WeeklyPlannerApp: App {
             deltaSync: GmailDeltaSync(settingsStore: settingsStore)
         )
         let gcalDeltaSync = GCalDeltaSync(settingsStore: settingsStore)
-        let gcalClient = GoogleCalendarClient(auth: googleAuthService, session: URLSession.shared)
         let gcalEngine = GCalSyncEngine(
             client: gcalClient,
             eventStore: eventStore,

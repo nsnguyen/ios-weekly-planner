@@ -104,10 +104,14 @@ final class GCalSyncEngine {
     private func apply(_ item: GCalEvent) async throws {
         if item.status == "cancelled" {
             let id = GCalMapper.deterministicID(for: item.id)
-            try await eventStore.delete(id: id)
+            try await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
+                try await eventStore.delete(id: id)
+            }
             syncLog.info("GCalSync deleted \(item.id, privacy: .public)")
         } else if let event = GCalMapper.event(from: item) {
-            try await eventStore.upsert(event)
+            try await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
+                try await eventStore.upsert(event)
+            }
             syncLog.info("GCalSync upserted \(item.id, privacy: .public) title=\(event.title, privacy: .public)")
         }
         // else: mapper returned nil for non-cancelled item (missing dates) → skip
@@ -120,8 +124,10 @@ final class GCalSyncEngine {
     func purge() async {
         do {
             let gcalEvents = try await eventStore.events(source: .googleCalendar)
-            for event in gcalEvents {
-                try? await eventStore.delete(id: event.id)
+            await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
+                for event in gcalEvents {
+                    try? await eventStore.delete(id: event.id)
+                }
             }
         } catch {
             syncLog.error("GCalSync purge fetch error: \(String(describing: error), privacy: .public)")
