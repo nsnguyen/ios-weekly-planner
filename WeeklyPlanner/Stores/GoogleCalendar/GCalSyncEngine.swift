@@ -97,7 +97,9 @@ final class GCalSyncEngine {
             break
         } while true
 
-        syncLog.info("GCalSync done token=\(deltaSync.currentToken() ?? "nil", privacy: .public)")
+        // String interpolation is a closure, so the capture must say self.
+        // swiftformat:disable:next redundantSelf
+        syncLog.info("GCalSync done token=\(self.deltaSync.currentToken() ?? "nil", privacy: .public)")
     }
 
     // MARK: - Per-item apply
