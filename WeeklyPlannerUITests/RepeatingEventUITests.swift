@@ -104,13 +104,25 @@ private func chooseDailyRepeat(_ app: XCUIApplication, title: String, field: XCU
     }
 
     let repeatMenu = app.buttons["paperEventSheet.repeat"]
-    repeatMenu.tap()
-    let daily = app.descendants(matching: .any)
-        .matching(NSPredicate(format: "label == %@", "Daily"))
-        .firstMatch
+    XCTAssertTrue(repeatMenu.waitForExistence(timeout: 3), "Repeat menu missing")
+    // The sheet is not a scroll view. element.tap() asks the button to
+    // scroll on screen, that action fails, and the hit point stays {-1, -1}
+    // even though the control's frame is inside the window.
+    tapWindowPoint(of: repeatMenu, in: app)
+    let daily = app.buttons["Daily"]
     if !daily.waitForExistence(timeout: 2) {
-        repeatMenu.tap()
+        tapWindowPoint(of: repeatMenu, in: app)
     }
     XCTAssertTrue(daily.waitForExistence(timeout: 3), "Repeat menu did not open")
     daily.tap()
+}
+
+/// Taps the element's window frame. Skips the scroll-to-visible path that
+/// `XCUIElement.tap()` takes for a control the sheet cannot scroll.
+@MainActor
+private func tapWindowPoint(of element: XCUIElement, in app: XCUIApplication) {
+    let frame = element.frame
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+        .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
+        .tap()
 }

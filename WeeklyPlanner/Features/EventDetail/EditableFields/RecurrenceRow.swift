@@ -32,6 +32,7 @@ struct RecurrenceRow: View {
                         .frame(minWidth: 44, minHeight: 44, alignment: .leading)
                         .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .tint(theme.blueInk)
                 .accessibilityLabel("Repeat")
                 .accessibilityValue(recurrence?.frequency.displayName ?? "None")
