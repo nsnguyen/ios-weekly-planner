@@ -13,7 +13,7 @@ final class SettingsViewModel {
     var themeKey: PaperThemeKey
     var fontKey: PaperFont
     var sizeKey: PaperSize
-    var weekStartsOnMonday: Bool
+    var weekStart: WeekStartDay
     var defaultReminderMinutes: Int?
     var appleIntelligenceEnabled: Bool
     var aiStickyNotesEnabled: Bool
@@ -24,7 +24,7 @@ final class SettingsViewModel {
         themeKey = settings.paperTheme
         fontKey = settings.paperFont
         sizeKey = settings.paperSize
-        weekStartsOnMonday = settings.weekStartsOnMonday
+        weekStart = settings.weekStart
         defaultReminderMinutes = settings.defaultReminderMinutes
         appleIntelligenceEnabled = settings.appleIntelligenceEnabled
         aiStickyNotesEnabled = settings.aiStickyNotesEnabled
@@ -45,9 +45,9 @@ final class SettingsViewModel {
         try? store.update { $0.paperSize = size }
     }
 
-    func setWeekStartsOnMonday(_ value: Bool) {
-        weekStartsOnMonday = value
-        try? store.update { $0.weekStartsOnMonday = value }
+    func setWeekStart(_ day: WeekStartDay) {
+        weekStart = day
+        try? store.update { $0.weekStart = day }
     }
 
     func setDefaultReminderMinutes(_ minutes: Int?) {

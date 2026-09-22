@@ -25,7 +25,7 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertEqual(vm.themeKey, .cream)
         XCTAssertEqual(vm.fontKey, .caveat)
         XCTAssertEqual(vm.sizeKey, .m)
-        XCTAssertTrue(vm.weekStartsOnMonday)
+        XCTAssertEqual(vm.weekStart, .monday)
         XCTAssertEqual(vm.defaultReminderMinutes, 15)
         XCTAssertTrue(vm.appleIntelligenceEnabled)
         // AI Sticky Notes are opt-in: off until the user enables them.
@@ -69,10 +69,26 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertNil(try store.current().defaultReminderMinutes)
     }
 
-    func testSettingWeekStartToSundayPersists() throws {
+    func testDefaultWeekStartIsMonday() throws {
         let vm = SettingsViewModel(store: store)
-        vm.setWeekStartsOnMonday(false)
-        XCTAssertFalse(vm.weekStartsOnMonday)
-        XCTAssertFalse(try store.current().weekStartsOnMonday)
+        XCTAssertEqual(vm.weekStart, .monday)
+    }
+
+    func testSettingWeekStartPersists() throws {
+        let vm = SettingsViewModel(store: store)
+        vm.setWeekStart(.saturday)
+        XCTAssertEqual(vm.weekStart, .saturday)
+        XCTAssertEqual(try store.current().weekStart, .saturday)
+        XCTAssertEqual(try store.current().weekStartRaw, 7)
+    }
+
+    func testLegacySundayBoolMigratesWhenRawUnset() throws {
+        // Pre-36b installs persisted only the Bool.
+        try store.update {
+            $0.weekStartsOnMonday = false
+            $0.weekStartRaw = 0
+        }
+        let vm = SettingsViewModel(store: store)
+        XCTAssertEqual(vm.weekStart, .sunday)
     }
 }
