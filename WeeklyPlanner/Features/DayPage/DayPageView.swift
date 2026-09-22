@@ -131,7 +131,7 @@ struct DayPageContent: View {
 
     /// Names the padded content node's local space (the annotation layer's
     /// frame) so the content column can be measured in layer coordinates.
-    private static let layerSpaceName = "dayPage.annotationLayer"
+    private nonisolated(unsafe) static let layerSpaceName = "dayPage.annotationLayer"
 
     var body: some View {
         let now = Date()
