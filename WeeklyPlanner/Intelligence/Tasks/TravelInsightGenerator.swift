@@ -1,6 +1,6 @@
 import CoreLocation
 import Foundation
-import MapKit
+@preconcurrency import MapKit
 
 /// Seam over MapKit / CoreLocation so unit tests don't need the real
 /// frameworks. Production impl below wraps `CLLocationManager` +
