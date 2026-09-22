@@ -58,6 +58,7 @@ final class WeekNavigationStabilityUITests: XCTestCase {
         return def
     }
 
+    @MainActor
     private func launchOnWeekView() -> XCUIApplication {
         let app = XCUIApplication()
         app.launch()
@@ -69,6 +70,7 @@ final class WeekNavigationStabilityUITests: XCTestCase {
         return app
     }
 
+    @MainActor
     private func rangeValue(_ app: XCUIApplication) -> String {
         let pill = app.buttons[ID.dateRangePill]
         XCTAssertTrue(pill.waitForExistence(timeout: 3), "Date-range pill not found")

@@ -48,6 +48,7 @@ final class WeekStartUITests: XCTestCase {
     }
 
     /// Preferences sit below the fold once fonts and connections are on the page.
+    @MainActor
     private func revealWeekStartMenu(in app: XCUIApplication) -> XCUIElement {
         let menu = app.buttons["settings.weekstart.menu"]
         if menu.waitForExistence(timeout: 2) {

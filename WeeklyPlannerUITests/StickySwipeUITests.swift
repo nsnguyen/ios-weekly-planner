@@ -34,6 +34,7 @@ final class StickySwipeUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     private func rangeValue(_ app: XCUIApplication) -> String {
         let pill = app.buttons[ID.dateRangePill]
         guard pill.waitForExistence(timeout: 3) else { return "" }
