@@ -4,17 +4,15 @@ import SwiftUI
 /// functions kept separate from the view modifiers so tests can assert
 /// formatting without hosting SwiftUI.
 enum AccessibilityFormatters {
-
     // MARK: - Event
 
     static func eventLabel(_ event: Event) -> String {
         let category = CategoryPalette.displayName(event.category)
         let timeRange = formatTimeRange(start: event.start, end: event.end)
-        let location: String
-        if let loc = event.location, !loc.isEmpty {
-            location = loc
+        let location: String = if let loc = event.location, !loc.isEmpty {
+            loc
         } else {
-            location = "no location"
+            "no location"
         }
         let source = event.source == .gmail ? "from Gmail" : "added by you"
         return "\(event.title), \(category), \(timeRange), \(location), \(source)"
@@ -62,12 +60,10 @@ enum AccessibilityFormatters {
 // MARK: - View modifiers
 
 extension View {
-
     /// Combine all child elements of an event row into one VoiceOver
     /// element with a descriptive label and a tap hint.
     func accessibleEvent(_ event: Event) -> some View {
-        self
-            .accessibilityElement(children: .combine)
+        accessibilityElement(children: .combine)
             .accessibilityLabel(AccessibilityFormatters.eventLabel(event))
             .accessibilityHint("Double tap to open details.")
             .accessibilityAddTraits(.isButton)
@@ -75,8 +71,7 @@ extension View {
 
     /// Combine task-row elements; tap toggles done state.
     func accessibleTask(_ task: TaskItem, onToggle: @escaping () -> Void) -> some View {
-        self
-            .accessibilityElement(children: .combine)
+        accessibilityElement(children: .combine)
             .accessibilityLabel(AccessibilityFormatters.taskLabel(task))
             .accessibilityHint("Double tap to toggle complete.")
             .accessibilityAddTraits(.isButton)
@@ -85,8 +80,7 @@ extension View {
 
     /// Phase 33: combined label for a Notes-tab row.
     func accessibleNote(_ note: Note) -> some View {
-        self
-            .accessibilityElement(children: .combine)
+        accessibilityElement(children: .combine)
             .accessibilityLabel(AccessibilityFormatters.noteLabel(note))
             .accessibilityHint("Double tap to open the note.")
             .accessibilityAddTraits(.isButton)
@@ -94,8 +88,7 @@ extension View {
 
     /// Side tab on the day page — announces day name and position.
     func accessibleSideTab(weekdayFull: String, dayN: Int) -> some View {
-        self
-            .accessibilityElement(children: .combine)
+        accessibilityElement(children: .combine)
             .accessibilityLabel(AccessibilityFormatters.sideTabLabel(weekdayFull: weekdayFull, dayN: dayN))
             .accessibilityHint("Double tap to flip to this day.")
             .accessibilityAddTraits(.isButton)
@@ -103,8 +96,7 @@ extension View {
 
     /// "Return to today" pill.
     func accessibleTodayPill() -> some View {
-        self
-            .accessibilityLabel("Return to today")
+        accessibilityLabel("Return to today")
             .accessibilityAddTraits(.isButton)
     }
 
@@ -112,8 +104,7 @@ extension View {
     /// (Phase 32 #49: user-facing copy says "Ask the planner", never
     /// "Apple Intelligence".)
     func accessibleAIButton() -> some View {
-        self
-            .accessibilityLabel("Ask the planner")
+        accessibilityLabel("Ask the planner")
             .accessibilityHint("Double tap to ask about your week.")
             .accessibilityAddTraits(.isButton)
     }
@@ -121,8 +112,7 @@ extension View {
     /// Day row on the week page — announces weekday name and position in the
     /// 7-row spread; also marks it as a button since tapping flips to that day.
     func accessibleWeekDayRow(weekdayFull: String, dayN: Int) -> some View {
-        self
-            .accessibilityElement(children: .combine)
+        accessibilityElement(children: .combine)
             .accessibilityLabel(AccessibilityFormatters.sideTabLabel(weekdayFull: weekdayFull, dayN: dayN))
             .accessibilityHint("Double tap to flip to this day.")
             .accessibilityAddTraits(.isButton)
@@ -130,8 +120,7 @@ extension View {
 
     /// Week-picker row — announces date range and week number.
     func accessibleWeekRow(range: String, weekNumber: Int) -> some View {
-        self
-            .accessibilityElement(children: .combine)
+        accessibilityElement(children: .combine)
             .accessibilityLabel(AccessibilityFormatters.weekRowLabel(range: range, weekNumber: weekNumber))
             .accessibilityHint("Double tap to jump to this week.")
             .accessibilityAddTraits(.isButton)

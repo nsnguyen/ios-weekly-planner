@@ -37,11 +37,9 @@ struct SizeSegmented: View {
             }
         }
         .padding(3)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.black.opacity(0.04))
-                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(theme.rule, lineWidth: 0.5))
-        )
+        .background(RoundedRectangle(cornerRadius: 10)
+            .fill(Color.black.opacity(0.04))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(theme.rule, lineWidth: 0.5)))
         .padding(.bottom, 18)
     }
 
@@ -78,5 +76,7 @@ private struct StatefulPreviewWrapper<Value, Content: View>: View {
         self.content = content
     }
 
-    var body: some View { content($value) }
+    var body: some View {
+        content($value)
+    }
 }

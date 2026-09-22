@@ -91,10 +91,14 @@ enum WeekMath {
     }
 
     /// Calendar configured to start weeks on Monday. ISO 8601 in spirit.
-    static func mondayCalendar() -> Calendar { calendar(startingOn: .monday) }
+    static func mondayCalendar() -> Calendar {
+        calendar(startingOn: .monday)
+    }
 
     /// Calendar configured to start weeks on Sunday.
-    static func sundayCalendar() -> Calendar { calendar(startingOn: .sunday) }
+    static func sundayCalendar() -> Calendar {
+        calendar(startingOn: .sunday)
+    }
 
     /// Process-wide week-start preference (Phase 36b). Seeded from
     /// `UserSettings.weekStart` in `WeeklyPlannerApp` before first layout

@@ -54,19 +54,19 @@ struct PaperTab: View {
 
     private var iconName: String {
         switch tab {
-        case .calendar: return "calendar"
-        case .review: return "tray"
-        case .notes: return "note.text"
-        case .settings: return "gearshape"
+        case .calendar: "calendar"
+        case .review: "tray"
+        case .notes: "note.text"
+        case .settings: "gearshape"
         }
     }
 
     private var label: String {
         switch tab {
-        case .calendar: return "Calendar"
-        case .review: return "Review"
-        case .notes: return "Notes"
-        case .settings: return "Settings"
+        case .calendar: "Calendar"
+        case .review: "Review"
+        case .notes: "Notes"
+        case .settings: "Settings"
         }
     }
 }

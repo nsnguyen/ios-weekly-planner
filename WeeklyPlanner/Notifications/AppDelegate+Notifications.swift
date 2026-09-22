@@ -1,6 +1,6 @@
+import os
 import UIKit
 import UserNotifications
-import os
 
 /// `UIApplicationDelegate` + `UNUserNotificationCenterDelegate` adapter.
 /// Responsibilities:
@@ -13,7 +13,9 @@ import os
 /// The delegate stays SwiftData-free in `application(_:didFinishLaunchingWithOptions:)`
 /// — region-entry cold-launches must finish quickly to avoid OS termination.
 @MainActor
-final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
+final class NotificationsAppDelegate: NSObject, UIApplicationDelegate,
+    @preconcurrency UNUserNotificationCenterDelegate
+{
     private static let log = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", category: "Notifications")
 
     /// Set by `WeeklyPlannerApp.init` after construction. Optionality keeps the
@@ -30,15 +32,16 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, @preconcu
         return true
     }
 
-    // Show banners in foreground.
+    /// Show banners in foreground.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions)
+                                    -> Void)
     {
         completionHandler([.banner, .list, .sound])
     }
 
-    // Tap / action handling.
+    /// Tap / action handling.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void)
@@ -93,11 +96,12 @@ final class NotificationsAppDelegate: NSObject, UIApplicationDelegate, @preconcu
         let newID = "\(request.identifier)-snooze-\(Int(Date().timeIntervalSince1970))"
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
         let newRequest = UNNotificationRequest(identifier: newID,
-                                                content: request.content,
-                                                trigger: trigger)
+                                               content: request.content,
+                                               trigger: trigger)
         do {
             try await center.add(newRequest)
-            Self.log.info("Snoozed notification \(request.identifier, privacy: .public) by \(seconds, privacy: .public)s")
+            Self.log
+                .info("Snoozed notification \(request.identifier, privacy: .public) by \(seconds, privacy: .public)s")
         } catch {
             Self.log.error("Snooze re-add failed: \(String(describing: error), privacy: .public)")
         }

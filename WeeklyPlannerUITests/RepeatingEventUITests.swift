@@ -6,15 +6,19 @@ final class RepeatingEventUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testDailyEventAppearsOnAdjacentDayAndScopedDeleteWorks() throws {
+    func testDailyEventAppearsOnAdjacentDayAndScopedDeleteWorks() {
         let app = XCUIApplication()
         app.launchArguments += ["-UITestSeedEmptyStore"]
         app.launch()
 
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
         let daySeg = app.buttons["topbar.dayweek.day"]
-        if daySeg.waitForExistence(timeout: 3) { daySeg.tap() }
+        if daySeg.waitForExistence(timeout: 3) {
+            daySeg.tap()
+        }
 
         // Create a daily event.
         let addLink = app.buttons["daypage.events.addRow"]
@@ -72,7 +76,9 @@ final class RepeatingEventUITests: XCTestCase {
         if !deleteButton.waitForExistence(timeout: 3) {
             // Sheet may need edit mode for the delete affordance.
             let edit = app.buttons["paperEventSheet.edit"]
-            if edit.waitForExistence(timeout: 2) { edit.tap() }
+            if edit.waitForExistence(timeout: 2) {
+                edit.tap()
+            }
         }
         XCTAssertTrue(deleteButton.waitForExistence(timeout: 3))
         deleteButton.tap()

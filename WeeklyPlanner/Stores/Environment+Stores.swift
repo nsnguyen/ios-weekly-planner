@@ -70,7 +70,7 @@ extension EnvironmentValues {
     @Entry var locationReminderManager: LocationReminderManager? = nil
 
     /// Deep-link routing target for notification taps — Phase 19.
-    @Entry var deepLinkRouter: DeepLinkRouter = DeepLinkRouter()
+    @Entry var deepLinkRouter: DeepLinkRouter = .init()
 
     /// Phase 24 — the shared `StickyOrchestrator` constructed at app
     /// init and injected into every DayPageContent so the cascade can
@@ -111,8 +111,13 @@ final class StubEventStore: EventStoring {
     func upsert(_: Event) async throws {}
     func delete(id _: UUID) async throws {}
     func deleteOccurrence(eventID _: UUID, occurrenceStart _: Date) async throws {}
-    func events(matching _: EventQuery) async throws -> [Event] { [] }
-    func events(source _: EventSource) async throws -> [Event] { [] }
+    func events(matching _: EventQuery) async throws -> [Event] {
+        []
+    }
+
+    func events(source _: EventSource) async throws -> [Event] {
+        []
+    }
 }
 
 /// No-op `InboxStoring` companion to `StubEventStore`. Same semantics:
@@ -134,7 +139,9 @@ final class StubInboxStore: InboxStoring {
     func accept(id _: UUID) async throws {}
     func dismiss(id _: UUID) async throws {}
     func clearPending() async throws {}
-    func anyStatus(forMessageID _: String) async throws -> InboxSuggestion? { nil }
+    func anyStatus(forMessageID _: String) async throws -> InboxSuggestion? {
+        nil
+    }
 }
 
 /// No-op `TaskStoring` companion to `StubEventStore`/`StubInboxStore`. Same
@@ -170,7 +177,9 @@ final class StubSettingsStore: SettingsStoring {
     private var cached: UserSettings?
 
     func current() throws -> UserSettings {
-        if let cached { return cached }
+        if let cached {
+            return cached
+        }
         let fresh = UserSettings()
         cached = fresh
         return fresh
@@ -190,11 +199,20 @@ final class StubSettingsStore: SettingsStoring {
 final class StubNotificationCenter: NotificationCentering {
     nonisolated init() {}
 
-    func authorizationStatus() async -> UNAuthorizationStatus { .notDetermined }
-    func requestAuthorization(options _: UNAuthorizationOptions) async throws -> Bool { false }
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        .notDetermined
+    }
+
+    func requestAuthorization(options _: UNAuthorizationOptions) async throws -> Bool {
+        false
+    }
+
     func setNotificationCategories(_: Set<UNNotificationCategory>) {}
     func add(_: UNNotificationRequest) async throws {}
-    func pendingRequests() async -> [UNNotificationRequest] { [] }
+    func pendingRequests() async -> [UNNotificationRequest] {
+        []
+    }
+
     func removePending(withIdentifiers _: [String]) {}
     func removeAllPending() {}
 }

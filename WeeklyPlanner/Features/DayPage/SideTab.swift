@@ -66,10 +66,10 @@ struct SideTab: View {
                             .padding(.leading, 3)
                     }
                 }
-            .frame(width: isSelected ? selectedWidth : baseWidth,
-                   height: Spacing.sideTabHeight)
-            .offset(x: isSelected ? Spacing.sideTabSelectedOffset : 0)
-            .contentShape(Rectangle())
+                .frame(width: isSelected ? selectedWidth : baseWidth,
+                       height: Spacing.sideTabHeight)
+                .offset(x: isSelected ? Spacing.sideTabSelectedOffset : 0)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibleSideTab(weekdayFull: weekdayLong, dayN: idx + 1)
@@ -155,8 +155,15 @@ extension SideTab {
 // MARK: - Previews
 
 #Preview("SideTab · All seven, Friday selected") {
-    let longNames = ["Monday", "Tuesday", "Wednesday", "Thursday",
-                     "Friday", "Saturday", "Sunday"]
+    let longNames = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
     let shortNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     return ZStack {
         BookCover()

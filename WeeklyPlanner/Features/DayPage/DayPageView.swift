@@ -254,17 +254,30 @@ struct DayPageContent: View {
                 PaperEventSheet(initialMode: .view(id),
                                 occurrenceStart: openEventOccurrenceStart,
                                 isOpen: Binding(get: { openEventID != nil },
-                                                set: { if !$0 { openEventID = nil; openEventOccurrenceStart = nil } }))
+                                                set: {
+                                                    if !$0 {
+                                                        openEventID = nil
+                                                        openEventOccurrenceStart = nil
+                                                    }
+                                                }))
             }
             if let anchor = creatingEventAt {
                 PaperEventSheet(initialMode: .create(at: anchor),
                                 isOpen: Binding(get: { creatingEventAt != nil },
-                                                set: { if !$0 { creatingEventAt = nil } }))
+                                                set: {
+                                                    if !$0 {
+                                                        creatingEventAt = nil
+                                                    }
+                                                }))
             }
             if let id = editingEventID {
                 PaperEventSheet(initialMode: .edit(id),
                                 isOpen: Binding(get: { editingEventID != nil },
-                                                set: { if !$0 { editingEventID = nil } }))
+                                                set: {
+                                                    if !$0 {
+                                                        editingEventID = nil
+                                                    }
+                                                }))
             }
             if let id = editingTaskID,
                let task = viewModel?.tasks.first(where: { $0.id == id })
@@ -272,7 +285,11 @@ struct DayPageContent: View {
                 Color.clear
                     .frame(width: 0, height: 0)
                     .popover(isPresented: Binding(get: { editingTaskID != nil },
-                                                  set: { if !$0 { editingTaskID = nil } }),
+                                                  set: {
+                                                      if !$0 {
+                                                          editingTaskID = nil
+                                                      }
+                                                  }),
                              attachmentAnchor: .point(.center),
                              arrowEdge: .top)
                     {
@@ -400,10 +417,9 @@ struct DayPageContent: View {
                 let bottoms = viewModel.annotations.map {
                     annotationLayerSize.height * CGFloat($0.unitY) + (noteHeights[$0.id] ?? 0)
                 }
-                let unit = DayPageLayout.stackedAnnotationUnit(
-                    contentBottom: contentBottomY,
-                    annotationBottoms: bottoms,
-                    layerSize: annotationLayerSize)
+                let unit = DayPageLayout.stackedAnnotationUnit(contentBottom: contentBottomY,
+                                                               annotationBottoms: bottoms,
+                                                               layerSize: annotationLayerSize)
                 Task {
                     if let created = await viewModel.addAnnotation(atUnit: unit) {
                         editingAnnotationID = created.id
@@ -448,9 +464,9 @@ struct DayPageContent: View {
                           onLongPress: { id in
                               editingTaskID = id
                           })
-                    .padding(.leading, DayPageLayout.pageMargin)
-                    .padding(.trailing, 18)
-                    .padding(.bottom, 24)
+                          .padding(.leading, DayPageLayout.pageMargin)
+                          .padding(.trailing, 18)
+                          .padding(.bottom, 24)
             }
             .background(theme.cream)
             // Tap-outside-to-commit also fires for the cream paper area
@@ -473,16 +489,15 @@ struct DayPageContent: View {
         if let insights = viewModel?.insights, !insights.isEmpty,
            (try? settingsStore.current())?.aiStickyNotesEnabled != false
         {
-            AIStickyStack(
-                insights: insights,
-                onTap: { insight in handleStickyTap(insight) },
-                onDismiss: { insight in
-                    Task { await viewModel?.dismissInsight(insight) }
-                },
-                onRefresh: {
-                    Task { await viewModel?.refreshInsights() }
-                },
-                onNavigate: { _ in })
+            AIStickyStack(insights: insights,
+                          onTap: { insight in handleStickyTap(insight) },
+                          onDismiss: { insight in
+                              Task { await viewModel?.dismissInsight(insight) }
+                          },
+                          onRefresh: {
+                              Task { await viewModel?.refreshInsights() }
+                          },
+                          onNavigate: { _ in })
                 .padding(.top, 96)
                 .padding(.trailing, 16)
         }

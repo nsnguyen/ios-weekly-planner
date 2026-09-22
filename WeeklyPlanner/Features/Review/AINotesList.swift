@@ -25,8 +25,8 @@ struct AINotesList: View {
                 .font(font.font(at: 20, weight: .bold))
                 .foregroundStyle(theme.ink)
                 .modifier(WavyUnderline(color: theme.ink.opacity(0.25),
-                                         amplitude: 1,
-                                         wavelength: 6))
+                                        amplitude: 1,
+                                        wavelength: 6))
                 .padding(.bottom, 8)
 
             ForEach(Array(bullets.enumerated()), id: \.offset) { _, bullet in
@@ -50,10 +50,10 @@ struct AINotesList: View {
 
     private func color(for ink: WeekSummary.Ink) -> Color {
         switch ink {
-        case .dark: return theme.ink
-        case .green: return theme.greenInk
-        case .red: return theme.redInk
-        case .blue: return theme.blueInk
+        case .dark: theme.ink
+        case .green: theme.greenInk
+        case .red: theme.redInk
+        case .blue: theme.blueInk
         }
     }
 
@@ -61,10 +61,10 @@ struct AINotesList: View {
     /// reaching into SwiftUI's environment.
     static func inkKey(_ ink: WeekSummary.Ink) -> String {
         switch ink {
-        case .dark: return "ink"
-        case .green: return "greenInk"
-        case .red: return "redInk"
-        case .blue: return "blueInk"
+        case .dark: "ink"
+        case .green: "greenInk"
+        case .red: "redInk"
+        case .blue: "blueInk"
         }
     }
 }

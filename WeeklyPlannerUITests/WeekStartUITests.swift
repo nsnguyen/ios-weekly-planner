@@ -49,10 +49,14 @@ final class WeekStartUITests: XCTestCase {
     /// Preferences sit below the fold once fonts and connections are on the page.
     private func revealWeekStartMenu(in app: XCUIApplication) -> XCUIElement {
         let menu = app.buttons["settings.weekstart.menu"]
-        if menu.waitForExistence(timeout: 2) { return menu }
+        if menu.waitForExistence(timeout: 2) {
+            return menu
+        }
         for _ in 0 ..< 4 {
             app.swipeUp()
-            if menu.waitForExistence(timeout: 1) { return menu }
+            if menu.waitForExistence(timeout: 1) {
+                return menu
+            }
         }
         return menu
     }

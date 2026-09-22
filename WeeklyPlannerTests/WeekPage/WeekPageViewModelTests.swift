@@ -156,5 +156,4 @@ final class WeekPageViewModelTests: XCTestCase {
 
         XCTAssertEqual(vm.inboxCount, 2)
     }
-
 }

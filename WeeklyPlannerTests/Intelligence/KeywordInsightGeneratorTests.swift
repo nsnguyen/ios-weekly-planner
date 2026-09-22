@@ -5,7 +5,7 @@ import XCTest
 @MainActor
 final class KeywordInsightGeneratorTests: XCTestCase {
     private func makeContext(events: [Event] = [],
-                              appleIntelligenceEnabled: Bool = true) -> DayContext
+                             appleIntelligenceEnabled: Bool = true) -> DayContext
     {
         DayContext(weekOffset: 0,
                    dayIdx: 5,
@@ -25,10 +25,9 @@ final class KeywordInsightGeneratorTests: XCTestCase {
 
     func testEmitsForBirthdayKeyword() async {
         let id = UUID()
-        let fake = FakeKeywordModel(result: .init(
-            text: "Don't forget Sara's gift!",
-            relatedEventID: id.uuidString,
-            confidence: 0.9))
+        let fake = FakeKeywordModel(result: .init(text: "Don't forget Sara's gift!",
+                                                  relatedEventID: id.uuidString,
+                                                  confidence: 0.9))
         let gen = KeywordInsightGenerator(model: fake)
         let insight = await gen.generate(for: makeContext(events: [event(title: "Sara's birthday", id: id)]))
         XCTAssertEqual(insight?.text, "Don't forget Sara's gift!")
@@ -39,8 +38,8 @@ final class KeywordInsightGeneratorTests: XCTestCase {
 
     func testDropsLowConfidence() async {
         let fake = FakeKeywordModel(result: .init(text: "uncertain",
-                                                   relatedEventID: "",
-                                                   confidence: 0.4))
+                                                  relatedEventID: "",
+                                                  confidence: 0.4))
         let gen = KeywordInsightGenerator(model: fake)
         let insight = await gen.generate(for: makeContext(events: [event(title: "Meeting")]))
         XCTAssertNil(insight)
@@ -48,8 +47,8 @@ final class KeywordInsightGeneratorTests: XCTestCase {
 
     func testNilWhenAppleIntelligenceOff() async {
         let fake = FakeKeywordModel(result: .init(text: "should not run",
-                                                   relatedEventID: "",
-                                                   confidence: 0.9))
+                                                  relatedEventID: "",
+                                                  confidence: 0.9))
         let gen = KeywordInsightGenerator(model: fake)
         let insight = await gen.generate(for: makeContext(events: [event(title: "M")],
                                                           appleIntelligenceEnabled: false))
@@ -60,8 +59,8 @@ final class KeywordInsightGeneratorTests: XCTestCase {
 
     func testGenerableEmptyStringSentinelHonored() async {
         let fake = FakeKeywordModel(result: .init(text: "Day-wide reminder",
-                                                   relatedEventID: "",
-                                                   confidence: 0.8))
+                                                  relatedEventID: "",
+                                                  confidence: 0.8))
         let gen = KeywordInsightGenerator(model: fake)
         let insight = await gen.generate(for: makeContext(events: [event(title: "M")]))
         XCTAssertNotNil(insight)
@@ -75,7 +74,9 @@ private final class FakeKeywordModel: KeywordInsightModeling {
     let result: KeywordInsightDraft
     private(set) var wasCalled = false
 
-    init(result: KeywordInsightDraft) { self.result = result }
+    init(result: KeywordInsightDraft) {
+        self.result = result
+    }
 
     func generateKeyword(prompt _: String, day _: DayContext) async throws -> KeywordInsightDraft? {
         wasCalled = true

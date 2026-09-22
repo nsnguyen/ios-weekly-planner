@@ -19,15 +19,14 @@ final class SwiftDataAnnotationStore: AnnotationStoring {
     }
 
     func annotations(dayKey: String) async throws -> [Annotation] {
-        try context.fetch(FetchDescriptor<Annotation>(
-            predicate: #Predicate<Annotation> { $0.dayKey == dayKey },
-            sortBy: [SortDescriptor(\Annotation.createdAt, order: .forward)]))
+        try context.fetch(FetchDescriptor<Annotation>(predicate: #Predicate<Annotation> { $0.dayKey == dayKey },
+                                                      sortBy: [SortDescriptor(\Annotation.createdAt, order: .forward)]))
     }
 
     func upsert(_ annotation: Annotation) async throws {
         let id = annotation.id
-        let existing = try context.fetch(
-            FetchDescriptor<Annotation>(predicate: #Predicate<Annotation> { $0.id == id })).first
+        let existing = try context.fetch(FetchDescriptor<Annotation>(predicate: #Predicate<Annotation> { $0.id == id }))
+            .first
 
         if let existing {
             existing.dayKey = annotation.dayKey
@@ -64,7 +63,10 @@ extension Notification.Name {
 final class StubAnnotationStore: AnnotationStoring {
     nonisolated init() {}
 
-    func annotations(dayKey _: String) async throws -> [Annotation] { [] }
+    func annotations(dayKey _: String) async throws -> [Annotation] {
+        []
+    }
+
     func upsert(_: Annotation) async throws {}
     func delete(id _: UUID) async throws {}
 }

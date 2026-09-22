@@ -6,22 +6,14 @@ import SwiftUI
 /// `content` closure so the card stays agnostic of the exact rows.
 struct PreferencesGroup<Content: View>: View {
     @Environment(\.paperTheme) private var theme
-    @ViewBuilder let content: () -> Content
-
-    init(@ViewBuilder content: @escaping () -> Content) {
-        self.content = content
-    }
+    @ViewBuilder @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(spacing: 0) {
             content()
         }
-        .background(
-            RoundedRectangle(cornerRadius: 14).fill(theme.creamHi)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14).strokeBorder(theme.rule, lineWidth: 0.5)
-        )
+        .background(RoundedRectangle(cornerRadius: 14).fill(theme.creamHi))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(theme.rule, lineWidth: 0.5))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.bottom, 14)
     }

@@ -23,17 +23,15 @@ final class ScanInboxToolTests: XCTestCase {
     func testReturnsPendingSuggestionsForRequestedWeek() async throws {
         let today = Self.may16_2026(hour: 12)
         let proposed = Self.may16_2026(hour: 9)
-        let suggestion = InboxSuggestion(
-            gmailMessageID: "msg-1",
-            proposedStart: proposed,
-            proposedEnd: proposed.addingTimeInterval(1800),
-            title: "Dentist follow-up",
-            fromName: "Mei",
-            fromEmail: "mei@example.com",
-            category: .health,
-            subject: "Confirm dentist",
-            bodySnippet: "Hi — can we confirm…"
-        )
+        let suggestion = InboxSuggestion(gmailMessageID: "msg-1",
+                                         proposedStart: proposed,
+                                         proposedEnd: proposed.addingTimeInterval(1800),
+                                         title: "Dentist follow-up",
+                                         fromName: "Mei",
+                                         fromEmail: "mei@example.com",
+                                         category: .health,
+                                         subject: "Confirm dentist",
+                                         bodySnippet: "Hi — can we confirm…")
         try await inbox.upsert(suggestion)
 
         let tool = ScanInboxTool(store: inbox)
@@ -48,16 +46,14 @@ final class ScanInboxToolTests: XCTestCase {
         let today = Self.may16_2026(hour: 12)
         for i in 0 ..< 6 {
             let proposed = Self.may16_2026(hour: 9 + i)
-            let suggestion = InboxSuggestion(
-                gmailMessageID: "msg-\(i)",
-                proposedStart: proposed,
-                proposedEnd: proposed.addingTimeInterval(1800),
-                title: "Suggestion \(i)",
-                fromName: "Sender \(i)",
-                fromEmail: "s\(i)@example.com",
-                category: .personal,
-                subject: "Subject \(i)"
-            )
+            let suggestion = InboxSuggestion(gmailMessageID: "msg-\(i)",
+                                             proposedStart: proposed,
+                                             proposedEnd: proposed.addingTimeInterval(1800),
+                                             title: "Suggestion \(i)",
+                                             fromName: "Sender \(i)",
+                                             fromEmail: "s\(i)@example.com",
+                                             category: .personal,
+                                             subject: "Subject \(i)")
             try await inbox.upsert(suggestion)
         }
         let tool = ScanInboxTool(store: inbox)

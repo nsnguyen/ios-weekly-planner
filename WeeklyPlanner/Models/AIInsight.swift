@@ -77,7 +77,7 @@ final class AIInsight {
         self.colorHex = colorHex
         self.tiltDegrees = tiltDegrees
         self.dismissed = dismissed
-        self.kindRaw = kind.rawValue
+        kindRaw = kind.rawValue
         self.actionURL = actionURL
         self.priority = priority
     }

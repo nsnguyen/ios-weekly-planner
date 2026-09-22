@@ -28,7 +28,9 @@ enum EKEventMapping {
         ekEvent.startDate = event.start
         ekEvent.endDate = event.end
         ekEvent.location = event.location
-        if let calendar { ekEvent.calendar = calendar }
+        if let calendar {
+            ekEvent.calendar = calendar
+        }
         ekEvent.notes = encodeNotes(forEvent: event)
         ekEvent.alarms = event.reminders.compactMap(makeAlarm(from:))
         if let recurrence = event.recurrence {

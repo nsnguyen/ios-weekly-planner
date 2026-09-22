@@ -9,8 +9,14 @@ import XCTest
 /// failed runs, and (3) always delete what they create.
 final class AnnotationsUITests: XCTestCase {
     private enum ID {
-        static func dayWeekSegment(_ v: String) -> String { "topbar.dayweek.\(v)" }
-        static func sideTab(_ n: Int) -> String { "daypage.sidetab.\(n)" }
+        static func dayWeekSegment(_ v: String) -> String {
+            "topbar.dayweek.\(v)"
+        }
+
+        static func sideTab(_ n: Int) -> String {
+            "daypage.sidetab.\(n)"
+        }
+
         static let editor = "daypage.annotation.editor"
         static let styleDone = "annotation.style.done"
         static let styleBold = "annotation.style.bold"
@@ -44,11 +50,17 @@ final class AnnotationsUITests: XCTestCase {
     @MainActor
     private func navigateToTestDay(_ app: XCUIApplication) {
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
         let daySeg = app.buttons[ID.dayWeekSegment("day")]
-        if daySeg.waitForExistence(timeout: 3) { daySeg.tap() }
+        if daySeg.waitForExistence(timeout: 3) {
+            daySeg.tap()
+        }
         let sunday = app.buttons[ID.sideTab(Self.testDayIdx)]
-        if sunday.waitForExistence(timeout: 3) { sunday.tap() }
+        if sunday.waitForExistence(timeout: 3) {
+            sunday.tap()
+        }
     }
 
     /// Best-effort deletion of an annotation with the given text — used to
@@ -69,7 +81,7 @@ final class AnnotationsUITests: XCTestCase {
     /// on the shared simulator by earlier runs. Best-effort, never asserts.
     @MainActor
     private func purgeGhostAnnotations(_ app: XCUIApplication) {
-        for _ in 0..<12 {
+        for _ in 0 ..< 12 {
             let ghost = app.buttons.matching(NSPredicate(format: "label == %@", "Annotation: ")).firstMatch
             guard ghost.exists else { return }
             ghost.tap()
@@ -90,12 +102,10 @@ final class AnnotationsUITests: XCTestCase {
     private func purgeAllAnnotations(_ app: XCUIApplication) {
         // The annotation layer renders a beat after navigation; a synchronous
         // .exists probe would exit before residue is visible.
-        _ = app.buttons.matching(
-            NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
+        _ = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
             .waitForExistence(timeout: 3)
-        for _ in 0..<12 {
-            let note = app.buttons.matching(
-                NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
+        for _ in 0 ..< 12 {
+            let note = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Annotation: ")).firstMatch
             guard note.exists else { return }
             note.tap()
             let delete = app.buttons[ID.styleDelete]
@@ -109,7 +119,7 @@ final class AnnotationsUITests: XCTestCase {
     /// content bottom and accumulate forever. Best-effort, never asserts.
     @MainActor
     private func purgeNudgeEvents(_ app: XCUIApplication) {
-        for _ in 0..<6 {
+        for _ in 0 ..< 6 {
             let leftover = app.descendants(matching: .any)
                 .matching(NSPredicate(format: "label CONTAINS %@", "nudge event")).firstMatch
             guard leftover.waitForExistence(timeout: 2) else { return }
@@ -118,7 +128,9 @@ final class AnnotationsUITests: XCTestCase {
             guard del.waitForExistence(timeout: 3) else { return }
             del.tap()
             let confirm = app.buttons["Delete"].firstMatch
-            if confirm.waitForExistence(timeout: 2) { confirm.tap() }
+            if confirm.waitForExistence(timeout: 2) {
+                confirm.tap()
+            }
             usleep(500_000)
         }
     }
@@ -310,7 +322,9 @@ final class AnnotationsUITests: XCTestCase {
             if del.waitForExistence(timeout: 3) {
                 del.tap()
                 let confirm = app.buttons["Delete"].firstMatch
-                if confirm.waitForExistence(timeout: 2) { confirm.tap() }
+                if confirm.waitForExistence(timeout: 2) {
+                    confirm.tap()
+                }
             }
         }
     }

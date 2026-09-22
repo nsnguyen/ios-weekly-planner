@@ -20,7 +20,7 @@ struct GmailMessage: Decodable {
     let threadId: String?
     let snippet: String?
     let historyId: String?
-    let internalDate: String?   // ms-since-epoch as a String
+    let internalDate: String? // ms-since-epoch as a String
     let payload: GmailPayload?
 }
 
@@ -38,7 +38,7 @@ struct GmailHeader: Decodable {
 
 struct GmailBody: Decodable {
     let size: Int?
-    let data: String?           // base64url-encoded
+    let data: String? // base64url-encoded
 }
 
 // MARK: - History (GET /gmail/v1/users/me/history?startHistoryId=...)
@@ -96,7 +96,9 @@ extension GmailMessage {
             return decoded
         }
         for part in payload.parts ?? [] {
-            if let found = findPart(in: part, mimeType: mimeType) { return found }
+            if let found = findPart(in: part, mimeType: mimeType) {
+                return found
+            }
         }
         return nil
     }
@@ -104,7 +106,9 @@ extension GmailMessage {
     private static func decodeBase64URL(_ raw: String) -> String? {
         var s = raw.replacingOccurrences(of: "-", with: "+")
             .replacingOccurrences(of: "_", with: "/")
-        while s.count % 4 != 0 { s.append("=") }
+        while s.count % 4 != 0 {
+            s.append("=")
+        }
         guard let data = Data(base64Encoded: s) else { return nil }
         return String(data: data, encoding: .utf8)
     }

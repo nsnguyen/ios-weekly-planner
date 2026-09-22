@@ -22,16 +22,15 @@ final class EventQueryTests: XCTestCase {
 
     func testMatchingFiltersByCategory() async throws {
         let anchor = Self.may16_2026(hour: 9)
-        try await store.upsert(Event(title: "Run", start: anchor, end: anchor.addingTimeInterval(1800), category: .health))
+        try await store.upsert(Event(title: "Run", start: anchor, end: anchor.addingTimeInterval(1800),
+                                     category: .health))
         try await store.upsert(Event(title: "Standup", start: anchor.addingTimeInterval(3600),
                                      end: anchor.addingTimeInterval(5400), category: .work))
 
-        let query = EventQuery(
-            dateRange: anchor ... anchor.addingTimeInterval(7200),
-            categories: [.health],
-            keywords: [],
-            personName: nil
-        )
+        let query = EventQuery(dateRange: anchor ... anchor.addingTimeInterval(7200),
+                               categories: [.health],
+                               keywords: [],
+                               personName: nil)
         let results = try await store.events(matching: query)
         XCTAssertEqual(results.map(\.title), ["Run"])
     }
@@ -43,12 +42,10 @@ final class EventQueryTests: XCTestCase {
         try await store.upsert(Event(title: "Pitch deck review", start: anchor.addingTimeInterval(3600),
                                      end: anchor.addingTimeInterval(5400), category: .work))
 
-        let query = EventQuery(
-            dateRange: anchor ... anchor.addingTimeInterval(7200),
-            categories: nil,
-            keywords: ["DENTIST"],
-            personName: nil
-        )
+        let query = EventQuery(dateRange: anchor ... anchor.addingTimeInterval(7200),
+                               categories: nil,
+                               keywords: ["DENTIST"],
+                               personName: nil)
         let results = try await store.events(matching: query)
         XCTAssertEqual(results.map(\.title), ["Dentist follow-up"])
     }
@@ -60,12 +57,10 @@ final class EventQueryTests: XCTestCase {
         try await store.upsert(Event(title: "Team sync", start: anchor.addingTimeInterval(3600),
                                      end: anchor.addingTimeInterval(5400), category: .work))
 
-        let query = EventQuery(
-            dateRange: anchor ... anchor.addingTimeInterval(7200),
-            categories: nil,
-            keywords: [],
-            personName: "sara"
-        )
+        let query = EventQuery(dateRange: anchor ... anchor.addingTimeInterval(7200),
+                               categories: nil,
+                               keywords: [],
+                               personName: "sara")
         let results = try await store.events(matching: query)
         XCTAssertEqual(results.map(\.title), ["Coffee with Sara"])
     }

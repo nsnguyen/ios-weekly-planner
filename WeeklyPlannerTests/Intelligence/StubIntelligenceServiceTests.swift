@@ -15,7 +15,8 @@ final class StubIntelligenceServiceTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        events = nil; container = nil
+        events = nil
+        container = nil
         try await super.tearDown()
     }
 
@@ -25,13 +26,11 @@ final class StubIntelligenceServiceTests: XCTestCase {
                                       end: start.addingTimeInterval(1800), category: .health))
         let service = StubIntelligenceService(eventStore: events, clock: { Self.may16_2026() })
 
-        let answer = try await service.ask(
-            query: "When's my next dentist appointment?",
-            context: PlannerContext(now: Self.may16_2026(),
-                                    viewedWeekOffset: 0,
-                                    maxResponseTokens: 256,
-                                    appleIntelligenceEnabled: true)
-        )
+        let answer = try await service.ask(query: "When's my next dentist appointment?",
+                                           context: PlannerContext(now: Self.may16_2026(),
+                                                                   viewedWeekOffset: 0,
+                                                                   maxResponseTokens: 256,
+                                                                   appleIntelligenceEnabled: true))
         XCTAssertTrue(answer.body.contains("dentist"))
         XCTAssertEqual(answer.citations.first?.title, "Dentist follow-up")
         XCTAssertEqual(answer.actions.count, 2)
@@ -39,28 +38,23 @@ final class StubIntelligenceServiceTests: XCTestCase {
 
     func testAvailabilityHonorsAppleIntelligenceEnabled() async {
         let service = StubIntelligenceService(eventStore: events, clock: { Self.may16_2026() })
-        let disabled = await service.availability(context: PlannerContext(
-            now: Self.may16_2026(),
-            viewedWeekOffset: 0,
-            maxResponseTokens: 256,
-            appleIntelligenceEnabled: false
-        ))
+        let disabled = await service.availability(context: PlannerContext(now: Self.may16_2026(),
+                                                                          viewedWeekOffset: 0,
+                                                                          maxResponseTokens: 256,
+                                                                          appleIntelligenceEnabled: false))
         XCTAssertEqual(disabled, .unavailable(.userDisabled))
-        let enabled = await service.availability(context: PlannerContext(
-            now: Self.may16_2026(),
-            viewedWeekOffset: 0,
-            maxResponseTokens: 256,
-            appleIntelligenceEnabled: true
-        ))
+        let enabled = await service.availability(context: PlannerContext(now: Self.may16_2026(),
+                                                                         viewedWeekOffset: 0,
+                                                                         maxResponseTokens: 256,
+                                                                         appleIntelligenceEnabled: true))
         XCTAssertEqual(enabled, .available)
     }
 
     func testStreamingDefaultEmitsSingleFinalDelta() async throws {
         let service = StubIntelligenceService(eventStore: events, clock: { Self.may16_2026() })
         var deltas: [AnswerDelta] = []
-        for try await delta in service.streamAsk(
-            query: "summarize my week",
-            context: PlannerContext.default)
+        for try await delta in service.streamAsk(query: "summarize my week",
+                                                 context: PlannerContext.default)
         {
             deltas.append(delta)
         }

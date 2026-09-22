@@ -170,10 +170,14 @@ struct WeekDayRowLayout {
     static let overflowVisibleEventCap = 5
 
     /// The day has no events → the row renders the `"none"` placeholder.
-    var isEmpty: Bool { leftColumn.isEmpty }
+    var isEmpty: Bool {
+        leftColumn.isEmpty
+    }
 
     /// Whether the row splits into two side-by-side columns.
-    var isTwoColumn: Bool { !rightColumn.isEmpty }
+    var isTwoColumn: Bool {
+        !rightColumn.isEmpty
+    }
 
     /// Applies the Phase 30 overflow rule to a pre-sorted event list.
     static func compute(for events: [Event]) -> WeekDayRowLayout {
@@ -193,7 +197,9 @@ struct WeekDayRowLayout {
     }
 
     /// `"+K more"` copy for the overflow affordance.
-    static func overflowLabel(_ count: Int) -> String { "+\(count) more" }
+    static func overflowLabel(_ count: Int) -> String {
+        "+\(count) more"
+    }
 }
 
 // MARK: - Previews
@@ -218,7 +224,7 @@ struct WeekDayRowLayout {
     // Seven events on Friday to eyeball the two-column "+K more" rule (#25).
     let categories: [Category] = [.work, .personal, .health, .family, .focus, .work, .personal]
     let friday = days[4]
-    let heavy: [Event] = (0..<7).map { i in
+    let heavy: [Event] = (0 ..< 7).map { i in
         let start = calendar.date(byAdding: .hour, value: i, to: nineAM) ?? nineAM
         return Event(title: "Busy block \(i + 1)",
                      start: start,

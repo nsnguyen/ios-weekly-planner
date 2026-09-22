@@ -1,10 +1,9 @@
-import XCTest
 import UserNotifications
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
 final class TaskNotificationSchedulerTests: XCTestCase {
-
     private var center: FakeNotificationCenter!
     private var locations: FakeLocationRegistrar!
     private var scheduler: TaskNotificationScheduler!
@@ -16,7 +15,7 @@ final class TaskNotificationSchedulerTests: XCTestCase {
     }
 
     func testScheduleReminderTimeProducesCalendarRequest() async throws {
-        let due = Date().addingTimeInterval(7 * 24 * 3600)   // 1 week from now
+        let due = Date().addingTimeInterval(7 * 24 * 3600) // 1 week from now
         let task = TaskItem(title: "Pay rent", due: due, category: .personal, reminderTime: due)
 
         try await scheduler.schedule(task: task)
@@ -30,15 +29,13 @@ final class TaskNotificationSchedulerTests: XCTestCase {
 
     func testScheduleLocationReminderRegistersRegion() async throws {
         let due = Date().addingTimeInterval(60 * 60 * 24 * 2)
-        let task = TaskItem(
-            title: "Pick up keys",
-            due: due,
-            category: .personal,
-            locationReminder: LocationReminder(name: "Marina",
-                                               latitude: 37.806,
-                                               longitude: -122.432,
-                                               radiusMeters: 150)
-        )
+        let task = TaskItem(title: "Pick up keys",
+                            due: due,
+                            category: .personal,
+                            locationReminder: LocationReminder(name: "Marina",
+                                                               latitude: 37.806,
+                                                               longitude: -122.432,
+                                                               radiusMeters: 150))
         try await scheduler.schedule(task: task)
 
         XCTAssertTrue(center.addedRequests.isEmpty)
@@ -47,7 +44,7 @@ final class TaskNotificationSchedulerTests: XCTestCase {
     }
 
     func testCancelByTaskIDClearsRequestsAndRegions() async throws {
-        let due = Date().addingTimeInterval(7 * 24 * 3600)   // 1 week from now
+        let due = Date().addingTimeInterval(7 * 24 * 3600) // 1 week from now
         let task = TaskItem(title: "Pay rent", due: due, category: .personal, reminderTime: due)
         try await scheduler.schedule(task: task)
         XCTAssertEqual(center.addedRequests.count, 1)
@@ -60,7 +57,7 @@ final class TaskNotificationSchedulerTests: XCTestCase {
 
     func testNoReminderFieldsSchedulesNothing() async throws {
         let due = Date(timeIntervalSinceReferenceDate: 800_000_000)
-        let task = TaskItem(title: "Read book", due: due, category: .personal)   // No reminders at all.
+        let task = TaskItem(title: "Read book", due: due, category: .personal) // No reminders at all.
 
         try await scheduler.schedule(task: task)
 

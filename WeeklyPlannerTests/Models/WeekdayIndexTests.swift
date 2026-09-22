@@ -13,10 +13,10 @@ final class WeekdayIndexTests: XCTestCase {
 
     func testEventWeekdayIndexFollowsCalendarFirstWeekday() throws {
         // Sun May 10 2026 / Mon May 11 2026.
-        let sundayEvent = Event(title: "Sun", start: try date(2026, 5, 10),
-                                end: try date(2026, 5, 10).addingTimeInterval(3600), category: .personal)
-        let mondayEvent = Event(title: "Mon", start: try date(2026, 5, 11),
-                                end: try date(2026, 5, 11).addingTimeInterval(3600), category: .personal)
+        let sundayEvent = try Event(title: "Sun", start: date(2026, 5, 10),
+                                    end: date(2026, 5, 10).addingTimeInterval(3600), category: .personal)
+        let mondayEvent = try Event(title: "Mon", start: date(2026, 5, 11),
+                                    end: date(2026, 5, 11).addingTimeInterval(3600), category: .personal)
 
         let monCal = WeekMath.mondayCalendar()
         XCTAssertEqual(sundayEvent.weekdayIndex(in: monCal), 6)
@@ -35,9 +35,9 @@ final class WeekdayIndexTests: XCTestCase {
         // Base Sat May 16 2026. Due Sun May 17:
         //   Monday-start  → same week (offset 0)
         //   Sunday-start  → next week (offset 1)
-        let task = TaskItem(title: "t", due: try date(2026, 5, 17), category: .personal)
+        let task = try TaskItem(title: "t", due: date(2026, 5, 17), category: .personal)
 
-        XCTAssertEqual(task.weekOffset(from: try date(2026, 5, 16), calendar: WeekMath.mondayCalendar()), 0)
-        XCTAssertEqual(task.weekOffset(from: try date(2026, 5, 16), calendar: WeekMath.sundayCalendar()), 1)
+        XCTAssertEqual(try task.weekOffset(from: date(2026, 5, 16), calendar: WeekMath.mondayCalendar()), 0)
+        XCTAssertEqual(try task.weekOffset(from: date(2026, 5, 16), calendar: WeekMath.sundayCalendar()), 1)
     }
 }

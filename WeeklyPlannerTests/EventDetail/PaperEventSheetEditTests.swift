@@ -55,13 +55,13 @@ final class PaperEventSheetEditTests: XCTestCase {
         XCTAssertNil(vm.composer)
     }
 
-    func testCanSave_falseWhenTitleEmptyOrTimesInvalid() async throws {
+    func testCanSave_falseWhenTitleEmptyOrTimesInvalid() throws {
         let vm = EventDetailViewModel(eventID: UUID(), eventStore: eventStore)
         vm.beginCreating(at: Date(), calendar: WeekMath.mondayCalendar())
         XCTAssertFalse(vm.composer?.canSave ?? true)
         vm.composer?.title = "Lunch"
         XCTAssertTrue(vm.composer?.canSave ?? false)
-        vm.composer?.end = vm.composer!.start.addingTimeInterval(-60)
+        vm.composer?.end = try XCTUnwrap(vm.composer?.start.addingTimeInterval(-60))
         XCTAssertFalse(vm.composer?.canSave ?? true)
     }
 

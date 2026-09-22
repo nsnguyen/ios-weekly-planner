@@ -22,11 +22,10 @@ final class LiveGoogleAuthService: GoogleAuthService {
     ]
     private static let refreshLeeway: TimeInterval = 5 * 60 // refresh when <5 min remain
 
-    init(
-        config: GoogleAuthConfig,
-        client: GIDSigningClient,
-        keychain: TokenKeychainStore<GoogleAccountInfo>
-    ) {
+    init(config: GoogleAuthConfig,
+         client: GIDSigningClient,
+         keychain: TokenKeychainStore<GoogleAccountInfo>)
+    {
         self.config = config
         self.client = client
         self.keychain = keychain

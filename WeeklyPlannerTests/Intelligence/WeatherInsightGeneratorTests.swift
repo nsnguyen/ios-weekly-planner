@@ -1,5 +1,5 @@
-import Foundation
 import CoreLocation
+import Foundation
 import XCTest
 @testable import WeeklyPlanner
 
@@ -21,7 +21,7 @@ final class WeatherInsightGeneratorTests: XCTestCase {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
         let rainAt = now.addingTimeInterval(2 * 3600)
         let provider = FakeWeatherProvider(forecast: [
-            HourlyPrecipitation(hourStart: rainAt, precipChance: 0.8)
+            HourlyPrecipitation(hourStart: rainAt, precipChance: 0.8),
         ])
         let evt = event(starts: rainAt)
         let gen = WeatherInsightGenerator(provider: provider)
@@ -36,11 +36,11 @@ final class WeatherInsightGeneratorTests: XCTestCase {
     func testNilWhenNoRainInWindow() async {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
         let provider = FakeWeatherProvider(forecast: [
-            HourlyPrecipitation(hourStart: now, precipChance: 0.1)
+            HourlyPrecipitation(hourStart: now, precipChance: 0.1),
         ])
         let gen = WeatherInsightGenerator(provider: provider)
         let insight = await gen.generate(for: makeContext(now: now, events: [
-            event(starts: now.addingTimeInterval(3600))
+            event(starts: now.addingTimeInterval(3600)),
         ]))
         XCTAssertNil(insight)
     }
@@ -48,7 +48,7 @@ final class WeatherInsightGeneratorTests: XCTestCase {
     func testNilWhenNoEvents() async {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
         let provider = FakeWeatherProvider(forecast: [
-            HourlyPrecipitation(hourStart: now, precipChance: 0.9)
+            HourlyPrecipitation(hourStart: now, precipChance: 0.9),
         ])
         let gen = WeatherInsightGenerator(provider: provider)
         let insight = await gen.generate(for: makeContext(now: now, events: []))
@@ -59,10 +59,14 @@ final class WeatherInsightGeneratorTests: XCTestCase {
 @MainActor
 private final class FakeWeatherProvider: WeatherProviding {
     let forecast: [HourlyPrecipitation]
-    init(forecast: [HourlyPrecipitation]) { self.forecast = forecast }
+    init(forecast: [HourlyPrecipitation]) {
+        self.forecast = forecast
+    }
+
     func hourlyPrecipitation(for _: CLLocation, day _: Date) async -> [HourlyPrecipitation] {
         forecast
     }
+
     func currentLocation() async -> CLLocation? {
         CLLocation(latitude: 37.78, longitude: -122.41)
     }

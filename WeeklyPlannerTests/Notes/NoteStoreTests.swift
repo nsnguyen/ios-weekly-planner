@@ -43,8 +43,8 @@ final class NoteStoreTests: XCTestCase {
     }
 
     func testNotesSortedMostRecentlyUpdatedFirst() async throws {
-        try await store.upsert(Note(title: "Old", body: "", updatedAt: Date(timeIntervalSince1970: 1_000)))
-        try await store.upsert(Note(title: "New", body: "", updatedAt: Date(timeIntervalSince1970: 2_000)))
+        try await store.upsert(Note(title: "Old", body: "", updatedAt: Date(timeIntervalSince1970: 1000)))
+        try await store.upsert(Note(title: "New", body: "", updatedAt: Date(timeIntervalSince1970: 2000)))
 
         let notes = try await store.notes()
         XCTAssertEqual(notes.map(\.title), ["New", "Old"])

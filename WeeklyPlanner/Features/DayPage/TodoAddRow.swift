@@ -196,7 +196,7 @@ struct TodoAddRow: View {
                     Circle()
                         .strokeBorder(theme.ink3,
                                       style: StrokeStyle(lineWidth: 1,
-                                                          dash: [2, 2]))
+                                                         dash: [2, 2]))
                         .frame(width: 18, height: 18)
                 }
 

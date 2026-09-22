@@ -21,11 +21,11 @@ enum InsightKind: String, CaseIterable, Codable, Sendable {
     /// fallback floor used by encouragement.
     var defaultPriority: Int {
         switch self {
-        case .travel: return 0
-        case .weather: return 1
-        case .keyword: return 2
-        case .inbox: return 3
-        case .encouragement: return 9
+        case .travel: 0
+        case .weather: 1
+        case .keyword: 2
+        case .inbox: 3
+        case .encouragement: 9
         }
     }
 
@@ -35,11 +35,11 @@ enum InsightKind: String, CaseIterable, Codable, Sendable {
     /// generator hard-coding it.
     var colorHex: String {
         switch self {
-        case .travel: return "#FFE680"        // yellow
-        case .weather: return "#C9F0E0"       // mint
-        case .keyword: return "#FFCCC9"       // pink
-        case .inbox: return "#E0DFFF"         // lavender (new)
-        case .encouragement: return "#FFE680" // yellow (legacy default)
+        case .travel: "#FFE680" // yellow
+        case .weather: "#C9F0E0" // mint
+        case .keyword: "#FFCCC9" // pink
+        case .inbox: "#E0DFFF" // lavender (new)
+        case .encouragement: "#FFE680" // yellow (legacy default)
         }
     }
 }
@@ -67,7 +67,9 @@ struct DayContext: @unchecked Sendable {
 
     /// Convenience over `AIInsight.key(weekOffset:dayIdx:)` so generators
     /// don't repeat the encoding.
-    var dayKey: String { AIInsight.key(weekOffset: weekOffset, dayIdx: dayIdx) }
+    var dayKey: String {
+        AIInsight.key(weekOffset: weekOffset, dayIdx: dayIdx)
+    }
 }
 
 /// One signal source for the AI sticky-note cascade. Every generator

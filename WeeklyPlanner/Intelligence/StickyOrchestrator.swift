@@ -69,7 +69,9 @@ final class StickyOrchestrator {
             for await draft in group {
                 if let draft {
                     let dismissed = dismissedText[draft.kind] ?? []
-                    if dismissed.contains(draft.text) { continue }
+                    if dismissed.contains(draft.text) {
+                        continue
+                    }
                     drafts.append(draft)
                 }
             }
@@ -101,7 +103,8 @@ final class StickyOrchestrator {
     /// behavior (every generator runs on the MainActor).
     @MainActor
     private static func generateDraft(gen: any InsightGenerator,
-                                       day: DayContext) async -> InsightDraft? {
+                                      day: DayContext) async -> InsightDraft?
+    {
         guard let insight = await gen.generate(for: day) else { return nil }
         return InsightDraft(insight: insight)
     }
@@ -119,12 +122,11 @@ final class StickyOrchestrator {
     /// with new results — so insights whose source event was deleted
     /// don't persist as stale ghosts. Saves once at the end.
     private func persist(_ insights: [AIInsight],
-                          day: DayContext,
-                          into context: ModelContext)
+                         day: DayContext,
+                         into context: ModelContext)
     {
         let dayKey = day.dayKey
-        let descriptor = FetchDescriptor<AIInsight>(
-            predicate: #Predicate { $0.dayKey == dayKey && !$0.dismissed })
+        let descriptor = FetchDescriptor<AIInsight>(predicate: #Predicate { $0.dayKey == dayKey && !$0.dismissed })
         if let existing = try? context.fetch(descriptor) {
             for row in existing {
                 context.delete(row)
@@ -140,8 +142,7 @@ final class StickyOrchestrator {
     /// re-emitting something the user already dismissed (so they don't
     /// see "Don't forget Sara's gift!" pop back five seconds later).
     private func dismissedTextByKind(dayKey: String, in context: ModelContext) -> [InsightKind: Set<String>] {
-        let descriptor = FetchDescriptor<AIInsight>(
-            predicate: #Predicate { $0.dayKey == dayKey && $0.dismissed })
+        let descriptor = FetchDescriptor<AIInsight>(predicate: #Predicate { $0.dayKey == dayKey && $0.dismissed })
         guard let dismissed = try? context.fetch(descriptor) else { return [:] }
         var byKind: [InsightKind: Set<String>] = [:]
         for row in dismissed {
@@ -179,14 +180,14 @@ private struct InsightDraft: Sendable {
 
     @MainActor
     init(insight: AIInsight) {
-        self.dayKey = insight.dayKey
-        self.text = insight.text
-        self.colorHex = insight.colorHex
-        self.tiltDegrees = insight.tiltDegrees
-        self.dismissed = insight.dismissed
-        self.kind = insight.kind
-        self.actionURL = insight.actionURL
-        self.priority = insight.priority
+        dayKey = insight.dayKey
+        text = insight.text
+        colorHex = insight.colorHex
+        tiltDegrees = insight.tiltDegrees
+        dismissed = insight.dismissed
+        kind = insight.kind
+        actionURL = insight.actionURL
+        priority = insight.priority
     }
 
     @MainActor

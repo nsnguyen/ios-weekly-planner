@@ -1,17 +1,15 @@
-import XCTest
 import SwiftData
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
 final class DefaultReminderPolicyTests: XCTestCase {
     private func makeEvent() -> Event {
-        Event(
-            title: "Coffee",
-            start: Date(timeIntervalSince1970: 1_700_000_000),
-            end: Date(timeIntervalSince1970: 1_700_003_600),
-            location: nil,
-            category: .personal
-        )
+        Event(title: "Coffee",
+              start: Date(timeIntervalSince1970: 1_700_000_000),
+              end: Date(timeIntervalSince1970: 1_700_003_600),
+              location: nil,
+              category: .personal)
     }
 
     private func settings(defaultMinutes: Int?) -> UserSettings {

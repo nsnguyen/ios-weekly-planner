@@ -32,12 +32,10 @@ final class ConnectionsCalendarTests: XCTestCase {
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
         auth = StubGoogleAuthService()
         spyEngine = SpyGCalSyncEngine()
-        sut = ConnectionsViewModel(
-            settingsStore: settingsStore,
-            inboxStore: inboxStore,
-            auth: auth,
-            gcalSyncEngine: spyEngine
-        )
+        sut = ConnectionsViewModel(settingsStore: settingsStore,
+                                   inboxStore: inboxStore,
+                                   auth: auth,
+                                   gcalSyncEngine: spyEngine)
     }
 
     override func tearDown() async throws {
@@ -64,13 +62,11 @@ final class ConnectionsCalendarTests: XCTestCase {
         XCTAssertEqual(sut.googleCalendarAccountEmail, "sara@gmail.com")
     }
 
-    func testConnectGoogleCalendarPostsNotification() async throws {
+    func testConnectGoogleCalendarPostsNotification() async {
         let expectation = XCTestExpectation(description: ".googleCalendarDidConnect posted")
-        let observer = NotificationCenter.default.addObserver(
-            forName: .googleCalendarDidConnect,
-            object: nil,
-            queue: .main
-        ) { _ in expectation.fulfill() }
+        let observer = NotificationCenter.default.addObserver(forName: .googleCalendarDidConnect,
+                                                              object: nil,
+                                                              queue: .main) { _ in expectation.fulfill() }
         defer { NotificationCenter.default.removeObserver(observer) }
 
         let presenter = UIViewController()
@@ -92,7 +88,7 @@ final class ConnectionsCalendarTests: XCTestCase {
 
     // MARK: - Disconnect
 
-    func testDisconnectGoogleCalendarCallsPurge() async throws {
+    func testDisconnectGoogleCalendarCallsPurge() async {
         // Pre-state: connected.
         await sut.connectGoogleCalendar(presenter: UIViewController())
         XCTAssertTrue(sut.isGoogleCalendarConnected)
@@ -114,7 +110,7 @@ final class ConnectionsCalendarTests: XCTestCase {
         XCTAssertNil(sut.googleCalendarAccountEmail)
     }
 
-    func testDisconnectGoogleCalendarDoesNotCallSignOut() async throws {
+    func testDisconnectGoogleCalendarDoesNotCallSignOut() async {
         // Critical: Gmail shares the same OAuth token.
         // Disconnecting Calendar must NOT revoke it.
         await sut.connectGoogleCalendar(presenter: UIViewController())
@@ -122,7 +118,7 @@ final class ConnectionsCalendarTests: XCTestCase {
         await sut.disconnectGoogleCalendar()
 
         XCTAssertEqual(auth.signOutCount, 0,
-            "disconnectGoogleCalendar must NOT call auth.signOut() — it would break a connected Gmail")
+                       "disconnectGoogleCalendar must NOT call auth.signOut() — it would break a connected Gmail")
     }
 
     func testDisconnectGoogleCalendarClearsSyncToken() async throws {

@@ -23,23 +23,27 @@ final class TodoBlockCRUDTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        taskStore = nil; eventStore = nil; inboxStore = nil
-        calendar = nil; today = nil; container = nil
+        taskStore = nil
+        eventStore = nil
+        inboxStore = nil
+        calendar = nil
+        today = nil
+        container = nil
         try await super.tearDown()
     }
 
     private func makeViewModel() -> DayPageViewModel {
         DayPageViewModel(weekOffset: 0,
-                          dayIdx: WeekMath.todayIndex(in: WeekMath.weekDays(forOffset: 0,
-                                                                            today: today),
-                                                       for: today) ?? 0,
-                          eventStore: eventStore,
-                          inboxStore: inboxStore,
-                          taskStore: taskStore,
-                          clock: { self.today })
+                         dayIdx: WeekMath.todayIndex(in: WeekMath.weekDays(forOffset: 0,
+                                                                           today: today),
+                                                     for: today) ?? 0,
+                         eventStore: eventStore,
+                         inboxStore: inboxStore,
+                         taskStore: taskStore,
+                         clock: { self.today })
     }
 
-    func testAddTask_persistsAndAppearsInList() async throws {
+    func testAddTask_persistsAndAppearsInList() async {
         let vm = makeViewModel()
         await vm.refresh()
         XCTAssertEqual(vm.tasks.count, 0)
@@ -54,7 +58,7 @@ final class TodoBlockCRUDTests: XCTestCase {
         XCTAssertEqual(vm.tasks.first?.priority, .high)
     }
 
-    func testAddTask_emptyTitle_isNoOp() async throws {
+    func testAddTask_emptyTitle_isNoOp() async {
         let vm = makeViewModel()
         vm.taskComposer.title = "   "
         await vm.addTask()
@@ -62,7 +66,7 @@ final class TodoBlockCRUDTests: XCTestCase {
         XCTAssertEqual(vm.tasks.count, 0)
     }
 
-    func testAddTask_resetsTitleKeepsComposing() async throws {
+    func testAddTask_resetsTitleKeepsComposing() async {
         let vm = makeViewModel()
         vm.taskComposer.isComposing = true
         vm.taskComposer.title = "Prep slides"
@@ -112,7 +116,7 @@ final class TodoBlockCRUDTests: XCTestCase {
         let vm = makeViewModel()
         await vm.refresh()
 
-        let tomorrow = today.addingTimeInterval(86_400)
+        let tomorrow = today.addingTimeInterval(86400)
         await vm.updateTask(id: task.id) { $0.due = tomorrow }
         await vm.refresh()
         // The task moved to a different day; this day-vm should no

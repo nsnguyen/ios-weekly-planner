@@ -1,5 +1,5 @@
-import Foundation
 import CoreLocation
+import Foundation
 import XCTest
 @testable import WeeklyPlanner
 
@@ -26,18 +26,20 @@ final class TravelInsightGeneratorTests: XCTestCase {
 
     func testEmitsForUpcomingEventWithLocation() async {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
-        let provider = FakeTravelProvider(
-            authStatus: .authorizedWhenInUse,
-            coordinateForAddress: ["Trick Dog, Mission": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41)],
-            currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
-            travelTimeSeconds: 25 * 60)
+        let provider = FakeTravelProvider(authStatus: .authorizedWhenInUse,
+                                          coordinateForAddress: [
+                                              "Trick Dog, Mission": CLLocationCoordinate2D(latitude: 37.78,
+                                                                                           longitude: -122.41),
+                                          ],
+                                          currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
+                                          travelTimeSeconds: 25 * 60)
         let evt = event(title: "Dentist", location: "Trick Dog, Mission",
                         startsInSeconds: 35 * 60, relativeTo: now)
         let gen = TravelInsightGenerator(provider: provider)
         let insight = await gen.generate(for: makeContext(now: now, events: [evt]))
         XCTAssertNotNil(insight)
         XCTAssertTrue(insight?.text.contains("Leave by") ?? false,
-                       "Got: \(insight?.text ?? "nil")")
+                      "Got: \(insight?.text ?? "nil")")
         XCTAssertTrue(insight?.text.contains("Dentist") ?? false)
         XCTAssertEqual(insight?.kind, .travel)
         XCTAssertEqual(insight?.priority, 0)
@@ -46,11 +48,12 @@ final class TravelInsightGeneratorTests: XCTestCase {
 
     func testNilWhenLocationAuthDenied() async {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
-        let provider = FakeTravelProvider(
-            authStatus: .denied,
-            coordinateForAddress: ["HQ": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41)],
-            currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
-            travelTimeSeconds: 600)
+        let provider = FakeTravelProvider(authStatus: .denied,
+                                          coordinateForAddress: [
+                                              "HQ": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41),
+                                          ],
+                                          currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
+                                          travelTimeSeconds: 600)
         let evt = event(title: "M", location: "HQ", startsInSeconds: 30 * 60, relativeTo: now)
         let gen = TravelInsightGenerator(provider: provider)
         let insight = await gen.generate(for: makeContext(now: now, events: [evt]))
@@ -59,11 +62,12 @@ final class TravelInsightGeneratorTests: XCTestCase {
 
     func testNilWhenEventBeyond4Hours() async {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
-        let provider = FakeTravelProvider(
-            authStatus: .authorizedWhenInUse,
-            coordinateForAddress: ["HQ": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41)],
-            currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
-            travelTimeSeconds: 600)
+        let provider = FakeTravelProvider(authStatus: .authorizedWhenInUse,
+                                          coordinateForAddress: [
+                                              "HQ": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41),
+                                          ],
+                                          currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
+                                          travelTimeSeconds: 600)
         let evt = event(title: "Late dinner", location: "HQ",
                         startsInSeconds: 5 * 3600, relativeTo: now)
         let gen = TravelInsightGenerator(provider: provider)
@@ -73,11 +77,12 @@ final class TravelInsightGeneratorTests: XCTestCase {
 
     func testRespectsDepartureThreshold() async {
         let now = Date(timeIntervalSince1970: 1_780_000_000)
-        let provider = FakeTravelProvider(
-            authStatus: .authorizedWhenInUse,
-            coordinateForAddress: ["HQ": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41)],
-            currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
-            travelTimeSeconds: 600)
+        let provider = FakeTravelProvider(authStatus: .authorizedWhenInUse,
+                                          coordinateForAddress: [
+                                              "HQ": CLLocationCoordinate2D(latitude: 37.78, longitude: -122.41),
+                                          ],
+                                          currentLocationValue: CLLocation(latitude: 37.79, longitude: -122.42),
+                                          travelTimeSeconds: 600)
         let evt = event(title: "Future", location: "HQ",
                         startsInSeconds: 3 * 3600, relativeTo: now)
         let gen = TravelInsightGenerator(provider: provider)
@@ -104,9 +109,18 @@ private final class FakeTravelProvider: TravelProviding {
         self.travelTimeSeconds = travelTimeSeconds
     }
 
-    func locationAuthorizationStatus() -> CLAuthorizationStatus { authStatus }
-    func currentLocation() async -> CLLocation? { currentLocationValue }
-    func geocode(address: String) async -> CLLocationCoordinate2D? { coordinateForAddress[address] }
+    func locationAuthorizationStatus() -> CLAuthorizationStatus {
+        authStatus
+    }
+
+    func currentLocation() async -> CLLocation? {
+        currentLocationValue
+    }
+
+    func geocode(address: String) async -> CLLocationCoordinate2D? {
+        coordinateForAddress[address]
+    }
+
     func travelTime(from _: CLLocationCoordinate2D, to _: CLLocationCoordinate2D) async -> TimeInterval? {
         travelTimeSeconds
     }

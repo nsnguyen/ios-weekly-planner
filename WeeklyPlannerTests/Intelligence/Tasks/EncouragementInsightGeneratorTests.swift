@@ -15,7 +15,8 @@ final class EncouragementInsightGeneratorTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        eventStore = nil; container = nil
+        eventStore = nil
+        container = nil
         try await super.tearDown()
     }
 
@@ -69,7 +70,7 @@ final class EncouragementInsightGeneratorTests: XCTestCase {
     func testGenerateReturnsNilWhenAIDisabled() async {
         let service = StubIntelligenceService(eventStore: eventStore)
         let generator = EncouragementInsightGenerator(intelligence: service,
-                                                       settings: { false })
+                                                      settings: { false })
         let ctx = DayContext(weekOffset: 0,
                              dayIdx: 0,
                              events: [],

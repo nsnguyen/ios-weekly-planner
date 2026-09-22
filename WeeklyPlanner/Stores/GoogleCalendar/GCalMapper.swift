@@ -52,6 +52,7 @@ enum GCalMapper {
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
     }()
+
     private nonisolated(unsafe) static let day: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
@@ -78,8 +79,12 @@ enum GCalMapper {
     }
 
     private static func parse(_ dt: GCalDateTime) -> Date? {
-        if let s = dt.dateTime { return iso.date(from: s) }
-        if let d = dt.date { return day.date(from: d) }   // all-day → local midnight
+        if let s = dt.dateTime {
+            return iso.date(from: s)
+        }
+        if let d = dt.date {
+            return day.date(from: d)
+        } // all-day → local midnight
         return nil
     }
 }

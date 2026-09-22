@@ -18,18 +18,15 @@ final class FindFreeSlotsTool: PlannerTool {
     /// Returns up to five free slots inside `dateRange` at least
     /// `minMinutes` long. Slot search is greedy left-to-right against the
     /// occupied intervals of every event in the range.
-    func run(
-        dateRange: ClosedRange<Date>,
-        minMinutes: Int,
-        dayPart: DayPart
-    ) async throws -> [ToolFreeSlot] {
-        let query = EventQuery(
-            dateRange: dateRange,
-            categories: nil,
-            keywords: [],
-            personName: nil
-        )
-        let events = (try? await store.events(matching: query)) ?? []
+    func run(dateRange: ClosedRange<Date>,
+             minMinutes: Int,
+             dayPart: DayPart) async throws -> [ToolFreeSlot]
+    {
+        let query = EventQuery(dateRange: dateRange,
+                               categories: nil,
+                               keywords: [],
+                               personName: nil)
+        let events = await (try? store.events(matching: query)) ?? []
         let busy = events.map { ($0.start, $0.end) }.sorted { $0.0 < $1.0 }
 
         var free: [ToolFreeSlot] = []
@@ -38,10 +35,14 @@ final class FindFreeSlotsTool: PlannerTool {
             if start > cursor {
                 appendIfLongEnough(start: cursor, end: min(start, dateRange.upperBound),
                                    minMinutes: minMinutes, dayPart: dayPart, into: &free)
-                if free.count >= 5 { return free }
+                if free.count >= 5 {
+                    return free
+                }
             }
             cursor = max(cursor, end)
-            if cursor >= dateRange.upperBound { break }
+            if cursor >= dateRange.upperBound {
+                break
+            }
         }
         if cursor < dateRange.upperBound {
             appendIfLongEnough(start: cursor, end: dateRange.upperBound,
@@ -50,13 +51,12 @@ final class FindFreeSlotsTool: PlannerTool {
         return Array(free.prefix(5))
     }
 
-    private func appendIfLongEnough(
-        start: Date,
-        end: Date,
-        minMinutes: Int,
-        dayPart: DayPart,
-        into free: inout [ToolFreeSlot]
-    ) {
+    private func appendIfLongEnough(start: Date,
+                                    end: Date,
+                                    minMinutes: Int,
+                                    dayPart: DayPart,
+                                    into free: inout [ToolFreeSlot])
+    {
         guard end > start else { return }
         guard end.timeIntervalSince(start) >= Double(minMinutes) * 60 else { return }
         guard Self.matches(dayPart: dayPart, start: start) else { return }

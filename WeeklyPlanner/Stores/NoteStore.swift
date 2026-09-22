@@ -23,8 +23,7 @@ final class SwiftDataNoteStore: NoteStoring {
     func notes() async throws -> [Note] {
         // Most-recently-updated first — editing a note intentionally
         // bubbles it to the top (upsert refreshes `updatedAt`).
-        try context.fetch(FetchDescriptor<Note>(
-            sortBy: [SortDescriptor(\Note.updatedAt, order: .reverse)]))
+        try context.fetch(FetchDescriptor<Note>(sortBy: [SortDescriptor(\Note.updatedAt, order: .reverse)]))
     }
 
     func note(id: UUID) async throws -> Note? {
@@ -65,8 +64,14 @@ extension Notification.Name {
 final class StubNoteStore: NoteStoring {
     nonisolated init() {}
 
-    func notes() async throws -> [Note] { [] }
-    func note(id _: UUID) async throws -> Note? { nil }
+    func notes() async throws -> [Note] {
+        []
+    }
+
+    func note(id _: UUID) async throws -> Note? {
+        nil
+    }
+
     func upsert(_: Note) async throws {}
     func delete(id _: UUID) async throws {}
 }

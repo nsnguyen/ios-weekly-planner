@@ -52,7 +52,7 @@ struct PaperNotesView: View {
                               })
             }
             .padding(.leading, 32) // clear the red margin
-            .padding(.bottom, 92)  // PaperTabBar clearance
+            .padding(.bottom, 92) // PaperTabBar clearance
         }
     }
 }

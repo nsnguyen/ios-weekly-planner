@@ -17,16 +17,17 @@ enum DynamicTypeSupport {
     /// to PaperFont's existing `font(at:weight:)` helper.
     static func handwriting(_ font: PaperFont,
                             size: CGFloat,
-                            relativeTo style: Font.TextStyle = .body) -> Font {
+                            relativeTo style: Font.TextStyle = .body) -> Font
+    {
         font.font(at: size, weight: .regular)
     }
 }
 
 /// Tab bar label rendering style chosen per Dynamic Type size.
 enum TabBarLabelStyle: String, Hashable, Sendable {
-    case full       // icon + full label
-    case truncate   // icon + truncated label (single line)
-    case iconOnly   // icon only
+    case full // icon + full label
+    case truncate // icon + truncated label (single line)
+    case iconOnly // icon only
 }
 
 /// Layout values that adapt to the current Dynamic Type size.
@@ -48,11 +49,11 @@ enum DynamicTypeLayout {
     static func tabBarLabelStyle(at size: DynamicTypeSize) -> TabBarLabelStyle {
         switch size {
         case .accessibility4, .accessibility5:
-            return .iconOnly
+            .iconOnly
         case .accessibility3:
-            return .truncate
+            .truncate
         default:
-            return .full
+            .full
         }
     }
 }

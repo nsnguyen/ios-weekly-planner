@@ -99,7 +99,7 @@ final class PageFlipController {
     /// - Parameter current: The page the user starts on.
     init(current: PageCoordinate) {
         self.current = current
-        self.autoCommitDelay = .milliseconds(700)
+        autoCommitDelay = .milliseconds(700)
     }
 
     /// Test seam: inject a short fallback delay to exercise the auto-commit

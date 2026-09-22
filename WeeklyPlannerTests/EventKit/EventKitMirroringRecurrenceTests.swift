@@ -60,7 +60,7 @@ final class EventKitMirroringRecurrenceTests: XCTestCase {
     func testDeleteOccurrenceExcludesLocallyEvenWithoutEKMatch() async throws {
         let weekly = makeWeekly()
         try await store.upsert(weekly)
-        let occurrence = weekly.start.addingTimeInterval(7 * 86_400)
+        let occurrence = weekly.start.addingTimeInterval(7 * 86400)
 
         try await store.deleteOccurrence(eventID: weekly.id, occurrenceStart: occurrence)
 

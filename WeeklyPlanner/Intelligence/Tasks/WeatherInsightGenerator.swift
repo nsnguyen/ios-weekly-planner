@@ -1,7 +1,7 @@
-import Foundation
 import CoreLocation
+import Foundation
 #if canImport(WeatherKit)
-import WeatherKit
+    import WeatherKit
 #endif
 
 /// Single hour of precipitation forecast used by the generator. Value
@@ -59,16 +59,14 @@ final class WeatherInsightGenerator: InsightGenerator {
             formatter.locale = Locale(identifier: "en_US_POSIX")
             let when = formatter.string(from: hour.hourStart).lowercased()
 
-            return AIInsight(
-                dayKey: day.dayKey,
-                dateGenerated: day.now,
-                text: "Bring an umbrella — rain at \(when)",
-                colorHex: InsightKind.weather.colorHex,
-                tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
-                kind: .weather,
-                actionURL: "weather://",
-                priority: InsightKind.weather.defaultPriority
-            )
+            return AIInsight(dayKey: day.dayKey,
+                             dateGenerated: day.now,
+                             text: "Bring an umbrella — rain at \(when)",
+                             colorHex: InsightKind.weather.colorHex,
+                             tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                             kind: .weather,
+                             actionURL: "weather://",
+                             priority: InsightKind.weather.defaultPriority)
         }
 
         return nil
@@ -86,7 +84,7 @@ final class LiveWeatherProvider: WeatherProviding {
     private let manager: CLLocationManager
 
     init() {
-        self.manager = CLLocationManager()
+        manager = CLLocationManager()
     }
 
     func currentLocation() async -> CLLocation? {
@@ -95,21 +93,21 @@ final class LiveWeatherProvider: WeatherProviding {
 
     func hourlyPrecipitation(for location: CLLocation, day: Date) async -> [HourlyPrecipitation] {
         #if canImport(WeatherKit)
-        if #available(iOS 26.0, *) {
-            do {
-                let weather = try await WeatherService.shared.weather(for: location)
-                let dayStart = Calendar.current.startOfDay(for: day)
-                let dayEnd = dayStart.addingTimeInterval(24 * 3600)
-                return weather.hourlyForecast.forecast
-                    .filter { $0.date >= dayStart && $0.date < dayEnd }
-                    .map {
-                        HourlyPrecipitation(hourStart: $0.date,
-                                             precipChance: $0.precipitationChance)
-                    }
-            } catch {
-                return []
+            if #available(iOS 26.0, *) {
+                do {
+                    let weather = try await WeatherService.shared.weather(for: location)
+                    let dayStart = Calendar.current.startOfDay(for: day)
+                    let dayEnd = dayStart.addingTimeInterval(24 * 3600)
+                    return weather.hourlyForecast.forecast
+                        .filter { $0.date >= dayStart && $0.date < dayEnd }
+                        .map {
+                            HourlyPrecipitation(hourStart: $0.date,
+                                                precipChance: $0.precipitationChance)
+                        }
+                } catch {
+                    return []
+                }
             }
-        }
         #endif
         return []
     }

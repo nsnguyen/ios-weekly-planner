@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import Combine
+import SwiftData
+import SwiftUI
 
 /// Root composition for the paper app. Sits above `RootView` (which only
 /// hosts the environment values) and below every page. Owns:
@@ -57,7 +57,9 @@ struct AppShell: View {
     /// materialized one yet. `@Query` returns at most one element here
     /// because `SwiftDataSettingsStore.current()` lazy-creates exactly one
     /// `UserSettings` instance.
-    private var settings: UserSettings { settingsRows.first ?? UserSettings() }
+    private var settings: UserSettings {
+        settingsRows.first ?? UserSettings()
+    }
 
     /// Re-seed the process-wide week calendar and rebuild week-anchored UI.
     /// A week-start change is rare; a full rebuild is the correct cost.
@@ -67,9 +69,17 @@ struct AppShell: View {
         weekLayoutEpoch += 1
     }
 
-    private var resolvedTheme: PaperTheme { settings.paperTheme.theme }
-    private var resolvedFont: PaperFont { settings.paperFont }
-    private var resolvedSize: PaperSize { settings.paperSize }
+    private var resolvedTheme: PaperTheme {
+        settings.paperTheme.theme
+    }
+
+    private var resolvedFont: PaperFont {
+        settings.paperFont
+    }
+
+    private var resolvedSize: PaperSize {
+        settings.paperSize
+    }
 
     init(settingsStore: any SettingsStoring) {
         let today = Date()
@@ -144,10 +154,8 @@ struct AppShell: View {
             // calendar tab is visible.
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PaperTabBar(selection: Binding(
-                get: { selection.current },
-                set: { selection.current = $0 }
-            ))
+            PaperTabBar(selection: Binding(get: { selection.current },
+                                           set: { selection.current = $0 }))
         }
         .animation(AnimationTokens.aiOverlaySlide(reduced: reduceMotion),
                    value: isAISearchOpen)
@@ -247,17 +255,14 @@ struct AppShell: View {
                                     tasks: StubTaskStore(),
                                     inbox: StubInboxStore())
         let fallbackService = StubIntelligenceService(eventStore: StubEventStore())
-        let intelligence: any IntelligenceService = PlannerLanguageModel(
-            registry: registry, fallback: fallbackService)
+        let intelligence: any IntelligenceService = PlannerLanguageModel(registry: registry, fallback: fallbackService)
         let generators: [any InsightGenerator] = [
             TravelInsightGenerator(provider: LiveTravelProvider()),
             WeatherInsightGenerator(provider: LiveWeatherProvider()),
             KeywordInsightGenerator(model: LiveKeywordInsightModel()),
             InboxInsightGenerator(),
         ]
-        return StickyOrchestrator(
-            generators: generators,
-            fallback: EncouragementInsightGenerator(intelligence: intelligence))
+        return StickyOrchestrator(generators: generators,
+                                  fallback: EncouragementInsightGenerator(intelligence: intelligence))
     }
-
 }

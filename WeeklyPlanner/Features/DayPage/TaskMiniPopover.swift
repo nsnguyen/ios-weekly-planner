@@ -113,7 +113,7 @@ struct TaskMiniPopover: View {
                     .frame(width: 72, alignment: .leading)
 
                 dueChip(label: "Today", date: startOfDay(Date()))
-                dueChip(label: "Tomorrow", date: startOfDay(Date().addingTimeInterval(86_400)))
+                dueChip(label: "Tomorrow", date: startOfDay(Date().addingTimeInterval(86400)))
                 dueChip(label: "Pick…", date: nil)
                 Spacer(minLength: 0)
             }

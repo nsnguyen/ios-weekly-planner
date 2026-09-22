@@ -13,7 +13,9 @@ struct ThemeCard: View {
     @Environment(\.paperTheme) private var activeTheme
     @Environment(\.paperFont) private var font
 
-    private var cardTheme: PaperTheme { themeKey.theme }
+    private var cardTheme: PaperTheme {
+        themeKey.theme
+    }
 
     var body: some View {
         Button(action: onPick) {
@@ -23,9 +25,9 @@ struct ThemeCard: View {
                 cardTheme.bookCover
                     .frame(width: 30, height: 30)
                     .clipShape(UnevenRoundedRectangle(cornerRadii: .init(topLeading: 0,
-                                                                          bottomLeading: 12,
-                                                                          bottomTrailing: 0,
-                                                                          topTrailing: 12)))
+                                                                         bottomLeading: 12,
+                                                                         bottomTrailing: 0,
+                                                                         topTrailing: 12)))
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 
                 VStack(alignment: .leading, spacing: 0) {
@@ -49,14 +51,10 @@ struct ThemeCard: View {
                 }
             }
             .frame(minHeight: 84)
-            .background(
-                RoundedRectangle(cornerRadius: 12).fill(cardTheme.cream)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(isActive ? activeTheme.blueInk : cardTheme.rule,
-                                  lineWidth: isActive ? 1.5 : 0.5)
-            )
+            .background(RoundedRectangle(cornerRadius: 12).fill(cardTheme.cream))
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(isActive ? activeTheme.blueInk : cardTheme.rule,
+                              lineWidth: isActive ? 1.5 : 0.5))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: isActive ? activeTheme.blueInk.opacity(0.22) : .clear,
                     radius: 3, x: 0, y: 0)

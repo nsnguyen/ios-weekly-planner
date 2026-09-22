@@ -20,7 +20,9 @@ enum AvailabilityState: Hashable {
     }
 
     var isAvailable: Bool {
-        if case .available = self { return true }
+        if case .available = self {
+            return true
+        }
         return false
     }
 
@@ -34,15 +36,15 @@ enum AvailabilityState: Hashable {
     var fallbackMessage: String {
         switch self {
         case .available:
-            return ""
+            ""
         case .unavailable(.deviceNotEligible):
-            return "On-device AI isn't available on this device. Showing canned suggestions."
+            "On-device AI isn't available on this device. Showing canned suggestions."
         case .unavailable(.modelNotReady):
-            return "On-device AI is still warming up. Showing canned suggestions."
+            "On-device AI is still warming up. Showing canned suggestions."
         case .unavailable(.appleIntelligenceNotEnabled):
-            return "Enable Apple Intelligence in iOS Settings to get personalized answers. Showing canned suggestions."
+            "Enable Apple Intelligence in iOS Settings to get personalized answers. Showing canned suggestions."
         case .unavailable(.userDisabled):
-            return "Ask the planner is turned off in Settings. Showing canned suggestions."
+            "Ask the planner is turned off in Settings. Showing canned suggestions."
         }
     }
 }

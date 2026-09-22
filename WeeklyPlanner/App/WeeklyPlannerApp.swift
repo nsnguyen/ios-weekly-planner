@@ -33,6 +33,7 @@ struct WeeklyPlannerApp: App {
     @State private var eventKitAuth: EventKitAuthorization
 
     // MARK: Phase 19 — notifications wiring
+
     @State private var notificationCenter: any NotificationCentering
     @State private var notificationAuth: NotificationAuthorization
     @State private var locationManager: LocationReminderManager
@@ -50,47 +51,37 @@ struct WeeklyPlannerApp: App {
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         // Phase 36b: week-start preference must be live before AppShell's
         // first WeekMath call.
-        let storedWeekStart = (try? settingsStore.current().weekStart) ?? .monday
-        WeekMath.preferredCalendar = WeekMath.calendar(startingOn: storedWeekStart)
-        let googleAuthService = LiveGoogleAuthService(
-            config: .fromBundle(),
-            client: RealGIDSigningClient(),
-            keychain: TokenKeychainStore<GoogleAccountInfo>(
-                serviceID: "com.weeklyplanner.WeeklyPlanner.google"
-            )
-        )
+        Self.applyStoredWeekStart(from: settingsStore)
+        let googleAuthService = LiveGoogleAuthService(config: .fromBundle(),
+                                                      client: RealGIDSigningClient(),
+                                                      keychain: TokenKeychainStore<GoogleAccountInfo>(serviceID: "com.weeklyplanner.WeeklyPlanner.google"))
         // Build the write stack as Google write-back outside EventKit mirroring.
         // Successful Google pushes flip the event source before the EventKit
         // mirror sees it, which prevents duplicate iOS Calendar entries.
         let eventKitGateway = SystemEventKitGateway()
         let calendarManager = CategoryCalendarManager(gateway: eventKitGateway)
         let eventKitAuth = EventKitAuthorization(gateway: eventKitGateway)
-        let mirroredStore = EventKitMirroringEventStore(
-            base: baseEventStore,
-            gateway: eventKitGateway,
-            calendarManager: calendarManager
-        )
+        let mirroredStore = EventKitMirroringEventStore(base: baseEventStore,
+                                                        gateway: eventKitGateway,
+                                                        calendarManager: calendarManager)
         let gcalClient = GoogleCalendarClient(auth: googleAuthService, session: URLSession.shared)
-        let eventStore: any EventStoring = GoogleCalendarWriteBackEventStore(
-            base: mirroredStore,
-            client: gcalClient,
-            isConnected: { [settingsStore] in
-                (try? settingsStore.current().googleCalendarConnected) ?? false
-            },
-            unlinkEventKitIdentifier: { [eventKitGateway] identifier in
-                guard eventKitGateway.eventsAuthStatus.isFullAccess else { return }
-                let from = Calendar.current.date(byAdding: .day, value: -365, to: Date()) ?? Date()
-                let to = Calendar.current.date(byAdding: .day, value: 365, to: Date()) ?? Date()
-                let window = eventKitGateway.fetchEvents(from: from, to: to, calendars: nil)
-                if let match = window.first(where: { $0.eventIdentifier == identifier }) {
-                    try? eventKitGateway.remove(match, span: .thisEvent)
-                }
-            }
-        )
+        let eventStore: any EventStoring = GoogleCalendarWriteBackEventStore(base: mirroredStore,
+                                                                             client: gcalClient,
+                                                                             isConnected: {
+                                                                                 Self
+                                                                                     .googleCalendarIsConnected(settingsStore)
+                                                                             },
+                                                                             unlinkEventKitIdentifier: { identifier in
+                                                                                 Self
+                                                                                     .unlinkEventKitEvent(identifier: identifier,
+                                                                                                          gateway: eventKitGateway)
+                                                                             })
         #if DEBUG
             SeedLoader.seedIfEmpty(context: container.mainContext)
         #endif
+
         // MARK: Phase 19 — notifications wiring
+
         // Constructed before wiredInboxStore so authWrapper can be injected
         // into the inbox store for the first-event permission probe.
         let center: any NotificationCentering = LiveNotificationCenter()
@@ -98,26 +89,20 @@ struct WeeklyPlannerApp: App {
 
         // Rebuild the inbox store now that eventStore + settingsStore are
         // available — the accept-flow needs them to mirror to EventKit.
-        let wiredInboxStore = SwiftDataInboxStore(
-            context: container.mainContext,
-            eventStore: eventStore,
-            settingsStore: settingsStore,
-            notificationAuth: authWrapper
-        )
+        let wiredInboxStore = SwiftDataInboxStore(context: container.mainContext,
+                                                  eventStore: eventStore,
+                                                  settingsStore: settingsStore,
+                                                  notificationAuth: authWrapper)
         let gmailClient = GmailClient(auth: googleAuthService, session: URLSession.shared)
         let extractor: any EventExtractor = LiveEventExtractor()
-        let syncEngine = InboxSyncEngine(
-            client: gmailClient,
-            extractor: extractor,
-            inboxStore: wiredInboxStore,
-            deltaSync: GmailDeltaSync(settingsStore: settingsStore)
-        )
+        let syncEngine = InboxSyncEngine(client: gmailClient,
+                                         extractor: extractor,
+                                         inboxStore: wiredInboxStore,
+                                         deltaSync: GmailDeltaSync(settingsStore: settingsStore))
         let gcalDeltaSync = GCalDeltaSync(settingsStore: settingsStore)
-        let gcalEngine = GCalSyncEngine(
-            client: gcalClient,
-            eventStore: eventStore,
-            deltaSync: gcalDeltaSync
-        )
+        let gcalEngine = GCalSyncEngine(client: gcalClient,
+                                        eventStore: eventStore,
+                                        deltaSync: gcalDeltaSync)
         let scheduler = BackgroundRefreshScheduler(engine: syncEngine)
         scheduler.registerHandler()
         scheduler.registerGCalHandler {
@@ -155,6 +140,27 @@ struct WeeklyPlannerApp: App {
         _taskScheduler = State(initialValue: taskSched)
         _rescheduleObserver = State(initialValue: rescheduler)
         _deepLinkRouter = State(initialValue: router)
+    }
+
+    /// Reads the persisted week start before any view calls `WeekMath`.
+    private static func applyStoredWeekStart(from settingsStore: any SettingsStoring) {
+        let storedWeekStart = (try? settingsStore.current().weekStart) ?? .monday
+        WeekMath.preferredCalendar = WeekMath.calendar(startingOn: storedWeekStart)
+    }
+
+    private static func googleCalendarIsConnected(_ settingsStore: any SettingsStoring) -> Bool {
+        (try? settingsStore.current().googleCalendarConnected) ?? false
+    }
+
+    /// Drops the EventKit copy when Google write-back takes ownership of an event.
+    private static func unlinkEventKitEvent(identifier: String, gateway: any EventKitGateway) {
+        guard gateway.eventsAuthStatus.isFullAccess else { return }
+        let from = Calendar.current.date(byAdding: .day, value: -365, to: Date()) ?? Date()
+        let to = Calendar.current.date(byAdding: .day, value: 365, to: Date()) ?? Date()
+        let window = gateway.fetchEvents(from: from, to: to, calendars: nil)
+        if let match = window.first(where: { $0.eventIdentifier == identifier }) {
+            try? gateway.remove(match, span: .thisEvent)
+        }
     }
 
     var body: some Scene {

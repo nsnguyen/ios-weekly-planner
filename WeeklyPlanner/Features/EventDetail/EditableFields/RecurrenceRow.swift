@@ -69,8 +69,8 @@ struct RecurrenceRow: View {
             .accessibilityIdentifier(AccessibilityIDs.eventRepeatIntervalMinus)
 
             Text(current.interval == 1
-                 ? "Every \(current.frequency.unitName)"
-                 : "Every \(current.interval) \(current.frequency.unitName)s")
+                ? "Every \(current.frequency.unitName)"
+                : "Every \(current.interval) \(current.frequency.unitName)s")
                 .font(font.font(at: 14 * size.scale, weight: .regular))
                 .foregroundStyle(theme.ink)
 
@@ -110,20 +110,18 @@ struct RecurrenceRow: View {
             .accessibilityIdentifier(AccessibilityIDs.eventRepeatEndMenu)
 
             if case let .onDate(date) = current.end {
-                DatePicker("", selection: Binding(
-                    get: { date },
-                    set: { newDate in update { $0.end = .onDate(newDate) } }),
-                    displayedComponents: [.date])
+                DatePicker("", selection: Binding(get: { date },
+                                                  set: { newDate in update { $0.end = .onDate(newDate) } }),
+                           displayedComponents: [.date])
                     .labelsHidden()
                     .datePickerStyle(.compact)
                     .tint(theme.blueInk)
             }
 
             if case let .afterCount(count) = current.end {
-                Stepper("", value: Binding(
-                    get: { count },
-                    set: { newCount in update { $0.end = .afterCount(max(1, newCount)) } }),
-                    in: 1 ... 999)
+                Stepper("", value: Binding(get: { count },
+                                           set: { newCount in update { $0.end = .afterCount(max(1, newCount)) } }),
+                        in: 1 ... 999)
                     .labelsHidden()
                     .accessibilityLabel("Number of times")
             }

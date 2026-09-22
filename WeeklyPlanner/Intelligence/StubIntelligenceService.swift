@@ -28,13 +28,11 @@ final class StubIntelligenceService: IntelligenceService {
         let sanitized = SafetyGuard.sanitize(query)
         let canned = AISearchCannedData.canned(for: sanitized)
         let citations = await resolveCitations(titleHints: canned.titleHints, now: clock())
-        return AIAnswer(
-            query: sanitized,
-            body: canned.body,
-            citations: citations,
-            actions: canned.actions,
-            elapsedSeconds: 0
-        )
+        return AIAnswer(query: sanitized,
+                        body: canned.body,
+                        citations: citations,
+                        actions: canned.actions,
+                        elapsedSeconds: 0)
     }
 
     /// Internal so `PlannerLanguageModel` can reuse the same title-substring
@@ -48,14 +46,14 @@ final class StubIntelligenceService: IntelligenceService {
             for event in events {
                 let title = event.title.lowercased()
                 guard lowered.contains(where: { title.contains($0) }) else { continue }
-                results.append(AICitation(
-                    id: event.id,
-                    title: event.title,
-                    category: event.category,
-                    weekdayLong: Self.weekdayFormatter.string(from: event.start),
-                    timeShort: Self.timeFormatter.string(from: event.start)
-                ))
-                if results.count >= 3 { return results }
+                results.append(AICitation(id: event.id,
+                                          title: event.title,
+                                          category: event.category,
+                                          weekdayLong: Self.weekdayFormatter.string(from: event.start),
+                                          timeShort: Self.timeFormatter.string(from: event.start)))
+                if results.count >= 3 {
+                    return results
+                }
             }
         }
         return results

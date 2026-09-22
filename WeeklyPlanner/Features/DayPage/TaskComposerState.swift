@@ -25,7 +25,7 @@ final class TaskComposerState {
     private(set) var pendingBlurToken: Int = 0
 
     init(forDay date: Date) {
-        self.due = date
+        due = date
     }
 
     /// Ask the inline-add row's TextField to relinquish focus. Called by
@@ -49,10 +49,10 @@ final class TaskComposerState {
     func build(category: Category = .personal) -> TaskItem {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         return TaskItem(title: trimmed,
-                         due: due,
-                         done: false,
-                         priority: priority,
-                         category: category)
+                        due: due,
+                        done: false,
+                        priority: priority,
+                        category: category)
     }
 
     /// Clear the title; KEEP `isComposing == true` so the user can chain

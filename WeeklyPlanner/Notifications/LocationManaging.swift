@@ -25,16 +25,32 @@ final class LiveLocationManager: NSObject, LocationManaging {
         set { manager.delegate = newValue }
     }
 
-    var authorizationStatus: CLAuthorizationStatus { manager.authorizationStatus }
-    var monitoredRegions: Set<CLRegion> { manager.monitoredRegions }
+    var authorizationStatus: CLAuthorizationStatus {
+        manager.authorizationStatus
+    }
+
+    var monitoredRegions: Set<CLRegion> {
+        manager.monitoredRegions
+    }
 
     override init() {
-        self.manager = CLLocationManager()
+        manager = CLLocationManager()
         super.init()
     }
 
-    func requestWhenInUseAuthorization() { manager.requestWhenInUseAuthorization() }
-    func requestAlwaysAuthorization() { manager.requestAlwaysAuthorization() }
-    func startMonitoring(for region: CLRegion) { manager.startMonitoring(for: region) }
-    func stopMonitoring(for region: CLRegion) { manager.stopMonitoring(for: region) }
+    func requestWhenInUseAuthorization() {
+        manager.requestWhenInUseAuthorization()
+    }
+
+    func requestAlwaysAuthorization() {
+        manager.requestAlwaysAuthorization()
+    }
+
+    func startMonitoring(for region: CLRegion) {
+        manager.startMonitoring(for: region)
+    }
+
+    func stopMonitoring(for region: CLRegion) {
+        manager.stopMonitoring(for: region)
+    }
 }

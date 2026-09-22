@@ -17,7 +17,9 @@ final class SummarizeWeekToolTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        events = nil; tasks = nil; container = nil
+        events = nil
+        tasks = nil
+        container = nil
         try await super.tearDown()
     }
 

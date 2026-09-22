@@ -26,8 +26,8 @@ struct StreaksBlock: View {
                 .font(font.font(at: 20, weight: .bold))
                 .foregroundStyle(theme.ink)
                 .modifier(WavyUnderline(color: theme.ink.opacity(0.25),
-                                         amplitude: 1,
-                                         wavelength: 6))
+                                        amplitude: 1,
+                                        wavelength: 6))
                 .padding(.bottom, 8)
 
             ForEach(streaks, id: \.id) { streak in
@@ -42,8 +42,8 @@ struct StreaksBlock: View {
                             ForEach(0 ..< 7, id: \.self) { idx in
                                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                                     .fill(streak.last7Days.indices.contains(idx) && streak.last7Days[idx]
-                                          ? theme.greenInk
-                                          : Color.black.opacity(0.08))
+                                        ? theme.greenInk
+                                        : Color.black.opacity(0.08))
                                     .frame(height: 5)
                             }
                         }

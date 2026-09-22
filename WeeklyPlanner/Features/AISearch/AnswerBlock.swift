@@ -100,7 +100,9 @@ struct AnswerBlock: View {
                 s = String(trimmed)
             }
             // Strip leading markdown header markers ("#", "##", ...).
-            while s.hasPrefix("#") { s.removeFirst() }
+            while s.hasPrefix("#") {
+                s.removeFirst()
+            }
             return s.trimmingCharacters(in: CharacterSet(charactersIn: " "))
         }
         return lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)

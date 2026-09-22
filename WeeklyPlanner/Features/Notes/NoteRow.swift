@@ -24,10 +24,8 @@ struct NoteRow: View {
                             .foregroundStyle(theme.redInk)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 1)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .strokeBorder(theme.redInk.opacity(0.5), lineWidth: 0.5)
-                            )
+                            .overlay(RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(theme.redInk.opacity(0.5), lineWidth: 0.5))
                     }
                 }
                 if !note.body.isEmpty {

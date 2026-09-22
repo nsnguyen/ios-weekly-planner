@@ -197,10 +197,18 @@ final class EventDetailViewModel {
             // rows reflect what's on disk.
             if let event {
                 alertOn = event.reminders.contains {
-                    if case .timeBefore = $0 { true } else { false }
+                    if case .timeBefore = $0 {
+                        true
+                    } else {
+                        false
+                    }
                 }
                 locationAlertOn = event.reminders.contains {
-                    if case .onArrive = $0 { true } else { false }
+                    if case .onArrive = $0 {
+                        true
+                    } else {
+                        false
+                    }
                 }
             }
             self.composer = nil
@@ -255,15 +263,27 @@ final class EventDetailViewModel {
 /// caller in the app already uses `if case` directly.
 private extension Reminder {
     var isTimeBefore: Bool {
-        if case .timeBefore = self { true } else { false }
+        if case .timeBefore = self {
+            true
+        } else {
+            false
+        }
     }
 
     var timeBeforeMinutes: Int? {
-        if case let .timeBefore(minutes) = self { minutes } else { nil }
+        if case let .timeBefore(minutes) = self {
+            minutes
+        } else {
+            nil
+        }
     }
 
     var isOnArrive: Bool {
-        if case .onArrive = self { true } else { false }
+        if case .onArrive = self {
+            true
+        } else {
+            false
+        }
     }
 }
 

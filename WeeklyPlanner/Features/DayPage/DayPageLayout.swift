@@ -32,7 +32,8 @@ enum DayPageLayout {
     /// degenerate (zero) layer size.
     static func stackedAnnotationUnit(contentBottom: CGFloat,
                                       annotationBottoms: [CGFloat],
-                                      layerSize: CGSize) -> CGPoint {
+                                      layerSize: CGSize) -> CGPoint
+    {
         let anchor = max(contentBottom, annotationBottoms.max() ?? 0)
         let y = min(anchor + stackSpacing, layerSize.height - bottomHeadroom)
         return Annotation.clampUnit(CGPoint(x: pageMargin / layerSize.width,
@@ -48,7 +49,8 @@ enum DayPageLayout {
     /// mirroring `stackedAnnotationUnit`.
     static func verticalDragUnit(currentUnitY: Double,
                                  translationHeight: CGFloat,
-                                 layerSize: CGSize) -> CGPoint {
+                                 layerSize: CGSize) -> CGPoint
+    {
         Annotation.clampUnit(CGPoint(x: pageMargin / layerSize.width,
                                      y: CGFloat(currentUnitY) + translationHeight / layerSize.height))
     }
@@ -69,7 +71,8 @@ enum DayPageLayout {
     /// degenerate layer). Pure: plain values in, placements out.
     static func compactedStack(notes: [(id: UUID, unitY: Double, height: CGFloat)],
                                contentBottom: CGFloat,
-                               layerSize: CGSize) -> [AnnotationPlacement] {
+                               layerSize: CGSize) -> [AnnotationPlacement]
+    {
         guard layerSize.width > 0, layerSize.height > 0 else { return [] }
         let ordered = notes.sorted { $0.unitY < $1.unitY }
         var placements: [AnnotationPlacement] = []

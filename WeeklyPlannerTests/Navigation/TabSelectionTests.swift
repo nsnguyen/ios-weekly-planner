@@ -15,11 +15,12 @@ final class TabSelectionTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        settingsStore = nil; container = nil
+        settingsStore = nil
+        container = nil
         try await super.tearDown()
     }
 
-    func testDefaultTabIsCalendar() throws {
+    func testDefaultTabIsCalendar() {
         let selection = TabSelection(settings: settingsStore)
         XCTAssertEqual(selection.current, .calendar)
     }

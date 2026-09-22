@@ -15,5 +15,7 @@ struct GoogleAuthConfig {
         return GoogleAuthConfig(clientID: raw?.trimmingCharacters(in: .whitespaces) ?? "")
     }
 
-    var isConfigured: Bool { !clientID.isEmpty }
+    var isConfigured: Bool {
+        !clientID.isEmpty
+    }
 }

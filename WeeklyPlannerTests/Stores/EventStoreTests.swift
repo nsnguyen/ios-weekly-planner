@@ -103,7 +103,7 @@ final class EventStoreTests: XCTestCase {
                              googleEtag: "\"old\"")
         try await store.upsert(original)
 
-        let updatedAt = Date(timeIntervalSince1970: 2_345)
+        let updatedAt = Date(timeIntervalSince1970: 2345)
         let imported = Event(id: importedID,
                              title: "Imported update",
                              start: Self.may16_2026(hour: 11),

@@ -12,8 +12,8 @@ final class SummarizeWeekTool: PlannerTool {
     }
 
     func run(weekOffset: Int, today: Date) async throws -> ToolWeekSummary {
-        let weekEvents = (try? await events.events(forWeekOffset: weekOffset, today: today)) ?? []
-        let weekTasks = (try? await tasks.tasks(forWeekOffset: weekOffset, today: today)) ?? []
+        let weekEvents = await (try? events.events(forWeekOffset: weekOffset, today: today)) ?? []
+        let weekTasks = await (try? tasks.tasks(forWeekOffset: weekOffset, today: today)) ?? []
 
         var hoursByCategory: [String: Double] = [:]
         for event in weekEvents {
@@ -29,11 +29,9 @@ final class SummarizeWeekTool: PlannerTool {
             .prefix(3)
             .map(\.id)
 
-        return ToolWeekSummary(
-            hoursByCategory: hoursByCategory,
-            tasksDone: done,
-            tasksOpen: open,
-            highlightEventIDs: Array(highlights)
-        )
+        return ToolWeekSummary(hoursByCategory: hoursByCategory,
+                               tasksDone: done,
+                               tasksOpen: open,
+                               highlightEventIDs: Array(highlights))
     }
 }

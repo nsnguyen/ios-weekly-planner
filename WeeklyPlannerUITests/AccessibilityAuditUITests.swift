@@ -24,12 +24,18 @@ final class AccessibilityAuditUITests: XCTestCase {
         // Day page is the default landing tab — no navigation needed.
         try app.performAccessibilityAudit { issue in
             // ink2 secondary text is intentionally below WCAG contrast — paper aesthetic.
-            if issue.auditType == .contrast { return true }
+            if issue.auditType == .contrast {
+                return true
+            }
             // Custom font sizes via DynamicTypeLayout — paper aesthetic; not system Dynamic Type.
-            if issue.auditType == .dynamicType { return true }
+            if issue.auditType == .dynamicType {
+                return true
+            }
             // FontCard uses lineLimit(1)+truncationMode(.tail); the parent Button carries the
             // full accessibilityLabel so VoiceOver users get the complete name.
-            if issue.auditType == .textClipped { return true }
+            if issue.auditType == .textClipped {
+                return true
+            }
             return false
         }
     }
@@ -43,12 +49,18 @@ final class AccessibilityAuditUITests: XCTestCase {
         // visible without navigation.
         try app.performAccessibilityAudit { issue in
             // ink2 secondary text is intentionally below WCAG contrast — paper aesthetic.
-            if issue.auditType == .contrast { return true }
+            if issue.auditType == .contrast {
+                return true
+            }
             // Custom font sizes via DynamicTypeLayout — paper aesthetic; not system Dynamic Type.
-            if issue.auditType == .dynamicType { return true }
+            if issue.auditType == .dynamicType {
+                return true
+            }
             // FontCard uses lineLimit(1)+truncationMode(.tail); the parent Button carries the
             // full accessibilityLabel so VoiceOver users get the complete name.
-            if issue.auditType == .textClipped { return true }
+            if issue.auditType == .textClipped {
+                return true
+            }
             return false
         }
     }
@@ -68,12 +80,18 @@ final class AccessibilityAuditUITests: XCTestCase {
         }
         try app.performAccessibilityAudit { issue in
             // ink2 secondary text is intentionally below WCAG contrast — paper aesthetic.
-            if issue.auditType == .contrast { return true }
+            if issue.auditType == .contrast {
+                return true
+            }
             // Custom font sizes via DynamicTypeLayout — paper aesthetic; not system Dynamic Type.
-            if issue.auditType == .dynamicType { return true }
+            if issue.auditType == .dynamicType {
+                return true
+            }
             // FontCard uses lineLimit(1)+truncationMode(.tail); the parent Button carries the
             // full accessibilityLabel so VoiceOver users get the complete name.
-            if issue.auditType == .textClipped { return true }
+            if issue.auditType == .textClipped {
+                return true
+            }
             return false
         }
     }
@@ -90,12 +108,18 @@ final class AccessibilityAuditUITests: XCTestCase {
         }
         try app.performAccessibilityAudit { issue in
             // ink2 secondary text is intentionally below WCAG contrast — paper aesthetic.
-            if issue.auditType == .contrast { return true }
+            if issue.auditType == .contrast {
+                return true
+            }
             // Custom font sizes via DynamicTypeLayout — paper aesthetic; not system Dynamic Type.
-            if issue.auditType == .dynamicType { return true }
+            if issue.auditType == .dynamicType {
+                return true
+            }
             // FontCard uses lineLimit(1)+truncationMode(.tail); the parent Button carries the
             // full accessibilityLabel so VoiceOver users get the complete name.
-            if issue.auditType == .textClipped { return true }
+            if issue.auditType == .textClipped {
+                return true
+            }
             return false
         }
     }
@@ -112,12 +136,18 @@ final class AccessibilityAuditUITests: XCTestCase {
         }
         try app.performAccessibilityAudit { issue in
             // ink2 secondary text is intentionally below WCAG contrast — paper aesthetic.
-            if issue.auditType == .contrast { return true }
+            if issue.auditType == .contrast {
+                return true
+            }
             // Custom font sizes via DynamicTypeLayout — paper aesthetic; not system Dynamic Type.
-            if issue.auditType == .dynamicType { return true }
+            if issue.auditType == .dynamicType {
+                return true
+            }
             // FontCard uses lineLimit(1)+truncationMode(.tail); the parent Button carries the
             // full accessibilityLabel so VoiceOver users get the complete name.
-            if issue.auditType == .textClipped { return true }
+            if issue.auditType == .textClipped {
+                return true
+            }
             return false
         }
     }
@@ -127,21 +157,26 @@ final class AccessibilityAuditUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         // Tap the first event row found by identifier prefix.
-        let firstEvent = app.buttons.matching(
-            NSPredicate(format: "identifier BEGINSWITH 'daypage.event.row.'")
-        ).firstMatch
+        let firstEvent = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'daypage.event.row.'"))
+            .firstMatch
         guard firstEvent.waitForExistence(timeout: 2) else {
             throw XCTSkip("No event rows present in seed data — audit skipped")
         }
         firstEvent.tap()
         try app.performAccessibilityAudit { issue in
             // ink2 secondary text is intentionally below WCAG contrast — paper aesthetic.
-            if issue.auditType == .contrast { return true }
+            if issue.auditType == .contrast {
+                return true
+            }
             // Custom font sizes via DynamicTypeLayout — paper aesthetic; not system Dynamic Type.
-            if issue.auditType == .dynamicType { return true }
+            if issue.auditType == .dynamicType {
+                return true
+            }
             // FontCard uses lineLimit(1)+truncationMode(.tail); the parent Button carries the
             // full accessibilityLabel so VoiceOver users get the complete name.
-            if issue.auditType == .textClipped { return true }
+            if issue.auditType == .textClipped {
+                return true
+            }
             return false
         }
     }

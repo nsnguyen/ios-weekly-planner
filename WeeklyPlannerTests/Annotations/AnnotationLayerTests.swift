@@ -47,7 +47,7 @@ final class AnnotationLayerTests: XCTestCase {
                          clock: { Self.may16_2026() })
     }
 
-    func testAddAnnotationLandsOnRightDayKeyAndClamps() async throws {
+    func testAddAnnotationLandsOnRightDayKeyAndClamps() async {
         let vm = makeViewModel(weekOffset: 0, dayIdx: 5)
         let created = await vm.addAnnotation(atUnit: CGPoint(x: 1.4, y: -0.2))
 
@@ -62,8 +62,8 @@ final class AnnotationLayerTests: XCTestCase {
     }
 
     func testRefreshLoadsExistingAnnotationsForDay() async throws {
-        try await annotationStore.upsert(
-            Annotation(dayKey: "0:5", text: "seeded", colorToken: .blue, isBold: false, unitX: 0.4, unitY: 0.4))
+        try await annotationStore.upsert(Annotation(dayKey: "0:5", text: "seeded", colorToken: .blue, isBold: false,
+                                                    unitX: 0.4, unitY: 0.4))
         let vm = makeViewModel()
         await vm.refresh()
         XCTAssertEqual(vm.annotations.map(\.text), ["seeded"])
@@ -116,10 +116,8 @@ final class AnnotationLayerTests: XCTestCase {
     }
 
     func testCompactNotesPacksGapBelowContent() async throws {
-        try await annotationStore.upsert(
-            Annotation(dayKey: "0:5", text: "a", unitX: 0.1, unitY: 0.3))
-        try await annotationStore.upsert(
-            Annotation(dayKey: "0:5", text: "b", unitX: 0.1, unitY: 0.6))
+        try await annotationStore.upsert(Annotation(dayKey: "0:5", text: "a", unitX: 0.1, unitY: 0.3))
+        try await annotationStore.upsert(Annotation(dayKey: "0:5", text: "b", unitX: 0.1, unitY: 0.6))
         let vm = makeViewModel()
         await vm.refresh()
         let heights = Dictionary(uniqueKeysWithValues: vm.annotations.map { ($0.id, CGFloat(20)) })
@@ -134,8 +132,7 @@ final class AnnotationLayerTests: XCTestCase {
     }
 
     func testCompactNotesDefersWhileEditing() async throws {
-        try await annotationStore.upsert(
-            Annotation(dayKey: "0:5", text: "a", unitX: 0.1, unitY: 0.3))
+        try await annotationStore.upsert(Annotation(dayKey: "0:5", text: "a", unitX: 0.1, unitY: 0.3))
         let vm = makeViewModel()
         await vm.refresh()
         let id = vm.annotations[0].id
@@ -148,7 +145,7 @@ final class AnnotationLayerTests: XCTestCase {
         XCTAssertEqual(vm.annotations[0].unitY, before, accuracy: 0.0001) // deferred: unchanged
     }
 
-    func testRequestCompactionBumpsToken() async throws {
+    func testRequestCompactionBumpsToken() {
         let vm = makeViewModel()
         let before = vm.compactionRequest
         vm.requestCompaction()

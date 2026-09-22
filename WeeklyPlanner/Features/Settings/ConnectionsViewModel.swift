@@ -54,16 +54,15 @@ final class ConnectionsViewModel {
     private let auth: any GoogleAuthService
     private let gcalPurger: (any GCalPurging)?
 
-    init(
-        settingsStore: any SettingsStoring,
-        inboxStore: any InboxStoring,
-        auth: any GoogleAuthService,
-        gcalSyncEngine: (any GCalPurging)? = nil
-    ) {
+    init(settingsStore: any SettingsStoring,
+         inboxStore: any InboxStoring,
+         auth: any GoogleAuthService,
+         gcalSyncEngine: (any GCalPurging)? = nil)
+    {
         self.settingsStore = settingsStore
         self.inboxStore = inboxStore
         self.auth = auth
-        self.gcalPurger = gcalSyncEngine
+        gcalPurger = gcalSyncEngine
         refreshFromSettings()
     }
 
@@ -144,7 +143,9 @@ final class ConnectionsViewModel {
         refreshFromSettings()
     }
 
-    func dismissAlert() { alert = nil }
+    func dismissAlert() {
+        alert = nil
+    }
 }
 
 // MARK: - GCalSyncEngine conformance
@@ -159,15 +160,11 @@ struct ConnectionsAlert: Equatable {
     let title: String
     let message: String
 
-    static let connectFailed = ConnectionsAlert(
-        title: "Couldn't connect Gmail",
-        message: "Check your network and try again."
-    )
+    static let connectFailed = ConnectionsAlert(title: "Couldn't connect Gmail",
+                                                message: "Check your network and try again.")
 
-    static let notConfigured = ConnectionsAlert(
-        title: "Gmail isn't configured",
-        message: "Add your Google OAuth client ID to Secrets.xcconfig and rebuild. See README."
-    )
+    static let notConfigured = ConnectionsAlert(title: "Gmail isn't configured",
+                                                message: "Add your Google OAuth client ID to Secrets.xcconfig and rebuild. See README.")
 }
 
 // MARK: - Notification.Name

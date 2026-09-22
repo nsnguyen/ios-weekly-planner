@@ -15,14 +15,15 @@ final class LastInteractionToolTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        store = nil; container = nil
+        store = nil
+        container = nil
         try await super.tearDown()
     }
 
     func testReturnsMostRecentMatchBeforeToday() async throws {
         let today = Self.may16_2026(hour: 12)
-        let saraOld = Self.may16_2026(hour: 9).addingTimeInterval(-14 * 86_400)
-        let saraNew = Self.may16_2026(hour: 9).addingTimeInterval(-2 * 86_400)
+        let saraOld = Self.may16_2026(hour: 9).addingTimeInterval(-14 * 86400)
+        let saraNew = Self.may16_2026(hour: 9).addingTimeInterval(-2 * 86400)
         try await store.upsert(Event(title: "Coffee with Sara", start: saraOld,
                                      end: saraOld.addingTimeInterval(1800), category: .personal))
         try await store.upsert(Event(title: "Sara's birthday breakfast", start: saraNew,

@@ -19,7 +19,10 @@ final class ToolRegistryTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        events = nil; tasks = nil; inbox = nil; container = nil
+        events = nil
+        tasks = nil
+        inbox = nil
+        container = nil
         try await super.tearDown()
     }
 
@@ -31,15 +34,13 @@ final class ToolRegistryTests: XCTestCase {
 
     func testToolEventResultRoundTripsThroughCodable() throws {
         let id = UUID()
-        let result = ToolEventResult(
-            id: id,
-            title: "Dentist follow-up",
-            start: Date(timeIntervalSince1970: 1_780_000_000),
-            end: Date(timeIntervalSince1970: 1_780_003_600),
-            location: "4th Street Dental",
-            categoryRaw: "health",
-            sourceRaw: "manual"
-        )
+        let result = ToolEventResult(id: id,
+                                     title: "Dentist follow-up",
+                                     start: Date(timeIntervalSince1970: 1_780_000_000),
+                                     end: Date(timeIntervalSince1970: 1_780_003_600),
+                                     location: "4th Street Dental",
+                                     categoryRaw: "health",
+                                     sourceRaw: "manual")
         let data = try JSONEncoder().encode(result)
         let decoded = try JSONDecoder().decode(ToolEventResult.self, from: data)
         XCTAssertEqual(decoded, result)

@@ -13,7 +13,9 @@ final class QuickTemplateUITests: XCTestCase {
         app.launch()
 
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
 
         let addLink = app.buttons["daypage.events.addRow"]
         XCTAssertTrue(addLink.waitForExistence(timeout: 5))

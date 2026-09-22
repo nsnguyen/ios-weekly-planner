@@ -57,8 +57,8 @@ final class EventComposerState {
     /// `start + 1h`; everything else empty/default.
     static func empty(at date: Date, calendar: Calendar) -> EventComposerState {
         let nextHour = calendar.nextDate(after: date,
-                                          matching: DateComponents(minute: 0, second: 0),
-                                          matchingPolicy: .nextTime) ?? date.addingTimeInterval(3600)
+                                         matching: DateComponents(minute: 0, second: 0),
+                                         matchingPolicy: .nextTime) ?? date.addingTimeInterval(3600)
         return EventComposerState(title: "",
                                   start: nextHour,
                                   end: nextHour.addingTimeInterval(3600),
@@ -97,7 +97,11 @@ final class EventComposerState {
             }
         }
         let locationAlertOn = event.reminders.contains {
-            if case .onArrive = $0 { true } else { false }
+            if case .onArrive = $0 {
+                true
+            } else {
+                false
+            }
         }
         let state = EventComposerState(title: event.title,
                                        start: event.start,
@@ -117,9 +121,13 @@ final class EventComposerState {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    var timesAreValid: Bool { end > start }
+    var timesAreValid: Bool {
+        end > start
+    }
 
-    var canSave: Bool { titleIsValid && timesAreValid }
+    var canSave: Bool {
+        titleIsValid && timesAreValid
+    }
 
     /// Field-by-field comparison against another composer instance held as
     /// a baseline by the caller (typically a snapshot taken at the moment
@@ -141,8 +149,8 @@ final class EventComposerState {
 
     private func reminderKey(_ r: Reminder) -> String {
         switch r {
-        case let .timeBefore(minutes): return "t:\(minutes)"
-        case let .onArrive(loc): return "a:\(loc.name):\(loc.latitude):\(loc.longitude):\(loc.radiusMeters)"
+        case let .timeBefore(minutes): "t:\(minutes)"
+        case let .onArrive(loc): "a:\(loc.name):\(loc.latitude):\(loc.longitude):\(loc.radiusMeters)"
         }
     }
 
@@ -168,8 +176,8 @@ final class EventComposerState {
         // `.timeBefore` alarms are always preserved.
         let filteredPreserved = preservedReminders.filter { reminder in
             switch reminder {
-            case .onArrive: return locationAlertOn
-            case .timeBefore: return true
+            case .onArrive: locationAlertOn
+            case .timeBefore: true
             }
         }
         reminders.append(contentsOf: filteredPreserved)

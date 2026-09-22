@@ -1,7 +1,7 @@
 import CoreLocation
 import Foundation
-import UserNotifications
 import os
+import UserNotifications
 
 /// Manages the iOS-mandated 20-region cap via a priority queue: lower
 /// `proximityInDays` always wins. On every `register(...)` call we:
@@ -56,8 +56,8 @@ final class LocationReminderManager: NSObject, LocationRegistering, CLLocationMa
         }
 
         let circle = CLCircularRegion(center: reminder.coordinate,
-                                       radius: reminder.radiusMeters,
-                                       identifier: identifier)
+                                      radius: reminder.radiusMeters,
+                                      identifier: identifier)
         circle.notifyOnEntry = true
         circle.notifyOnExit = false
 

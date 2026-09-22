@@ -35,8 +35,10 @@ final class AnnotationStoreTests: XCTestCase {
     }
 
     func testAnnotationsAreScopedToTheirDayKey() async throws {
-        try await store.upsert(Annotation(dayKey: "0:5", text: "sat", colorToken: .ink, isBold: false, unitX: 0.5, unitY: 0.5))
-        try await store.upsert(Annotation(dayKey: "0:4", text: "fri", colorToken: .ink, isBold: false, unitX: 0.5, unitY: 0.5))
+        try await store.upsert(Annotation(dayKey: "0:5", text: "sat", colorToken: .ink, isBold: false, unitX: 0.5,
+                                          unitY: 0.5))
+        try await store.upsert(Annotation(dayKey: "0:4", text: "fri", colorToken: .ink, isBold: false, unitX: 0.5,
+                                          unitY: 0.5))
 
         let saturday = try await store.annotations(dayKey: "0:5")
         XCTAssertEqual(saturday.map(\.text), ["sat"])
@@ -44,8 +46,10 @@ final class AnnotationStoreTests: XCTestCase {
 
     func testUpsertExistingUpdatesInPlace() async throws {
         let id = UUID()
-        try await store.upsert(Annotation(id: id, dayKey: "0:5", text: "v1", colorToken: .ink, isBold: false, unitX: 0.5, unitY: 0.5))
-        try await store.upsert(Annotation(id: id, dayKey: "0:5", text: "v2", colorToken: .green, isBold: true, unitX: 0.1, unitY: 0.9))
+        try await store.upsert(Annotation(id: id, dayKey: "0:5", text: "v1", colorToken: .ink, isBold: false,
+                                          unitX: 0.5, unitY: 0.5))
+        try await store.upsert(Annotation(id: id, dayKey: "0:5", text: "v2", colorToken: .green, isBold: true,
+                                          unitX: 0.1, unitY: 0.9))
 
         let count = try container.mainContext.fetch(FetchDescriptor<Annotation>()).count
         XCTAssertEqual(count, 1, "Upsert should update, not insert a second row")
@@ -64,7 +68,8 @@ final class AnnotationStoreTests: XCTestCase {
 
     func testMutationsPostChangeNotification() async throws {
         let exp = expectation(forNotification: .annotationStoreDidChange, object: nil)
-        try await store.upsert(Annotation(dayKey: "0:5", text: "ping", colorToken: .ink, isBold: false, unitX: 0.5, unitY: 0.5))
+        try await store.upsert(Annotation(dayKey: "0:5", text: "ping", colorToken: .ink, isBold: false, unitX: 0.5,
+                                          unitY: 0.5))
         await fulfillment(of: [exp], timeout: 1)
     }
 

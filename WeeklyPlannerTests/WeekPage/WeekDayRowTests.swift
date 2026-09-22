@@ -11,7 +11,10 @@ final class WeekDayRowTests: XCTestCase {
     /// Saturday May 16, 2026 at noon — the standard planner test anchor.
     private static let anchor: Date = {
         var c = DateComponents()
-        c.year = 2026; c.month = 5; c.day = 16; c.hour = 12
+        c.year = 2026
+        c.month = 5
+        c.day = 16
+        c.hour = 12
         return WeekMath.mondayCalendar().date(from: c) ?? Date()
     }()
 
@@ -19,7 +22,7 @@ final class WeekDayRowTests: XCTestCase {
     /// "Event 0"…"Event N-1" so column ordering is assertable.
     private func makeEvents(_ count: Int) -> [Event] {
         let calendar = WeekMath.mondayCalendar()
-        return (0..<count).map { i in
+        return (0 ..< count).map { i in
             let start = calendar.date(byAdding: .hour, value: i, to: Self.anchor) ?? Self.anchor
             let end = calendar.date(byAdding: .hour, value: 1, to: start) ?? start
             return Event(title: "Event \(i)", start: start, end: end, category: .work)
@@ -57,7 +60,7 @@ final class WeekDayRowTests: XCTestCase {
     // MARK: - (25) layout rule: 1–3 events stay single column
 
     func testUpToThreeEventsStaySingleColumn() {
-        for n in 1...3 {
+        for n in 1 ... 3 {
             let layout = WeekDayRowLayout.compute(for: makeEvents(n))
             XCTAssertEqual(layout.leftColumn.count, n, "n=\(n) all in left column")
             XCTAssertTrue(layout.rightColumn.isEmpty, "n=\(n) is single column")

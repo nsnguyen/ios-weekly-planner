@@ -7,6 +7,7 @@ final class WeekPickerViewModelTests: XCTestCase {
         WeekMath.preferredCalendar = WeekMath.mondayCalendar()
         super.tearDown()
     }
+
     /// Reference date used throughout the mock: Saturday, May 16, 2026.
     /// Matches the constant the rest of the test suite uses for week-math.
     private static func may16_2026(hour: Int = 12) -> Date {

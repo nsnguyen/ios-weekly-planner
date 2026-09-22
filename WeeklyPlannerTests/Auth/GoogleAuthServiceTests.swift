@@ -1,5 +1,5 @@
-import XCTest
 import UIKit
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
@@ -15,11 +15,9 @@ final class GoogleAuthServiceTests: XCTestCase {
         keychain = TokenKeychainStore<GoogleAccountInfo>(serviceID: serviceID)
         try keychain.clear()
         fakeClient = FakeGIDSigningClient()
-        sut = LiveGoogleAuthService(
-            config: GoogleAuthConfig(clientID: "test-client-id"),
-            client: fakeClient,
-            keychain: keychain
-        )
+        sut = LiveGoogleAuthService(config: GoogleAuthConfig(clientID: "test-client-id"),
+                                    client: fakeClient,
+                                    keychain: keychain)
     }
 
     override func tearDown() async throws {
@@ -69,18 +67,16 @@ final class GoogleAuthServiceTests: XCTestCase {
     }
 
     func testAccessTokenRefreshesWhenExpiringSoon() async throws {
-        fakeClient.signInResult = .success(.init(
-            email: "sara@gmail.com",
-            accessToken: "old-token",
-            refreshToken: "r",
-            expiresAt: Date(timeIntervalSinceNow: 60) // 1 min from now → triggers refresh
-        ))
-        fakeClient.refreshResult = .success(.init(
-            email: "sara@gmail.com",
-            accessToken: "new-token",
-            refreshToken: "r",
-            expiresAt: Date(timeIntervalSinceNow: 3600)
-        ))
+        fakeClient.signInResult = .success(.init(email: "sara@gmail.com",
+                                                 accessToken: "old-token",
+                                                 refreshToken: "r",
+                                                 expiresAt: Date(timeIntervalSinceNow: 60) // 1 min from now → triggers
+                                                 // refresh
+            ))
+        fakeClient.refreshResult = .success(.init(email: "sara@gmail.com",
+                                                  accessToken: "new-token",
+                                                  refreshToken: "r",
+                                                  expiresAt: Date(timeIntervalSinceNow: 3600)))
         _ = try await sut.signIn(presenting: UIViewController())
 
         let token = try await sut.accessToken()
@@ -91,11 +87,9 @@ final class GoogleAuthServiceTests: XCTestCase {
     }
 
     func testNotConfiguredThrowsWhenClientIDEmpty() async throws {
-        sut = LiveGoogleAuthService(
-            config: GoogleAuthConfig(clientID: ""),
-            client: fakeClient,
-            keychain: keychain
-        )
+        sut = LiveGoogleAuthService(config: GoogleAuthConfig(clientID: ""),
+                                    client: fakeClient,
+                                    keychain: keychain)
 
         do {
             _ = try await sut.signIn(presenting: UIViewController())
@@ -118,12 +112,10 @@ final class GoogleAuthServiceTests: XCTestCase {
 
 @MainActor
 final class FakeGIDSigningClient: GIDSigningClient {
-    var signInResult: Result<GoogleAccountInfo, Error> = .success(.init(
-        email: "sara@gmail.com",
-        accessToken: "stub-access-token",
-        refreshToken: "stub-refresh-token",
-        expiresAt: Date(timeIntervalSinceNow: 3600)
-    ))
+    var signInResult: Result<GoogleAccountInfo, Error> = .success(.init(email: "sara@gmail.com",
+                                                                        accessToken: "stub-access-token",
+                                                                        refreshToken: "stub-refresh-token",
+                                                                        expiresAt: Date(timeIntervalSinceNow: 3600)))
     var refreshResult: Result<GoogleAccountInfo, Error> = .failure(GoogleAuthError.reauthenticationRequired)
 
     private(set) var configureCount = 0
@@ -133,7 +125,9 @@ final class FakeGIDSigningClient: GIDSigningClient {
     private(set) var handleCount = 0
     private(set) var currentSnapshotCount = 0
 
-    func configure(clientID _: String) { configureCount += 1 }
+    func configure(clientID _: String) {
+        configureCount += 1
+    }
 
     func signIn(presenting _: UIViewController, scopes _: [String]) async throws -> GoogleAccountInfo {
         signInCount += 1
@@ -145,7 +139,17 @@ final class FakeGIDSigningClient: GIDSigningClient {
         return try refreshResult.get()
     }
 
-    func handle(url _: URL) -> Bool { handleCount += 1; return true }
-    func signOut() { signOutCount += 1 }
-    func currentSnapshot() -> GoogleAccountInfo? { currentSnapshotCount += 1; return nil }
+    func handle(url _: URL) -> Bool {
+        handleCount += 1
+        return true
+    }
+
+    func signOut() {
+        signOutCount += 1
+    }
+
+    func currentSnapshot() -> GoogleAccountInfo? {
+        currentSnapshotCount += 1
+        return nil
+    }
 }

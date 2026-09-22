@@ -38,7 +38,7 @@ struct PaperSettingsView: View {
                             }
                         }
                         .padding(.leading, 32) // clear the red margin
-                        .padding(.bottom, 92)  // PaperTabBar clearance
+                        .padding(.bottom, 92) // PaperTabBar clearance
                     }
                 }
             }
@@ -50,7 +50,6 @@ struct PaperSettingsView: View {
         }
     }
 
-    @ViewBuilder
     private func sections(for viewModel: SettingsViewModel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             // 1. THEME
@@ -63,10 +62,8 @@ struct PaperSettingsView: View {
 
             // 3. TEXT SIZE
             SectionTitle("Text size")
-            SizeSegmented(selection: Binding(
-                get: { viewModel.sizeKey },
-                set: { viewModel.setSize($0) }
-            ))
+            SizeSegmented(selection: Binding(get: { viewModel.sizeKey },
+                                             set: { viewModel.setSize($0) }))
 
             // 4. CONNECTIONS (Phase 17 replaces this placeholder)
             SectionTitle("Connections", eyebrow: "Sources")
@@ -79,23 +76,20 @@ struct PaperSettingsView: View {
                 PrefRowDivider()
                 PrefRow(label: "Default reminder",
                         value: ReminderOption(minutes: viewModel.defaultReminderMinutes),
-                        options: ReminderOption.allCases) { newValue in
+                        options: ReminderOption.allCases)
+                { newValue in
                     viewModel.setDefaultReminderMinutes(newValue.minutes)
                 }
                 PrefRowDivider()
                 ToggleRow(label: PaperSettingsView.askThePlannerToggleLabel,
                           detail: "On-device only · keeps data private",
-                          isOn: Binding(
-                              get: { viewModel.appleIntelligenceEnabled },
-                              set: { viewModel.setAppleIntelligenceEnabled($0) }
-                          ))
+                          isOn: Binding(get: { viewModel.appleIntelligenceEnabled },
+                                        set: { viewModel.setAppleIntelligenceEnabled($0) }))
                 PrefRowDivider()
                 ToggleRow(label: "AI Sticky Notes",
                           detail: "Smart reminders on each day page",
-                          isOn: Binding(
-                              get: { viewModel.aiStickyNotesEnabled },
-                              set: { viewModel.setAIStickyNotesEnabled($0) }
-                          ))
+                          isOn: Binding(get: { viewModel.aiStickyNotesEnabled },
+                                        set: { viewModel.setAIStickyNotesEnabled($0) }))
             }
 
             AboutFooter()
@@ -150,7 +144,9 @@ struct ReminderOption: Hashable, CaseIterable, CustomStringConvertible {
 
     var description: String {
         guard let minutes else { return "None" }
-        if minutes == 60 { return "1 hr" }
+        if minutes == 60 {
+            return "1 hr"
+        }
         return "\(minutes) min"
     }
 }

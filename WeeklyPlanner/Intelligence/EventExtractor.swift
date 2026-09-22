@@ -5,13 +5,11 @@ import Foundation
 /// (Foundation Models, iOS 26+). Tests + BG-fallback: `StubEventExtractor`.
 @MainActor
 protocol EventExtractor: AnyObject {
-    func extract(
-        subject: String,
-        snippet: String,
-        fromName: String,
-        fromEmail: String,
-        body: String
-    ) async throws -> ExtractedEvent
+    func extract(subject: String,
+                 snippet: String,
+                 fromName: String,
+                 fromEmail: String,
+                 body: String) async throws -> ExtractedEvent
 }
 
 /// Always returns `isEvent: false`. Used by:
@@ -22,21 +20,18 @@ protocol EventExtractor: AnyObject {
 final class StubEventExtractor: EventExtractor {
     nonisolated init() {}
 
-    func extract(
-        subject _: String,
-        snippet _: String,
-        fromName _: String,
-        fromEmail _: String,
-        body _: String
-    ) async throws -> ExtractedEvent {
-        ExtractedEvent(
-            isEvent: false,
-            title: "",
-            startISO: "",
-            endISO: "",
-            location: "",
-            categoryHint: "",
-            confidence: 0
-        )
+    func extract(subject _: String,
+                 snippet _: String,
+                 fromName _: String,
+                 fromEmail _: String,
+                 body _: String) async throws -> ExtractedEvent
+    {
+        ExtractedEvent(isEvent: false,
+                       title: "",
+                       startISO: "",
+                       endISO: "",
+                       location: "",
+                       categoryHint: "",
+                       confidence: 0)
     }
 }

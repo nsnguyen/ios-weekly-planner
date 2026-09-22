@@ -20,7 +20,7 @@ final class SettingsViewModelTests: XCTestCase {
         try await super.tearDown()
     }
 
-    func testDefaultsAfterFreshInstall() throws {
+    func testDefaultsAfterFreshInstall() {
         let vm = SettingsViewModel(store: store)
         XCTAssertEqual(vm.themeKey, .cream)
         XCTAssertEqual(vm.fontKey, .caveat)
@@ -69,7 +69,7 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertNil(try store.current().defaultReminderMinutes)
     }
 
-    func testDefaultWeekStartIsMonday() throws {
+    func testDefaultWeekStartIsMonday() {
         let vm = SettingsViewModel(store: store)
         XCTAssertEqual(vm.weekStart, .monday)
     }

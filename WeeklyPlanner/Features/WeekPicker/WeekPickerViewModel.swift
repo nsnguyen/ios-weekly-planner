@@ -140,10 +140,14 @@ final class WeekPickerViewModel {
     }
 
     /// True when a backward (older) step is possible.
-    var canStepBackward: Bool { displayedMonthIndex > 0 }
+    var canStepBackward: Bool {
+        displayedMonthIndex > 0
+    }
 
     /// True when a forward (newer) step is possible.
-    var canStepForward: Bool { displayedMonthIndex < months.count - 1 }
+    var canStepForward: Bool {
+        displayedMonthIndex < months.count - 1
+    }
 
     /// Step the displayed month by `delta` months (±1 chevrons, ±12 year
     /// steppers), clamped to the built window.

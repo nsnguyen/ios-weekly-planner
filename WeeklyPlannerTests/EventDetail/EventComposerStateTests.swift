@@ -169,16 +169,20 @@ final class EventComposerStateTests: XCTestCase {
         // Round-trip via build() should re-emit both.
         let rebuilt = state.build(id: event.id)
         let minutes = rebuilt.reminders.compactMap { r -> Int? in
-            if case let .timeBefore(m) = r { return m } else { return nil }
+            if case let .timeBefore(m) = r {
+                m
+            } else {
+                nil
+            }
         }.sorted()
         XCTAssertEqual(minutes, [10, 30])
     }
 
     func testFromEvent_onArriveOnly_locationAlertOnAlertOff() {
         let geofence = LocationReminder(name: "HQ",
-                                         latitude: 37.78,
-                                         longitude: -122.41,
-                                         radiusMeters: 100)
+                                        latitude: 37.78,
+                                        longitude: -122.41,
+                                        radiusMeters: 100)
         let event = Event(title: "T",
                           start: Date(),
                           end: Date().addingTimeInterval(3600),
@@ -190,16 +194,20 @@ final class EventComposerStateTests: XCTestCase {
         // Build should preserve the geofence verbatim.
         let rebuilt = state.build(id: event.id)
         let preservedGeofence = rebuilt.reminders.first { r in
-            if case .onArrive = r { return true } else { return false }
+            if case .onArrive = r {
+                true
+            } else {
+                false
+            }
         }
         XCTAssertNotNil(preservedGeofence)
     }
 
     func testBuild_locationAlertOff_dropsPreservedOnArrive() {
         let geofence = LocationReminder(name: "HQ",
-                                         latitude: 37.78,
-                                         longitude: -122.41,
-                                         radiusMeters: 100)
+                                        latitude: 37.78,
+                                        longitude: -122.41,
+                                        radiusMeters: 100)
         let event = Event(title: "T",
                           start: Date(),
                           end: Date().addingTimeInterval(3600),
@@ -209,7 +217,11 @@ final class EventComposerStateTests: XCTestCase {
         state.locationAlertOn = false
         let rebuilt = state.build(id: event.id)
         let hasOnArrive = rebuilt.reminders.contains { r in
-            if case .onArrive = r { return true } else { return false }
+            if case .onArrive = r {
+                true
+            } else {
+                false
+            }
         }
         XCTAssertFalse(hasOnArrive)
     }
@@ -229,14 +241,18 @@ final class EventComposerStateTests: XCTestCase {
         state.alertMinutes = 20
         let event = state.build()
         let minutes = event.reminders.compactMap { r -> Int? in
-            if case let .timeBefore(m) = r { return m } else { return nil }
+            if case let .timeBefore(m) = r {
+                m
+            } else {
+                nil
+            }
         }
         XCTAssertEqual(minutes, [20])
     }
 
     func testIsDirty_detectsEveryEditableField() {
         let baseline = EventComposerState.empty(at: Date(timeIntervalSince1970: 1_780_000_000),
-                                                 calendar: .current)
+                                                calendar: .current)
         baseline.title = "Lunch"
 
         func freshCopy() -> EventComposerState {
@@ -254,28 +270,36 @@ final class EventComposerStateTests: XCTestCase {
 
         XCTAssertFalse(freshCopy().isDirty(against: baseline))
 
-        let titleMut = freshCopy(); titleMut.title = "Dinner"
+        let titleMut = freshCopy()
+        titleMut.title = "Dinner"
         XCTAssertTrue(titleMut.isDirty(against: baseline))
 
-        let startMut = freshCopy(); startMut.start = baseline.start.addingTimeInterval(60)
+        let startMut = freshCopy()
+        startMut.start = baseline.start.addingTimeInterval(60)
         XCTAssertTrue(startMut.isDirty(against: baseline))
 
-        let endMut = freshCopy(); endMut.end = baseline.end.addingTimeInterval(60)
+        let endMut = freshCopy()
+        endMut.end = baseline.end.addingTimeInterval(60)
         XCTAssertTrue(endMut.isDirty(against: baseline))
 
-        let catMut = freshCopy(); catMut.category = .work
+        let catMut = freshCopy()
+        catMut.category = .work
         XCTAssertTrue(catMut.isDirty(against: baseline))
 
-        let locMut = freshCopy(); locMut.location = "HQ"
+        let locMut = freshCopy()
+        locMut.location = "HQ"
         XCTAssertTrue(locMut.isDirty(against: baseline))
 
-        let alertMut = freshCopy(); alertMut.alertOn = true
+        let alertMut = freshCopy()
+        alertMut.alertOn = true
         XCTAssertTrue(alertMut.isDirty(against: baseline))
 
-        let minMut = freshCopy(); minMut.alertMinutes = 30
+        let minMut = freshCopy()
+        minMut.alertMinutes = 30
         XCTAssertTrue(minMut.isDirty(against: baseline))
 
-        let geoMut = freshCopy(); geoMut.locationAlertOn = true
+        let geoMut = freshCopy()
+        geoMut.locationAlertOn = true
         XCTAssertTrue(geoMut.isDirty(against: baseline))
     }
 }

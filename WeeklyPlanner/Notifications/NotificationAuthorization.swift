@@ -1,6 +1,6 @@
 import Foundation
-import UserNotifications
 import os
+import UserNotifications
 
 /// Wraps the alert+sound+badge+timeSensitive opt-in flow. Callers either
 /// observe the current `status()` to gate UI affordances, or fire `request()`

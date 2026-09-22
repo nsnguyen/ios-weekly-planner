@@ -98,7 +98,7 @@ final class ReviewViewModel {
 
         if let summaryGenerator {
             switch await summaryGenerator.generate(weekOffset: weekOffset, today: now) {
-            case .generated(let produced): summaryState = .real(produced)
+            case let .generated(produced): summaryState = .real(produced)
             case .unavailable: summaryState = .aiOff
             case .noContent: summaryState = .hidden
             }

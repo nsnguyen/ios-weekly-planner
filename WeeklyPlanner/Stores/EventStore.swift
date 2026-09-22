@@ -47,14 +47,15 @@ final class SwiftDataEventStore: EventStoring {
 
         // Single events: start-in-window, as before — recurring masters
         // are excluded here and expanded below instead.
-        let singlesDescriptor = FetchDescriptor<Event>(
-            predicate: #Predicate<Event> { $0.start >= start && $0.start < end && !$0.isRecurring },
+        let singlesDescriptor =
+            FetchDescriptor<Event>(predicate: #Predicate<Event> {
+                $0.start >= start && $0.start < end && !$0.isRecurring
+            },
             sortBy: [SortDescriptor(\.start, order: .forward)])
         let singles = try context.fetch(singlesDescriptor)
 
         // Recurring series: expand into this window (transient copies).
-        let recurringDescriptor = FetchDescriptor<Event>(
-            predicate: #Predicate<Event> { $0.isRecurring })
+        let recurringDescriptor = FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.isRecurring })
         let masters = try context.fetch(recurringDescriptor)
         let calendar = WeekMath.preferredCalendar
         let occurrences = masters.flatMap {
@@ -74,7 +75,8 @@ final class SwiftDataEventStore: EventStoring {
         var existing = try context.fetch(FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.id == id })).first
 
         if existing == nil, let googleEventID = event.googleEventID {
-            existing = try context.fetch(FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.googleEventID == googleEventID })).first
+            existing = try context
+                .fetch(FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.googleEventID == googleEventID })).first
         }
 
         if let existing {
@@ -107,10 +109,8 @@ final class SwiftDataEventStore: EventStoring {
     func events(matching query: EventQuery) async throws -> [Event] {
         let start = query.dateRange.lowerBound
         let end = query.dateRange.upperBound
-        let descriptor = FetchDescriptor<Event>(
-            predicate: #Predicate<Event> { $0.start >= start && $0.start <= end },
-            sortBy: [SortDescriptor(\.start, order: .forward)]
-        )
+        let descriptor = FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.start >= start && $0.start <= end },
+                                                sortBy: [SortDescriptor(\.start, order: .forward)])
         let raw = try context.fetch(descriptor)
         return raw.filter { event in
             if let categories = query.categories, !categories.isEmpty {
@@ -130,10 +130,8 @@ final class SwiftDataEventStore: EventStoring {
 
     func events(source: EventSource) async throws -> [Event] {
         let raw = source.rawValue
-        let descriptor = FetchDescriptor<Event>(
-            predicate: #Predicate<Event> { $0.sourceRaw == raw },
-            sortBy: [SortDescriptor(\.start, order: .forward)]
-        )
+        let descriptor = FetchDescriptor<Event>(predicate: #Predicate<Event> { $0.sourceRaw == raw },
+                                                sortBy: [SortDescriptor(\.start, order: .forward)])
         return try context.fetch(descriptor)
     }
 

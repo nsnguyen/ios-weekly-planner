@@ -13,28 +13,28 @@ import SwiftUI
 /// - AI overlay slide: 0.2s easeOut fade (overlay is larger surface)
 extension AnimationTokens {
     static func pageFlip(reduced: Bool) -> Animation {
-        reduced ? .easeInOut(duration: 0.15) : Self.pageFlip
+        reduced ? .easeInOut(duration: 0.15) : pageFlip
     }
 
     static func sheetSlide(reduced: Bool) -> Animation {
-        reduced ? .easeOut(duration: 0.15) : Self.sheetSlide
+        reduced ? .easeOut(duration: 0.15) : sheetSlide
     }
 
     static func stickyPeel(reduced: Bool) -> Animation {
-        reduced ? .linear(duration: 0) : Self.stickyPeel
+        reduced ? .linear(duration: 0) : stickyPeel
     }
 
     static func stickySwipe(reduced: Bool) -> Animation {
-        reduced ? .easeOut(duration: 0.18) : Self.stickySwipe
+        reduced ? .easeOut(duration: 0.18) : stickySwipe
     }
 
     static func pickerDrop(reduced: Bool) -> Animation {
-        reduced ? .easeOut(duration: 0.15) : Self.pickerDrop
+        reduced ? .easeOut(duration: 0.15) : pickerDrop
     }
 
     /// AI overlay uses the same sheet-slide curve in full mode but a
     /// slightly longer fade in reduced mode (overlay is larger surface).
     static func aiOverlaySlide(reduced: Bool) -> Animation {
-        reduced ? .easeOut(duration: 0.20) : Self.sheetSlide
+        reduced ? .easeOut(duration: 0.20) : sheetSlide
     }
 }

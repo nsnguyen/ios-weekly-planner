@@ -15,7 +15,8 @@ final class EventSuggestionGeneratorTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        eventStore = nil; container = nil
+        eventStore = nil
+        container = nil
         try await super.tearDown()
     }
 
@@ -36,7 +37,7 @@ final class EventSuggestionGeneratorTests: XCTestCase {
         XCTAssertTrue(prompt.contains("≤ 140 chars"))
     }
 
-    func testGenerateReturnsTrimmedBodyOnSuccess() async throws {
+    func testGenerateReturnsTrimmedBodyOnSuccess() async {
         let event = Event(title: "Dentist follow-up",
                           start: Date(timeIntervalSince1970: 1_780_000_000),
                           end: Date(timeIntervalSince1970: 1_780_001_800),
@@ -55,7 +56,7 @@ final class EventSuggestionGeneratorTests: XCTestCase {
                           category: .health)
         let service = StubIntelligenceService(eventStore: eventStore)
         let generator = EventSuggestionGenerator(intelligence: service,
-                                                  settings: { false })
+                                                 settings: { false })
         let text = await generator.generate(for: event)
         XCTAssertNil(text)
     }

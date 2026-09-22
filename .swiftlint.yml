@@ -1,3 +1,7 @@
+# CI: swiftlint 0.65.1 --strict --baseline swiftlint_baseline.json
+# The baseline records violations that already existed when the lint gate
+# started running. Regenerate it with the same SwiftLint version after a cleanup:
+#   swiftlint --strict --write-baseline swiftlint_baseline.json
 included:
   - WeeklyPlanner
   - WeeklyPlannerTests

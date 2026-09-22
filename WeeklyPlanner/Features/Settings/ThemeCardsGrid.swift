@@ -37,5 +37,7 @@ private struct StatefulPreviewWrapper<Value, Content: View>: View {
         self.content = content
     }
 
-    var body: some View { content($value) }
+    var body: some View {
+        content($value)
+    }
 }

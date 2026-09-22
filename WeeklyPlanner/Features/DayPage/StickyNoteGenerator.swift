@@ -36,9 +36,8 @@ enum StickyNoteGenerator {
                          in context: ModelContext) -> [AIInsight]
     {
         let key = AIInsight.key(weekOffset: weekOffset, dayIdx: dayIdx)
-        let desc = FetchDescriptor<AIInsight>(
-            predicate: #Predicate { $0.dayKey == key && !$0.dismissed },
-            sortBy: [SortDescriptor(\.priority, order: .forward)])
+        let desc = FetchDescriptor<AIInsight>(predicate: #Predicate { $0.dayKey == key && !$0.dismissed },
+                                              sortBy: [SortDescriptor(\.priority, order: .forward)])
         let rows = (try? context.fetch(desc)) ?? []
         return Array(rows.prefix(StickyOrchestrator.cascadeCap))
     }

@@ -46,8 +46,8 @@ final class Event {
 
     // MARK: Google Calendar provenance (Phase 37)
 
-    var googleEventID: String? = nil
-    var googleEtag: String? = nil
+    var googleEventID: String?
+    var googleEtag: String?
 
     /// Reminders attached to this event. Stored as a JSON-encoded blob by
     /// SwiftData because `Reminder` is a Codable enum with associated values.

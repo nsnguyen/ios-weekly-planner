@@ -1,10 +1,9 @@
-import XCTest
 import UserNotifications
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
 final class EventNotificationSchedulerTests: XCTestCase {
-
     private var center: FakeNotificationCenter!
     private var locations: FakeLocationRegistrar!
     private var scheduler: EventNotificationScheduler!
@@ -16,15 +15,13 @@ final class EventNotificationSchedulerTests: XCTestCase {
     }
 
     func testScheduleTimeReminderProducesCalendarRequest() async throws {
-        let start = Date().addingTimeInterval(7 * 24 * 3600)   // 1 week from now
-        let event = Event(
-            title: "Lunch with Sara",
-            start: start,
-            end: start.addingTimeInterval(3600),
-            location: "Café Bleu",
-            category: .personal,
-            reminders: [.timeBefore(minutes: 15)]
-        )
+        let start = Date().addingTimeInterval(7 * 24 * 3600) // 1 week from now
+        let event = Event(title: "Lunch with Sara",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          location: "Café Bleu",
+                          category: .personal,
+                          reminders: [.timeBefore(minutes: 15)])
 
         try await scheduler.schedule(event: event)
 
@@ -37,17 +34,15 @@ final class EventNotificationSchedulerTests: XCTestCase {
 
     func testScheduleArrivalRegistersRegion() async throws {
         let start = Date().addingTimeInterval(60 * 60 * 24 * 2)
-        let event = Event(
-            title: "Sara's Birthday",
-            start: start,
-            end: start.addingTimeInterval(3600),
-            location: "Trick Dog",
-            category: .personal,
-            reminders: [.onArrive(LocationReminder(name: "Trick Dog",
-                                                  latitude: 37.759,
-                                                  longitude: -122.412,
-                                                  radiusMeters: 150))]
-        )
+        let event = Event(title: "Sara's Birthday",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          location: "Trick Dog",
+                          category: .personal,
+                          reminders: [.onArrive(LocationReminder(name: "Trick Dog",
+                                                                 latitude: 37.759,
+                                                                 longitude: -122.412,
+                                                                 radiusMeters: 150))])
 
         try await scheduler.schedule(event: event)
 
@@ -58,14 +53,12 @@ final class EventNotificationSchedulerTests: XCTestCase {
     }
 
     func testRescheduleClearsOldRequestsByPrefix() async throws {
-        let start = Date().addingTimeInterval(7 * 24 * 3600)   // 1 week from now
-        let event = Event(
-            title: "Lunch",
-            start: start,
-            end: start.addingTimeInterval(3600),
-            category: .personal,
-            reminders: [.timeBefore(minutes: 15)]
-        )
+        let start = Date().addingTimeInterval(7 * 24 * 3600) // 1 week from now
+        let event = Event(title: "Lunch",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          category: .personal,
+                          reminders: [.timeBefore(minutes: 15)])
 
         try await scheduler.schedule(event: event)
         XCTAssertEqual(center.addedRequests.count, 1)
@@ -79,14 +72,12 @@ final class EventNotificationSchedulerTests: XCTestCase {
     }
 
     func testCancelByEventIDRemovesAllRequests() async throws {
-        let start = Date().addingTimeInterval(7 * 24 * 3600)   // 1 week from now
-        let event = Event(
-            title: "Lunch",
-            start: start,
-            end: start.addingTimeInterval(3600),
-            category: .personal,
-            reminders: [.timeBefore(minutes: 15), .timeBefore(minutes: 60)]
-        )
+        let start = Date().addingTimeInterval(7 * 24 * 3600) // 1 week from now
+        let event = Event(title: "Lunch",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          category: .personal,
+                          reminders: [.timeBefore(minutes: 15), .timeBefore(minutes: 60)])
         try await scheduler.schedule(event: event)
         XCTAssertEqual(center.addedRequests.count, 2)
 
@@ -98,13 +89,12 @@ final class EventNotificationSchedulerTests: XCTestCase {
 
     func testPastTimeReminderIsSkipped() async throws {
         // Reminder time would land in the past — scheduler should not add it.
-        let start = Date().addingTimeInterval(60)            // 1 min from now
-        let event = Event(
-            title: "Imminent",
-            start: start,
-            end: start.addingTimeInterval(3600),
-            category: .personal,
-            reminders: [.timeBefore(minutes: 15)]            // -14 min from now
+        let start = Date().addingTimeInterval(60) // 1 min from now
+        let event = Event(title: "Imminent",
+                          start: start,
+                          end: start.addingTimeInterval(3600),
+                          category: .personal,
+                          reminders: [.timeBefore(minutes: 15)] // -14 min from now
         )
         try await scheduler.schedule(event: event)
         XCTAssertTrue(center.addedRequests.isEmpty)

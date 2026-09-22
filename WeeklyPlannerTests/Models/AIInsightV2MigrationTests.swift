@@ -7,9 +7,9 @@ import XCTest
 final class AIInsightV2MigrationTests: XCTestCase {
     func testNewInsight_defaultsToEncouragementKind() {
         let insight = AIInsight(dayKey: "0:5",
-                                 text: "Don't forget Sara's gift!",
-                                 colorHex: "#FFE680",
-                                 tiltDegrees: 4)
+                                text: "Don't forget Sara's gift!",
+                                colorHex: "#FFE680",
+                                tiltDegrees: 4)
         XCTAssertEqual(insight.kindRaw, "encouragement")
         XCTAssertEqual(insight.kind, .encouragement)
         XCTAssertNil(insight.actionURL)
@@ -18,12 +18,12 @@ final class AIInsightV2MigrationTests: XCTestCase {
 
     func testNewInsight_explicitKind_storesAndRoundTripsViaRawValue() {
         let insight = AIInsight(dayKey: "0:5",
-                                 text: "Leave by 9:35 for dentist",
-                                 colorHex: "#FFE680",
-                                 tiltDegrees: 4,
-                                 kind: .travel,
-                                 actionURL: "http://maps.apple.com/?daddr=37.78,-122.41",
-                                 priority: 0)
+                                text: "Leave by 9:35 for dentist",
+                                colorHex: "#FFE680",
+                                tiltDegrees: 4,
+                                kind: .travel,
+                                actionURL: "http://maps.apple.com/?daddr=37.78,-122.41",
+                                priority: 0)
         XCTAssertEqual(insight.kindRaw, "travel")
         XCTAssertEqual(insight.kind, .travel)
         XCTAssertEqual(insight.actionURL, "http://maps.apple.com/?daddr=37.78,-122.41")
@@ -35,9 +35,9 @@ final class AIInsightV2MigrationTests: XCTestCase {
         let context = container.mainContext
 
         let travel = AIInsight(dayKey: "0:5", text: "T", colorHex: "#FFE680",
-                                tiltDegrees: 0, kind: .travel, priority: 0)
+                               tiltDegrees: 0, kind: .travel, priority: 0)
         let weather = AIInsight(dayKey: "0:5", text: "W", colorHex: "#C9F0E0",
-                                 tiltDegrees: 0, kind: .weather, priority: 1)
+                                tiltDegrees: 0, kind: .weather, priority: 1)
         context.insert(travel)
         context.insert(weather)
         try context.save()

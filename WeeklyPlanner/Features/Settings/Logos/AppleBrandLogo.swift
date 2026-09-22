@@ -4,7 +4,7 @@ import SwiftUI
 /// at the theme's ink color. The SF Symbol is permitted for first-party Apple
 /// product references (Apple HIG section "Apple logo").
 struct AppleBrandLogo: View {
-    var size: CGSize = CGSize(width: 18, height: 22)
+    var size: CGSize = .init(width: 18, height: 22)
 
     @Environment(\.paperTheme) private var theme
 

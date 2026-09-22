@@ -13,7 +13,7 @@ import Foundation
 enum DefaultReminderPolicy {
     static func apply(to event: Event, settings: UserSettings) {
         guard let minutes = settings.defaultReminderMinutes else { return }
-        guard event.reminders.contains(where: { $0.isTimeBased }) == false else { return }
+        guard event.reminders.contains(where: \.isTimeBased) == false else { return }
         event.reminders.append(.timeBefore(minutes: minutes))
     }
 }
@@ -23,7 +23,9 @@ extension Reminder {
     /// (as opposed to a location-arrival trigger). Used by
     /// `DefaultReminderPolicy` to avoid stacking duplicate time reminders.
     var isTimeBased: Bool {
-        if case .timeBefore = self { return true }
+        if case .timeBefore = self {
+            return true
+        }
         return false
     }
 }

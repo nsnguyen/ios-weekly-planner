@@ -48,8 +48,8 @@ final class UserSettings {
 
     // MARK: Google Calendar sync (Phase 37)
 
-    var gcalSyncToken: String? = nil
-    var googleCalendarAccountEmail: String? = nil
+    var gcalSyncToken: String?
+    var googleCalendarAccountEmail: String?
 
     // Style
     var styleRaw: String
@@ -144,7 +144,9 @@ extension UserSettings {
 
     var weekStart: WeekStartDay {
         get {
-            if let day = WeekStartDay(rawValue: weekStartRaw) { return day }
+            if let day = WeekStartDay(rawValue: weekStartRaw) {
+                return day
+            }
             return weekStartsOnMonday ? .monday : .sunday
         }
         set { weekStartRaw = newValue.rawValue }

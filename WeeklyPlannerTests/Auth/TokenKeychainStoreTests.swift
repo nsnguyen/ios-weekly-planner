@@ -18,12 +18,10 @@ final class TokenKeychainStoreTests: XCTestCase {
     }
 
     func testSaveAndLoadRoundtrip() throws {
-        let info = GoogleAccountInfo(
-            email: "sara@gmail.com",
-            accessToken: "access-123",
-            refreshToken: "refresh-456",
-            expiresAt: Date(timeIntervalSince1970: 1_700_000_000)
-        )
+        let info = GoogleAccountInfo(email: "sara@gmail.com",
+                                     accessToken: "access-123",
+                                     refreshToken: "refresh-456",
+                                     expiresAt: Date(timeIntervalSince1970: 1_700_000_000))
 
         try store.save(info)
         let loaded = try store.load()

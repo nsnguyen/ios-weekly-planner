@@ -28,7 +28,9 @@ final class FontPickUITests: XCTestCase {
         app.terminate()
         app.launch()
         let settingsAgain = app.buttons["tabbar.tab.settings"]
-        if settingsAgain.waitForExistence(timeout: 5) { settingsAgain.tap() }
+        if settingsAgain.waitForExistence(timeout: 5) {
+            settingsAgain.tap()
+        }
 
         // The card should still exist and remain the selected one. FontCard
         // adds the `.isSelected` trait when active, which XCUIElement exposes

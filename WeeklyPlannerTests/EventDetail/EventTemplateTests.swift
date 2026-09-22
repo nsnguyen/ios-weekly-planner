@@ -8,12 +8,12 @@ final class EventTemplateTests: XCTestCase {
         XCTAssertEqual(Set(EventTemplate.curated.map(\.id)).count, EventTemplate.curated.count)
     }
 
-    func testApplyPrefillsComposerKeepingStartAnchor() {
+    func testApplyPrefillsComposerKeepingStartAnchor() throws {
         let anchor = Date(timeIntervalSince1970: 1_780_000_000)
         let state = EventComposerState.empty(at: anchor, calendar: WeekMath.mondayCalendar())
         let originalStart = state.start
 
-        let gym = EventTemplate.curated.first { $0.id == "gym" }!
+        let gym = try XCTUnwrap(EventTemplate.curated.first { $0.id == "gym" })
         state.apply(gym)
 
         XCTAssertEqual(state.title, "Gym")
@@ -24,10 +24,10 @@ final class EventTemplateTests: XCTestCase {
         XCTAssertEqual(state.alertMinutes, 15)
     }
 
-    func testApplyWithoutAlertTurnsAlertOff() {
+    func testApplyWithoutAlertTurnsAlertOff() throws {
         let state = EventComposerState.empty(at: Date(timeIntervalSince1970: 1_780_000_000),
                                              calendar: WeekMath.mondayCalendar())
-        let lunch = EventTemplate.curated.first { $0.id == "lunch" }!
+        let lunch = try XCTUnwrap(EventTemplate.curated.first { $0.id == "lunch" })
         state.apply(lunch)
 
         XCTAssertEqual(state.title, "Lunch")

@@ -12,6 +12,7 @@ final class MonthGridViewTests: XCTestCase {
         WeekMath.preferredCalendar = WeekMath.mondayCalendar()
         super.tearDown()
     }
+
     /// Reference date used throughout the suite: Saturday, May 16, 2026.
     private static func may16_2026() -> Date {
         var components = DateComponents()

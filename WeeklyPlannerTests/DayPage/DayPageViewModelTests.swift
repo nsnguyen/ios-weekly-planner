@@ -203,19 +203,17 @@ final class DayPageViewModelTests: XCTestCase {
         let taskStore = SwiftDataTaskStore(context: container.mainContext)
         let today = Self.may16_2026(hour: 9)
 
-        let inboxOnly = StickyOrchestrator(
-            generators: [InboxInsightGenerator()],
-            fallback: FixedNilGenerator())
+        let inboxOnly = StickyOrchestrator(generators: [InboxInsightGenerator()],
+                                           fallback: FixedNilGenerator())
         // Use the real `InboxSuggestion` initializer — the brief's
         // condensed shape doesn't exist on the model.
-        let suggestion = InboxSuggestion(
-            gmailMessageID: "test-msg-1",
-            proposedStart: today,
-            title: "T",
-            fromName: "X",
-            fromEmail: "x@y.com",
-            category: .work,
-            subject: "Test")
+        let suggestion = InboxSuggestion(gmailMessageID: "test-msg-1",
+                                         proposedStart: today,
+                                         title: "T",
+                                         fromName: "X",
+                                         fromEmail: "x@y.com",
+                                         category: .work,
+                                         subject: "Test")
         try await inboxStore.upsert(suggestion)
 
         let days = WeekMath.weekDays(forOffset: 0, today: today)
@@ -251,17 +249,15 @@ final class DayPageViewModelTests: XCTestCase {
 
         // InboxInsightGenerator WOULD emit an insight for a pending
         // suggestion, so a persisted row proves the cascade ran.
-        let inboxOnly = StickyOrchestrator(
-            generators: [InboxInsightGenerator()],
-            fallback: FixedNilGenerator())
-        let suggestion = InboxSuggestion(
-            gmailMessageID: "test-msg-off",
-            proposedStart: today,
-            title: "T",
-            fromName: "X",
-            fromEmail: "x@y.com",
-            category: .work,
-            subject: "Test")
+        let inboxOnly = StickyOrchestrator(generators: [InboxInsightGenerator()],
+                                           fallback: FixedNilGenerator())
+        let suggestion = InboxSuggestion(gmailMessageID: "test-msg-off",
+                                         proposedStart: today,
+                                         title: "T",
+                                         fromName: "X",
+                                         fromEmail: "x@y.com",
+                                         category: .work,
+                                         subject: "Test")
         try await inboxStore.upsert(suggestion)
 
         let days = WeekMath.weekDays(forOffset: 0, today: today)
@@ -295,17 +291,15 @@ final class DayPageViewModelTests: XCTestCase {
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         try settingsStore.update { $0.aiStickyNotesEnabled = true }
 
-        let inboxOnly = StickyOrchestrator(
-            generators: [InboxInsightGenerator()],
-            fallback: FixedNilGenerator())
-        let suggestion = InboxSuggestion(
-            gmailMessageID: "test-msg-on",
-            proposedStart: today,
-            title: "T",
-            fromName: "X",
-            fromEmail: "x@y.com",
-            category: .work,
-            subject: "Test")
+        let inboxOnly = StickyOrchestrator(generators: [InboxInsightGenerator()],
+                                           fallback: FixedNilGenerator())
+        let suggestion = InboxSuggestion(gmailMessageID: "test-msg-on",
+                                         proposedStart: today,
+                                         title: "T",
+                                         fromName: "X",
+                                         fromEmail: "x@y.com",
+                                         category: .work,
+                                         subject: "Test")
         try await inboxStore.upsert(suggestion)
 
         let days = WeekMath.weekDays(forOffset: 0, today: today)
@@ -330,11 +324,11 @@ final class DayPageViewModelTests: XCTestCase {
         let container = try SwiftDataStack.inMemoryContainer()
         let today = Self.may16_2026()
         let stored = AIInsight(dayKey: AIInsight.key(weekOffset: 0, dayIdx: 5),
-                                text: "Hi",
-                                colorHex: "#FFE680",
-                                tiltDegrees: 0,
-                                kind: .keyword,
-                                priority: 2)
+                               text: "Hi",
+                               colorHex: "#FFE680",
+                               tiltDegrees: 0,
+                               kind: .keyword,
+                               priority: 2)
         container.mainContext.insert(stored)
         try container.mainContext.save()
 
@@ -362,5 +356,7 @@ final class DayPageViewModelTests: XCTestCase {
 @MainActor
 private final class FixedNilGenerator: InsightGenerator {
     let kind: InsightKind = .encouragement
-    func generate(for _: DayContext) async -> AIInsight? { nil }
+    func generate(for _: DayContext) async -> AIInsight? {
+        nil
+    }
 }

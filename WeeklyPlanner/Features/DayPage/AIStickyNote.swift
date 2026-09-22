@@ -94,10 +94,8 @@ struct AIStickyNote: View {
                 folded = true
             }
         }
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .onEnded { _ in onLongPress?() }
-        )
+        .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
+            .onEnded { _ in onLongPress?() })
         .accessibilityLabel("AI insight: \(insight.text)")
         .accessibilityHint("Double tap to fold or expand")
         .accessibilityAddTraits(.isButton)
