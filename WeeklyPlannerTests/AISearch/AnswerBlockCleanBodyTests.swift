@@ -1,6 +1,7 @@
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class AnswerBlockCleanBodyTests: XCTestCase {
     func testStripsBoldAsterisks() {
         XCTAssertEqual(AnswerBlock.cleanBody("Friday afternoon: **meeting at 4 PM**."),
