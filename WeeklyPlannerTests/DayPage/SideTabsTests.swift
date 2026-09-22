@@ -3,6 +3,7 @@ import UIKit
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class SideTabsTests: XCTestCase {
     func testPastelColorsMatchSpec() {
         XCTAssertEqual(SideTab.pastel(forIdx: 0).rgbaBytes, RGBA(0xE8, 0xD9, 0xB7))

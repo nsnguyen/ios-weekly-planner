@@ -2,6 +2,7 @@ import SwiftUI
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class TornEdgeShapeTests: XCTestCase {
     func testPathTileWidthHeightConstants() {
         XCTAssertEqual(TornEdgeShape.tileWidth, 40)

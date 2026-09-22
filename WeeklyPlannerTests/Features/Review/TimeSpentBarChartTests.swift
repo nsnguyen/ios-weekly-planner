@@ -1,6 +1,7 @@
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class TimeSpentBarChartTests: XCTestCase {
     func testRowsFromEmptyDictionaryIsEmpty() {
         XCTAssertTrue(TimeSpentBarChart.rows(from: [:]).isEmpty)

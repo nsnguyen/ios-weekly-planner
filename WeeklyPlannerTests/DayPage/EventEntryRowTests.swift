@@ -5,6 +5,7 @@ import XCTest
 /// Time-formatting rules for `EventEntryRow.timeLabel(for:)`. Layout/visual
 /// behavior is exercised via SwiftUI previews and snapshot tests in later
 /// groups; this suite isolates the pure string logic.
+@MainActor
 final class EventEntryRowTests: XCTestCase {
     // MARK: - Hour-only formatting (minute == 0)
 

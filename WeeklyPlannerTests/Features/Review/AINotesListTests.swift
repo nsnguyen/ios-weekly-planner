@@ -1,6 +1,7 @@
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class AINotesListTests: XCTestCase {
     func testInkResolvesToThemeColorMapping() {
         XCTAssertEqual(AINotesList.inkKey(.dark), "ink")

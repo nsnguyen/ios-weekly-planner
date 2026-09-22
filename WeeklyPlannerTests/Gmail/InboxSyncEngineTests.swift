@@ -71,9 +71,9 @@ final class InboxSyncEngineTests: XCTestCase {
                                                   eventStore: inMemoryEvents,
                                                   settingsStore: settingsStore)
         try await storeWithEvents.upsert(makeSuggestion(id: "m1"))
-        let id = try try await XCTUnwrap(storeWithEvents.pending(forWeekOffset: 0,
-                                                                 today: Date(timeIntervalSince1970: 1_700_000_000))
-                .first?.id)
+        let pending = try await storeWithEvents.pending(forWeekOffset: 0,
+                                                        today: Date(timeIntervalSince1970: 1_700_000_000))
+        let id = try XCTUnwrap(pending.first?.id)
 
         try await storeWithEvents.accept(id: id)
 
@@ -83,9 +83,9 @@ final class InboxSyncEngineTests: XCTestCase {
 
     func testDismissPreventsResuggestionOnNextSync() async throws {
         try await inboxStore.upsert(makeSuggestion(id: "m1"))
-        let id = try try await XCTUnwrap(inboxStore.pending(forWeekOffset: 0,
-                                                            today: Date(timeIntervalSince1970: 1_700_000_000)).first?
-                .id)
+        let pending = try await inboxStore.pending(forWeekOffset: 0,
+                                                   today: Date(timeIntervalSince1970: 1_700_000_000))
+        let id = try XCTUnwrap(pending.first?.id)
         try await inboxStore.dismiss(id: id)
 
         fakeClient.listResponse = [GmailMessageStub(id: "m1", threadId: nil)]
