@@ -35,6 +35,9 @@ struct AppShell: View {
     @State private var paperView: PaperView = .day
     @State private var isPickerOpen: Bool = false
     @State private var isAISearchOpen: Bool = false
+    /// Bumped when week-start changes so week-anchored views rebuild against
+    /// the new `WeekMath.preferredCalendar`.
+    @State private var weekLayoutEpoch = 0
 
     /// Phase 24 — constructed once at `init` so the orchestrator's per-day
     /// TTL cache survives view re-renders. Computing a fresh orchestrator
@@ -55,6 +58,14 @@ struct AppShell: View {
     /// because `SwiftDataSettingsStore.current()` lazy-creates exactly one
     /// `UserSettings` instance.
     private var settings: UserSettings { settingsRows.first ?? UserSettings() }
+
+    /// Re-seed the process-wide week calendar and rebuild week-anchored UI.
+    /// A week-start change is rare; a full rebuild is the correct cost.
+    private func applyWeekStartPreference() {
+        let day = settingsRows.first?.weekStart ?? .monday
+        WeekMath.preferredCalendar = WeekMath.calendar(startingOn: day)
+        weekLayoutEpoch += 1
+    }
 
     private var resolvedTheme: PaperTheme { settings.paperTheme.theme }
     private var resolvedFont: PaperFont { settings.paperFont }
@@ -78,6 +89,7 @@ struct AppShell: View {
                 switch selection.current {
                 case .calendar:
                     calendarTab
+                        .id(weekLayoutEpoch)
                 case .review:
                     PaperReviewView(weekOffset: controller.current.week)
                 case .notes:
@@ -96,6 +108,7 @@ struct AppShell: View {
                 controller.setWeek(offset)
                 isPickerOpen = false
             }
+            .id(weekLayoutEpoch)
 
             if isAISearchOpen {
                 PaperAISearchView(isOpen: $isAISearchOpen,
@@ -120,6 +133,9 @@ struct AppShell: View {
             Task { @MainActor in
                 await engine?.sync()
             }
+        }
+        .onChange(of: settingsRows.first?.weekStartRaw) { _, _ in
+            applyWeekStartPreference()
         }
         .onChange(of: deepLinkRouter.pending) { _, new in
             guard new != nil else { return }

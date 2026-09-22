@@ -48,6 +48,10 @@ struct WeeklyPlannerApp: App {
         let noteStore = SwiftDataNoteStore(context: container.mainContext)
         let annotationStore = SwiftDataAnnotationStore(context: container.mainContext)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
+        // Phase 36b: week-start preference must be live before AppShell's
+        // first WeekMath call.
+        let storedWeekStart = (try? settingsStore.current().weekStart) ?? .monday
+        WeekMath.preferredCalendar = WeekMath.calendar(startingOn: storedWeekStart)
         let googleAuthService = LiveGoogleAuthService(
             config: .fromBundle(),
             client: RealGIDSigningClient(),
