@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 /// Thin protocol seam over `UNUserNotificationCenter` so the schedulers can
 /// be unit-tested without touching the system service.
