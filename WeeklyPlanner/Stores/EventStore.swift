@@ -56,7 +56,7 @@ final class SwiftDataEventStore: EventStoring {
         let recurringDescriptor = FetchDescriptor<Event>(
             predicate: #Predicate<Event> { $0.isRecurring })
         let masters = try context.fetch(recurringDescriptor)
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let occurrences = masters.flatMap {
             OccurrenceExpander.occurrences(of: $0, in: start ..< end, calendar: calendar)
         }
@@ -140,7 +140,7 @@ final class SwiftDataEventStore: EventStoring {
     // MARK: - Week bounds helper
 
     static func weekBounds(forOffset offset: Int, today: Date) -> (start: Date, end: Date) {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let mondayThisWeek = mondayOfWeek(containing: today, calendar: calendar)
         let mondayTarget = calendar.date(byAdding: .day, value: 7 * offset, to: mondayThisWeek) ?? mondayThisWeek
         let mondayNext = calendar.date(byAdding: .day, value: 7, to: mondayTarget) ?? mondayTarget
@@ -150,8 +150,11 @@ final class SwiftDataEventStore: EventStoring {
     private static func mondayOfWeek(containing date: Date, calendar: Calendar) -> Date {
         let startOfDay = calendar.startOfDay(for: date)
         let weekday = calendar.component(.weekday, from: startOfDay)
-        let daysSinceMonday = (weekday + 5) % 7
-        return calendar.date(byAdding: .day, value: -daysSinceMonday, to: startOfDay) ?? startOfDay
+        // Index of this date's weekday relative to the calendar's first
+        // weekday (0 = week start). For Monday-start calendars this is the
+        // historical `(weekday + 5) % 7`. The method name is historical.
+        let daysSinceStart = (weekday - calendar.firstWeekday + 7) % 7
+        return calendar.date(byAdding: .day, value: -daysSinceStart, to: startOfDay) ?? startOfDay
     }
 }
 

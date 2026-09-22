@@ -89,7 +89,7 @@ struct PaperReviewView: View {
     /// Formatter shared by the header. POSIX-locked so unit tests stay
     /// deterministic.
     private static func formatWeekRange(weekOffset: Int, today: Date) -> String {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let monday = WeekMath.weekDays(forOffset: weekOffset, today: today).first?.date ?? today
         let sunday = calendar.date(byAdding: .day, value: 6, to: monday) ?? monday
         let day = DateFormatter()

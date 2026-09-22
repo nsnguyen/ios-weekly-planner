@@ -122,7 +122,7 @@ struct PaperEventSheet: View {
                                                      eventStore: eventStore)
                 }
                 viewModel?.beginCreating(at: date,
-                                         calendar: WeekMath.mondayCalendar())
+                                         calendar: WeekMath.preferredCalendar)
             }
         }
         .alert("Delete this event?", isPresented: $showDeleteConfirm) {

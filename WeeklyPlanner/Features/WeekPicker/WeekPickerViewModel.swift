@@ -124,7 +124,7 @@ final class WeekPickerViewModel {
         // Start the displayed month on the focus month. Derived by id (not
         // by assuming the middle index) so a dropped month at the window
         // edge can't shift the anchor.
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let todayMonday = Self.mondayOfWeek(containing: baseDate, calendar: calendar)
         let focusMonday = calendar.date(byAdding: .day, value: focusWeekOffset * 7, to: todayMonday) ?? todayMonday
         let comps = calendar.dateComponents([.year, .month], from: focusMonday)
@@ -182,7 +182,7 @@ final class WeekPickerViewModel {
     ///     and which day is the red-circle today.
     /// - Returns: A 49-element array, oldest first.
     static func buildMonths(around focusWeekOffset: Int, baseDate: Date) -> [PickerMonth] {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let todayMonday = mondayOfWeek(containing: baseDate, calendar: calendar)
         let focusMonday = calendar.date(byAdding: .day, value: focusWeekOffset * 7, to: todayMonday) ?? todayMonday
         let focusComponents = calendar.dateComponents([.year, .month], from: focusMonday)
@@ -265,14 +265,17 @@ final class WeekPickerViewModel {
                            weeks: weeks)
     }
 
-    /// Monday of the week containing `date`. Always returns a Monday at the
-    /// start of day for the given calendar. Matches `WeekMath`'s internal
-    /// helper, duplicated here because that one is private to `WeekMath`.
+    /// Start of the week containing `date`, using `calendar.firstWeekday`.
+    /// Matches `WeekMath`'s internal helper, duplicated here because that
+    /// one is private to `WeekMath`. The method name is historical.
     private static func mondayOfWeek(containing date: Date, calendar: Calendar) -> Date {
         let startOfDay = calendar.startOfDay(for: date)
         let weekday = calendar.component(.weekday, from: startOfDay)
-        let daysSinceMonday = (weekday + 5) % 7
-        return calendar.date(byAdding: .day, value: -daysSinceMonday, to: startOfDay) ?? startOfDay
+        // Index of this date's weekday relative to the calendar's first
+        // weekday (0 = week start). For Monday-start calendars this is the
+        // historical `(weekday + 5) % 7`.
+        let daysSinceStart = (weekday - calendar.firstWeekday + 7) % 7
+        return calendar.date(byAdding: .day, value: -daysSinceStart, to: startOfDay) ?? startOfDay
     }
 
     /// `"May 2026"` style. POSIX-locale so the format doesn't drift across

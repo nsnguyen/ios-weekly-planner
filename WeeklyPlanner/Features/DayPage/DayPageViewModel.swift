@@ -141,7 +141,7 @@ final class DayPageViewModel {
     /// filter them to this day. Errors from any store are surfaced via
     /// `loadError` while previously-loaded data is left in place.
     func refresh() async {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let now = clock()
 
         do {

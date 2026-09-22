@@ -46,7 +46,7 @@ final class EventNotificationScheduler {
         locationRegistrar.unregister(eventID: event.id)
 
         if let recurrence = event.recurrence {
-            let calendar = WeekMath.mondayCalendar()
+            let calendar = WeekMath.preferredCalendar
             let now = Date()
             let windowEnd = calendar.date(byAdding: .day, value: Self.recurringWindowDays, to: now) ?? now
             let starts = OccurrenceExpander.occurrenceStarts(

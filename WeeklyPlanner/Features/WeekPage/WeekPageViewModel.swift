@@ -81,7 +81,7 @@ final class WeekPageViewModel {
     /// surfaced via `loadError` while previously-loaded data is left in place
     /// (matches `DayPageViewModel`'s policy).
     func refresh() async {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let now = clock()
         days = WeekMath.weekDays(forOffset: weekOffset, today: now)
 

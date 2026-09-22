@@ -116,7 +116,7 @@ struct TodoBlock: View {
 // MARK: - Previews
 
 #Preview("TodoBlock · Three tasks (cream)") {
-    let calendar = WeekMath.mondayCalendar()
+    let calendar = WeekMath.preferredCalendar
     var components = DateComponents()
     components.year = 2026
     components.month = 5
