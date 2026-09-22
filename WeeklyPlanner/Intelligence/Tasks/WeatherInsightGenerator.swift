@@ -1,7 +1,7 @@
 import CoreLocation
 import Foundation
 #if canImport(WeatherKit)
-    import WeatherKit
+    @preconcurrency import WeatherKit
 #endif
 
 /// Single hour of precipitation forecast used by the generator. Value
