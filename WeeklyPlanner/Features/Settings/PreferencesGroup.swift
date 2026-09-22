@@ -6,7 +6,14 @@ import SwiftUI
 /// `content` closure so the card stays agnostic of the exact rows.
 struct PreferencesGroup<Content: View>: View {
     @Environment(\.paperTheme) private var theme
-    @ViewBuilder @ViewBuilder let content: () -> Content
+    @ViewBuilder let content: () -> Content
+
+    // The parameter attribute is what lets call sites pass multiple rows.
+    // redundantMemberwiseInit copies it onto the property and leaves both.
+    // swiftformat:disable:next redundantMemberwiseInit
+    init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
 
     var body: some View {
         VStack(spacing: 0) {
