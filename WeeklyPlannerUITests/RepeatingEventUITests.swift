@@ -31,7 +31,7 @@ final class RepeatingEventUITests: XCTestCase {
         XCTAssertTrue(titleField.waitForExistence(timeout: 3))
         titleField.tap()
         _ = app.keyboards.firstMatch.waitForExistence(timeout: 2)
-        titleField.typeText(String(title))
+        titleField.typeText(String(title) + "\n")
 
         app.buttons["paperEventSheet.repeat"].tap()
         let daily = app.buttons["Daily"]

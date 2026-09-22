@@ -78,7 +78,8 @@ jobs:
             -scheme WeeklyPlanner \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
             -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Upload xcresult on failure
         if: failure()

@@ -280,7 +280,10 @@ final class AnnotationsUITests: XCTestCase {
         app.buttons[ID.styleDone].tap()
         let note = app.staticTexts["nudge me"]
         XCTAssertTrue(note.waitForExistence(timeout: 4), "Note not rendered")
-        let topBefore = note.frame.minY
+        // The drop animation can still be moving the note when it first
+        // appears. A mid-flight frame reads as "already lower" and then the
+        // settled stack position looks like the note moved up.
+        let topBefore = settledMinY(of: note)
 
         // Create an event on the same day — the content column grows into
         // the band the note occupies (same recipe as EventCreateFlowUITests).
@@ -308,9 +311,10 @@ final class AnnotationsUITests: XCTestCase {
 
         // The note must have moved below the event row — no overlap.
         XCTAssertTrue(note.waitForExistence(timeout: 4), "Note vanished after event creation")
-        XCTAssertGreaterThanOrEqual(note.frame.minY, eventRow.frame.maxY,
+        let topAfter = settledMinY(of: note)
+        XCTAssertGreaterThanOrEqual(topAfter, eventRow.frame.maxY,
                                     "Note should be nudged below the event row")
-        XCTAssertGreaterThan(note.frame.minY, topBefore,
+        XCTAssertGreaterThan(topAfter, topBefore,
                              "Note should have moved down from its pre-event position")
 
         // Cleanup (mandatory — persistent store): note first, then the event
@@ -328,4 +332,18 @@ final class AnnotationsUITests: XCTestCase {
             }
         }
     }
+}
+
+@MainActor
+private func settledMinY(of element: XCUIElement) -> CGFloat {
+    var last = element.frame.minY
+    for _ in 0 ..< 8 {
+        usleep(250_000)
+        let next = element.frame.minY
+        if abs(next - last) < 0.5 {
+            return next
+        }
+        last = next
+    }
+    return last
 }
