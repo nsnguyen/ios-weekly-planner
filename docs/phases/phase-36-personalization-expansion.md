@@ -1,5 +1,9 @@
 # Phase 36 — Personalization Expansion
 
+> **Status:** 36a (fonts/templates) shipped earlier. **36b (week start) shipped**
+> — all seven days, persisted as `weekStartRaw` with a legacy Bool fallback,
+> and Day / Week / side tabs / week picker follow `WeekMath.preferredCalendar`.
+
 > **Milestone M (v1.1 Features).** Post-submission. Covers `docs/suggestions.md`
 > lines 41 (more templates), 42 (more fonts), 45 (more week-start options), and
 > 47 (polish the "Make it yours" footer).
@@ -51,7 +55,7 @@ WeeklyPlannerTests/Stores/WeekMathTests.swift              # MODIFY — week-sta
       previews live and applies app-wide like the existing ones.
 - [ ] **(41)** The template set (the "continue with template" add-event path)
       offers more choices; selecting one applies as before.
-- [ ] **(45)** Week-start offers more than Sunday/Monday (target: all seven, or
+- [x] **(45)** Week-start offers more than Sunday/Monday (target: all seven, or
       at least add Saturday) and changing it re-lays the Week page and picker
       consistently.
 - [ ] **(47)** The Settings "Make it yours" footer reads as finished — app
@@ -61,12 +65,12 @@ WeeklyPlannerTests/Stores/WeekMathTests.swift              # MODIFY — week-sta
 ## Logic & Data Checklist
 - [ ] New fonts are bundled (project.yml/XcodeGen), registered in `PaperFont`,
       and covered by the same size/weight-for-legibility mapping (Phase 21).
-- [ ] **Week-start is the one non-additive change:** `WeekMath` currently
-      assumes a Monday-based calendar (`mondayCalendar()`, `PageCoordinate.day`
-      0 = Mon). Supporting other start days must thread a configurable first
-      weekday through `WeekMath`, the Week page rows, the side tabs, and the
-      picker — without breaking offset math. Verify against the freeze fix
-      (Phase 27) so nothing regresses.
+- [x] **Week-start is the one non-additive change:** `WeekMath` follows
+      `preferredCalendar` (`calendar(startingOn:)`). Day page, Week page,
+      side tabs, event/task bucketing, and the week picker use that
+      calendar. Monday remains the default, so existing Monday offset math
+      stays the identity case. On-device confirmation of the Phase 27 freeze
+      fix after a week-start change is still a device pass.
 - [ ] `UserSettings` persists the new selections; `SettingsViewModel`
       structural invariants (counts) updated.
 - [ ] Template model/source confirmed (see Risks) before expanding it.
