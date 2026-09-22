@@ -6,6 +6,7 @@ final class WeekStartUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testSwitchingWeekStartToSundayRelaysWeekPage() {
         let app = XCUIApplication()
         app.launch()

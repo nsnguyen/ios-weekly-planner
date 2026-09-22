@@ -14,6 +14,7 @@ final class TaskCreateFlowUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testAddTaskInline_endToEnd() {
         let app = XCUIApplication()
         app.launch()

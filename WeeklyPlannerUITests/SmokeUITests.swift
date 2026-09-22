@@ -10,6 +10,7 @@ final class SmokeUITests: XCTestCase {
     /// least one window within five seconds. We don't assert on any specific
     /// text because the Day page now renders dynamic seed content — the
     /// visible strings change by date / locale.
+    @MainActor
     func testAppLaunches() {
         let app = XCUIApplication()
         app.launch()

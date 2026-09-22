@@ -6,6 +6,7 @@ final class RepeatingEventUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testDailyEventAppearsOnAdjacentDayAndScopedDeleteWorks() {
         let app = XCUIApplication()
         app.launchArguments += ["-UITestSeedEmptyStore"]

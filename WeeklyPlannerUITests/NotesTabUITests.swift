@@ -6,6 +6,7 @@ final class NotesTabUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testCreateNotePersistsAcrossRelaunchAndDeletes() {
         let app = XCUIApplication()
         app.launch()

@@ -10,6 +10,7 @@ final class EventCreateFlowUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testCreateEvent_endToEnd() {
         let app = XCUIApplication()
         app.launchArguments += ["-UITestSeedEmptyStore"]

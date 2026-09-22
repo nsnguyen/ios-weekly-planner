@@ -14,6 +14,7 @@ final class AIStickyStackUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testStickyTopIdentifier_eventuallyPresentOnDayPage() {
         let app = XCUIApplication()
         app.launch()
