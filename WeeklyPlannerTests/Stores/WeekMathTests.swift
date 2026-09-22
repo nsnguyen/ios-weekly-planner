@@ -115,10 +115,14 @@ final class WeekMathTests: XCTestCase {
         }
     }
 
-    func testOffsetMathStableAcrossYearBoundarySundayStart() {
-        // Wed Dec 30 2026; Sunday-start week = Dec 27 2026 – Jan 2 2027.
-        var c = DateComponents(); c.year = 2026; c.month = 12; c.day = 30; c.hour = 12
-        let today = WeekMath.mondayCalendar().date(from: c)!
+    func testOffsetMathStableAcrossYearBoundarySundayStart() throws {
+        // Wed Dec 30 2026. Sunday-start week = Dec 27 2026 – Jan 2 2027.
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 12
+        components.day = 30
+        components.hour = 12
+        let today = try XCTUnwrap(WeekMath.mondayCalendar().date(from: components))
         let cal = WeekMath.sundayCalendar()
 
         let thisWeek = WeekMath.weekDays(forOffset: 0, calendar: cal, today: today)

@@ -39,6 +39,12 @@ jobs:
           key: ${{ runner.os }}-spm-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-spm-
 
+      - name: Provide placeholder secrets
+        run: |
+          if [ ! -f Secrets.xcconfig ]; then
+            cp Secrets.example.xcconfig Secrets.xcconfig
+          fi
+
       - name: Generate Xcode project
         run: xcodegen generate
 
