@@ -80,7 +80,7 @@ extension TaskItem {
 
     /// Number of weeks from the start of `base`'s week to the start of `due`'s
     /// week. Used to bucket tasks into the same week-strip view that shows
-    /// events. Monday-based.
+    /// events. Follows `calendar.firstWeekday`.
     func weekOffset(from base: Date, calendar: Calendar = .current) -> Int {
         let baseStart = calendar.startOfWeekMondayBased(for: base)
         let dueStart = calendar.startOfWeekMondayBased(for: due)
@@ -90,12 +90,16 @@ extension TaskItem {
 }
 
 extension Calendar {
-    /// Monday-based start-of-week. Independent of `firstWeekday` so tasks
-    /// always bucket consistently with the planner view.
+    /// Start of the week containing `date`, using this calendar's
+    /// `firstWeekday`. The method name is historical (Phase 36b); Monday-start
+    /// calendars still return the old Monday.
     func startOfWeekMondayBased(for date: Date) -> Date {
         let weekday = component(.weekday, from: date)
-        let daysSinceMonday = (weekday + 5) % 7
-        let monday = self.date(byAdding: .day, value: -daysSinceMonday, to: startOfDay(for: date))
-        return monday ?? startOfDay(for: date)
+        // Index of this date's weekday relative to the calendar's first
+        // weekday (0 = week start). For Monday-start calendars this is the
+        // historical `(weekday + 5) % 7`.
+        let daysSinceStart = (weekday - firstWeekday + 7) % 7
+        let weekStart = self.date(byAdding: .day, value: -daysSinceStart, to: startOfDay(for: date))
+        return weekStart ?? startOfDay(for: date)
     }
 }

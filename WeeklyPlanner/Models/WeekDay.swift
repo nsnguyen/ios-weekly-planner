@@ -3,7 +3,7 @@ import Foundation
 /// One day cell in the week strip / hobonichi week page. Pure value type —
 /// recomputed from `WeekMath` whenever the week changes. Never persisted.
 struct WeekDay: Equatable, Hashable {
-    /// 0...6, Monday-based (`weekStartsOnMonday` toggle in Settings can shift).
+    /// 0...6, relative to the configured week start (`UserSettings.weekStart`).
     let idx: Int
     /// Week offset relative to "today's week" (0 = current, -1 = last, +1 = next).
     let offset: Int

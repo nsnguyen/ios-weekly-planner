@@ -420,10 +420,15 @@ final class DayPageViewModel {
 }
 
 private extension Date {
-    /// Monday-based weekday index (0 = Mon … 6 = Sun). Mirrors
-    /// `Event.weekdayIndex(in:)` for non-`Event` date values.
+    /// Weekday index relative to `calendar.firstWeekday` (0 = week start).
+    /// Mirrors `Event.weekdayIndex(in:)` for non-`Event` date values.
+    /// The method name is historical; Monday-start calendars still return
+    /// the old `(weekday + 5) % 7` result.
     func mondayBasedWeekdayIndex(in calendar: Calendar) -> Int {
         let weekday = calendar.component(.weekday, from: self)
-        return (weekday + 5) % 7
+        // Index of this date's weekday relative to the calendar's first
+        // weekday (0 = week start). For Monday-start calendars this is the
+        // historical `(weekday + 5) % 7`.
+        return (weekday - calendar.firstWeekday + 7) % 7
     }
 }
