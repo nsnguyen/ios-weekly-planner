@@ -17,10 +17,9 @@ final class PaperSettingsViewTests: XCTestCase {
         XCTAssertEqual(ReminderOption(minutes: 60).description, "1 hr")
     }
 
-    func testWeekStartHasMondayAndSundayOnly() {
-        let cases = WeekStart.allCases
-        XCTAssertEqual(cases, [.monday, .sunday])
-        XCTAssertEqual(cases.map(\.description), ["Monday", "Sunday"])
+    func testWeekStartOffersAllSevenDays() {
+        XCTAssertEqual(WeekStartDay.allCases.map(\.displayName),
+                       ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
     }
 
     func testPaperThemeKeyCountMatchesGridColumnCount() {

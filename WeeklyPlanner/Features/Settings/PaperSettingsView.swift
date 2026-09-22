@@ -75,11 +75,7 @@ struct PaperSettingsView: View {
             // 5. PREFERENCES
             SectionTitle("Preferences")
             PreferencesGroup {
-                PrefRow(label: "Week starts on",
-                        value: viewModel.weekStartsOnMonday ? WeekStart.monday : .sunday,
-                        options: WeekStart.allCases) { newValue in
-                    viewModel.setWeekStartsOnMonday(newValue == .monday)
-                }
+                weekStartRow(viewModel)
                 PrefRowDivider()
                 PrefRow(label: "Default reminder",
                         value: ReminderOption(minutes: viewModel.defaultReminderMinutes),
@@ -106,16 +102,38 @@ struct PaperSettingsView: View {
         }
         .padding(EdgeInsets(top: 14, leading: 18, bottom: 28, trailing: 18))
     }
+
+    /// Seven-day week-start menu. Matches `PrefRow` padding and type so the
+    /// row sits in the preferences card; the menu (not pills) is what the
+    /// week-start UI test drives.
+    private func weekStartRow(_ viewModel: SettingsViewModel) -> some View {
+        Menu {
+            ForEach(WeekStartDay.allCases, id: \.self) { day in
+                Button(day.displayName) { viewModel.setWeekStart(day) }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Text("Week starts on")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(theme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(viewModel.weekStart.displayName)
+                    .font(.system(size: 14))
+                    .foregroundStyle(theme.ink2)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(theme.ink3)
+            }
+            .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Week starts on")
+        .accessibilityValue(viewModel.weekStart.displayName)
+        .accessibilityIdentifier("settings.weekstart.menu")
+    }
 }
 
 // MARK: - PrefRow value types
-
-/// Two-state option for `Week starts on`. `CustomStringConvertible` so
-/// `PrefRow` can render it directly.
-enum WeekStart: String, CaseIterable, CustomStringConvertible {
-    case monday, sunday
-    var description: String { rawValue.capitalized }
-}
 
 /// Five-state option for `Default reminder`. `nil` minutes maps to "None";
 /// everything else uses a compact "5 min" / "1 hr" form.
