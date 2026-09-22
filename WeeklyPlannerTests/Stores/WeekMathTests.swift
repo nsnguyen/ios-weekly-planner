@@ -74,4 +74,69 @@ final class WeekMathTests: XCTestCase {
         let week = WeekMath.weekDays(forOffset: 0, today: Self.may16_2026())
         XCTAssertEqual(week.map(\.weekdayInitial), ["M", "T", "W", "T", "F", "S", "S"])
     }
+
+    func testSundayStartWeekOnMay16_2026() {
+        let cal = WeekMath.sundayCalendar()
+        let week = WeekMath.weekDays(forOffset: 0, calendar: cal, today: Self.may16_2026())
+
+        XCTAssertEqual(week.first?.weekdayShort, "Sun")
+        XCTAssertEqual(week.first?.dayNumber, 10)
+        XCTAssertEqual(week.last?.weekdayShort, "Sat")
+        XCTAssertEqual(week.last?.dayNumber, 16)
+        XCTAssertEqual(WeekMath.todayIndex(in: week, for: Self.may16_2026(), calendar: cal), 6)
+        XCTAssertEqual(week.map(\.weekdayInitial), ["S", "M", "T", "W", "T", "F", "S"])
+    }
+
+    func testSaturdayStartWeekOnMay16_2026() {
+        let cal = WeekMath.calendar(startingOn: .saturday)
+        let week = WeekMath.weekDays(forOffset: 0, calendar: cal, today: Self.may16_2026())
+
+        XCTAssertEqual(week.first?.weekdayShort, "Sat")
+        XCTAssertEqual(week.first?.dayNumber, 16, "Today IS the week start")
+        XCTAssertEqual(week.last?.weekdayShort, "Fri")
+        XCTAssertEqual(week.last?.dayNumber, 22)
+        XCTAssertEqual(WeekMath.todayIndex(in: week, for: Self.may16_2026(), calendar: cal), 0)
+        XCTAssertEqual(week.map(\.weekdayInitial), ["S", "S", "M", "T", "W", "T", "F"])
+    }
+
+    func testEveryStartDayProducesSevenConsecutiveDaysContainingToday() {
+        for day in WeekStartDay.allCases {
+            let cal = WeekMath.calendar(startingOn: day)
+            let week = WeekMath.weekDays(forOffset: 0, calendar: cal, today: Self.may16_2026())
+
+            XCTAssertEqual(week.count, 7, "\(day)")
+            XCTAssertEqual(cal.component(.weekday, from: week[0].date), day.rawValue,
+                           "\(day): week must begin on its start day")
+            XCTAssertNotNil(WeekMath.todayIndex(in: week, for: Self.may16_2026(), calendar: cal), "\(day)")
+            for index in 1 ..< 7 {
+                let gap = cal.dateComponents([.day], from: week[index - 1].date, to: week[index].date).day
+                XCTAssertEqual(gap, 1, "\(day): days must be consecutive")
+            }
+        }
+    }
+
+    func testOffsetMathStableAcrossYearBoundarySundayStart() {
+        // Wed Dec 30 2026; Sunday-start week = Dec 27 2026 – Jan 2 2027.
+        var c = DateComponents(); c.year = 2026; c.month = 12; c.day = 30; c.hour = 12
+        let today = WeekMath.mondayCalendar().date(from: c)!
+        let cal = WeekMath.sundayCalendar()
+
+        let thisWeek = WeekMath.weekDays(forOffset: 0, calendar: cal, today: today)
+        XCTAssertEqual(thisWeek.first?.dayNumber, 27)
+        XCTAssertEqual(thisWeek.last?.dayNumber, 2)
+
+        let nextWeek = WeekMath.weekDays(forOffset: 1, calendar: cal, today: today)
+        XCTAssertEqual(nextWeek.first?.dayNumber, 3)
+        XCTAssertEqual(nextWeek.first?.year, 2027)
+    }
+
+    func testPreferredCalendarDefaultsToMonday() {
+        WeekMath.preferredCalendar = WeekMath.mondayCalendar()
+        XCTAssertEqual(WeekMath.preferredCalendar.firstWeekday, 2)
+    }
+
+    func testWeekStartDayDisplayNames() {
+        XCTAssertEqual(WeekStartDay.allCases.map(\.displayName),
+                       ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
+    }
 }
