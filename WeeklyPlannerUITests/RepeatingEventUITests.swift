@@ -30,13 +30,7 @@ final class RepeatingEventUITests: XCTestCase {
         let titleField = app.textFields.firstMatch
         XCTAssertTrue(titleField.waitForExistence(timeout: 3))
         titleField.tap()
-        _ = app.keyboards.firstMatch.waitForExistence(timeout: 2)
-        titleField.typeText(String(title) + "\n")
-
-        app.buttons["paperEventSheet.repeat"].tap()
-        let daily = app.buttons["Daily"]
-        XCTAssertTrue(daily.waitForExistence(timeout: 3), "Repeat menu did not open")
-        daily.tap()
+        chooseDailyRepeat(app, title: String(title), field: titleField)
 
         let save = app.buttons["paperEventSheet.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 2))
@@ -92,4 +86,31 @@ final class RepeatingEventUITests: XCTestCase {
         XCTAssertTrue(eventElement().waitForNonExistence(timeout: 5),
                       "Series not removed after delete-all")
     }
+}
+
+/// Types the title, resigns the field, and picks Daily.
+///
+/// A newline typed into the single-line title field does not resign it.
+/// The following tap is then consumed dismissing the keyboard, so the
+/// Repeat menu never opens. The Return key does resign it (same path as
+/// the event-create UI test). If that tap is still swallowed, try once more.
+@MainActor
+private func chooseDailyRepeat(_ app: XCUIApplication, title: String, field: XCUIElement) {
+    _ = app.keyboards.firstMatch.waitForExistence(timeout: 2)
+    field.typeText(title)
+    if app.keyboards.firstMatch.exists {
+        app.keyboards.buttons["Return"].tap()
+        _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 2)
+    }
+
+    let repeatMenu = app.buttons["paperEventSheet.repeat"]
+    repeatMenu.tap()
+    let daily = app.descendants(matching: .any)
+        .matching(NSPredicate(format: "label == %@", "Daily"))
+        .firstMatch
+    if !daily.waitForExistence(timeout: 2) {
+        repeatMenu.tap()
+    }
+    XCTAssertTrue(daily.waitForExistence(timeout: 3), "Repeat menu did not open")
+    daily.tap()
 }

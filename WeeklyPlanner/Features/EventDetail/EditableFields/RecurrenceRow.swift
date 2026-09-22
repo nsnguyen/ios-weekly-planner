@@ -23,13 +23,16 @@ struct RecurrenceRow: View {
                         Button(frequency.displayName) { setFrequency(frequency) }
                     }
                 } label: {
+                    // The 44pt target has to be the label. A frame on the
+                    // Menu grows the accessibility bounds around a smaller
+                    // control, and XCUITest then taps the padding.
                     Text(recurrence?.frequency.displayName ?? "None")
                         .font(font.font(at: 15 * size.scale, weight: .regular))
                         .foregroundStyle(theme.ink)
+                        .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
                 .tint(theme.blueInk)
-                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
-                .contentShape(Rectangle())
                 .accessibilityLabel("Repeat")
                 .accessibilityValue(recurrence?.frequency.displayName ?? "None")
                 .accessibilityIdentifier(AccessibilityIDs.eventRepeatMenu)

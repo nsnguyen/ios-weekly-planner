@@ -280,10 +280,8 @@ final class AnnotationsUITests: XCTestCase {
         app.buttons[ID.styleDone].tap()
         let note = app.staticTexts["nudge me"]
         XCTAssertTrue(note.waitForExistence(timeout: 4), "Note not rendered")
-        // The drop animation can still be moving the note when it first
-        // appears. A mid-flight frame reads as "already lower" and then the
-        // settled stack position looks like the note moved up.
-        let topBefore = settledMinY(of: note)
+        // Let the drop animation finish before the event changes the stack.
+        _ = settledMinY(of: note)
 
         // Create an event on the same day — the content column grows into
         // the band the note occupies (same recipe as EventCreateFlowUITests).
@@ -309,13 +307,14 @@ final class AnnotationsUITests: XCTestCase {
         XCTAssertTrue(eventRow.waitForExistence(timeout: 5), "Event row not visible")
         sleep(1) // let the nudge animation settle before reading frames
 
-        // The note must have moved below the event row — no overlap.
+        // Compaction packs the note against the content column in either
+        // direction. A short new row can fit in the slack above the note,
+        // and the note then moves up to close that gap. The invariant is
+        // that the settled note sits below the event row.
         XCTAssertTrue(note.waitForExistence(timeout: 4), "Note vanished after event creation")
         let topAfter = settledMinY(of: note)
         XCTAssertGreaterThanOrEqual(topAfter, eventRow.frame.maxY,
                                     "Note should be nudged below the event row")
-        XCTAssertGreaterThan(topAfter, topBefore,
-                             "Note should have moved down from its pre-event position")
 
         // Cleanup (mandatory — persistent store): note first, then the event
         // via its row → sheet delete (confirmation dialog may appear).
