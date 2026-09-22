@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// One month section inside `WeekPickerSheet`'s scroll body. Renders a
-/// centered handwritten "May 2026"-style title, a Monday-first weekday
-/// header row, and a stack of `WeekRowView`s (Phase 31 #33 #34).
+/// centered handwritten "May 2026"-style title, a weekday header row that
+/// follows the configured week start, and a stack of `WeekRowView`s
+/// (Phase 31 #33 #34, Phase 36b).
 ///
 /// Kept as its own struct (rather than inlined into the sheet) so the sheet
 /// stays readable and so the month section can be previewed in isolation
@@ -13,11 +14,23 @@ struct MonthGridView: View {
     /// consumes it via `frameAlignment`.
     static let titleAlignment: TextAlignment = .center
 
-    /// Phase 31 (33) presentation contract — Monday-first weekday header,
-    /// weekends included. Two letters (vs. the JS mock's single letter)
-    /// because the single-letter form repeats T and S and reads as a typo.
+    /// Phase 31 (33) presentation contract — weekday header, weekends
+    /// included. Two letters (vs. the single-letter form) because T and S
+    /// would otherwise repeat and read as a typo, and because `ForEach`
+    /// identity must be unique. Rotates with `WeekMath.preferredCalendar`
+    /// (Phase 36b). Monday-start stays `Mo…Su`.
     /// Unit-tested in `MonthGridViewTests.testWeekdayHeaderPresent`.
-    static let weekdaySymbols = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    static var weekdaySymbols: [String] {
+        weekdaySymbols(for: WeekMath.preferredCalendar)
+    }
+
+    /// Two-letter weekday labels for a week that starts on
+    /// `calendar.firstWeekday`. Sunday-based order rotated into place.
+    static func weekdaySymbols(for calendar: Calendar) -> [String] {
+        let ordered = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        let start = (calendar.firstWeekday - 1 + 7) % 7
+        return (0 ..< 7).map { ordered[(start + $0) % 7] }
+    }
 
     /// The month to render. The view reads `title` for the header row and
     /// hands each `PickerWeek` off to a `WeekRowView`.
@@ -72,9 +85,10 @@ struct MonthGridView: View {
         }
     }
 
-    /// Seven Monday-first weekday labels above the month's rows (Phase 31
-    /// #33). Spacing/padding mirror `WeekRowView`'s day cells exactly so the
-    /// columns line up: HStack(spacing: 3) + 14pt horizontal padding.
+    /// Seven weekday labels above the month's rows (Phase 31 #33, rotated
+    /// in Phase 36b). Spacing/padding mirror `WeekRowView`'s day cells
+    /// exactly so the columns line up: HStack(spacing: 3) + 14pt horizontal
+    /// padding.
     private var weekdayHeader: some View {
         HStack(spacing: 3) {
             ForEach(Self.weekdaySymbols, id: \.self) { symbol in

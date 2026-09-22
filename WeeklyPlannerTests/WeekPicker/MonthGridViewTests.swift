@@ -8,6 +8,10 @@ import XCTest
 /// `docs/mock/` is the visual gate.
 @MainActor
 final class MonthGridViewTests: XCTestCase {
+    override func tearDown() {
+        WeekMath.preferredCalendar = WeekMath.mondayCalendar()
+        super.tearDown()
+    }
     /// Reference date used throughout the suite: Saturday, May 16, 2026.
     private static func may16_2026() -> Date {
         var components = DateComponents()
@@ -24,9 +28,16 @@ final class MonthGridViewTests: XCTestCase {
     }
 
     /// (33) Monday-first weekday header, all seven days — weekends stay.
+    /// Phase 36b rotates this with the preference; the default stays Monday.
     func testWeekdayHeaderPresent() {
+        WeekMath.preferredCalendar = WeekMath.mondayCalendar()
         XCTAssertEqual(MonthGridView.weekdaySymbols,
                        ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"])
+    }
+
+    func testWeekdayHeaderRotatesToSundayStart() {
+        XCTAssertEqual(MonthGridView.weekdaySymbols(for: WeekMath.sundayCalendar()),
+                       ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"])
     }
 
     /// (33) The ISO week-number column is gone from rows, the row's
