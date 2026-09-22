@@ -26,7 +26,6 @@ final class ConnectionsCalendarTests: XCTestCase {
     private var sut: ConnectionsViewModel!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
@@ -45,7 +44,6 @@ final class ConnectionsCalendarTests: XCTestCase {
         inboxStore = nil
         settingsStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     // MARK: - Connect

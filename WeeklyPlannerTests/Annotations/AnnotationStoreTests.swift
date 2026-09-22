@@ -8,7 +8,6 @@ final class AnnotationStoreTests: XCTestCase {
     private var store: SwiftDataAnnotationStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataAnnotationStore(context: container.mainContext)
     }
@@ -16,7 +15,6 @@ final class AnnotationStoreTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testRoundTripPreservesStyleAndPosition() async throws {

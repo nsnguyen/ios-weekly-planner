@@ -12,7 +12,6 @@ final class InboxSyncEngineTests: XCTestCase {
     private var sut: InboxSyncEngine!
 
     override func setUp() async throws {
-        try await super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         container = try ModelContainer(for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
                                        configurations: config)

@@ -9,7 +9,6 @@ final class EventStoreTests: XCTestCase {
     private var store: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class EventStoreTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     /// Anchor every test on Sat May 16, 2026 so week math is deterministic.

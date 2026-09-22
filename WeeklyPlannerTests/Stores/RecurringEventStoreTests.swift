@@ -8,7 +8,6 @@ final class RecurringEventStoreTests: XCTestCase {
     private var store: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataEventStore(context: container.mainContext)
     }
@@ -16,7 +15,6 @@ final class RecurringEventStoreTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     private static func date(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 9) -> Date {

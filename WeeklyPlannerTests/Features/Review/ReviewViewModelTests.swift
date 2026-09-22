@@ -10,7 +10,6 @@ final class ReviewViewModelTests: XCTestCase {
     private var taskStore: SwiftDataTaskStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         taskStore = SwiftDataTaskStore(context: container.mainContext)
@@ -20,7 +19,6 @@ final class ReviewViewModelTests: XCTestCase {
         eventStore = nil
         taskStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testTimeByCategorySumsCorrectly() async throws {

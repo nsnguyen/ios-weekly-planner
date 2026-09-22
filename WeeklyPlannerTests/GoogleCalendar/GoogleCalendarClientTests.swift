@@ -8,7 +8,6 @@ final class GoogleCalendarClientTests: XCTestCase {
     private var sut: GoogleCalendarClient!
 
     override func setUp() async throws {
-        try await super.setUp()
         fakeAuth = RecordingAuthService(token: "test-token")
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [URLProtocolStub.self]
@@ -19,7 +18,6 @@ final class GoogleCalendarClientTests: XCTestCase {
 
     override func tearDown() async throws {
         URLProtocolStub.reset()
-        try await super.tearDown()
     }
 
     func testListEventsSendsSingleEventsAndBearer() async throws {

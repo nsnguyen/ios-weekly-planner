@@ -9,7 +9,6 @@ final class StubIntelligenceServiceTests: XCTestCase {
     private var events: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         events = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class StubIntelligenceServiceTests: XCTestCase {
     override func tearDown() async throws {
         events = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testDentistQueryReturnsCannedBodyAndCitationFromStore() async throws {

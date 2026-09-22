@@ -5,7 +5,6 @@ import XCTest
 final class WeekPickerViewModelTests: XCTestCase {
     override func tearDown() {
         WeekMath.preferredCalendar = WeekMath.mondayCalendar()
-        super.tearDown()
     }
 
     /// Reference date used throughout the mock: Saturday, May 16, 2026.

@@ -13,7 +13,6 @@ final class TodoBlockCRUDTests: XCTestCase {
     private var today: Date!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         taskStore = SwiftDataTaskStore(context: container.mainContext)
         eventStore = SwiftDataEventStore(context: container.mainContext)
@@ -29,7 +28,6 @@ final class TodoBlockCRUDTests: XCTestCase {
         calendar = nil
         today = nil
         container = nil
-        try await super.tearDown()
     }
 
     private func makeViewModel() -> DayPageViewModel {

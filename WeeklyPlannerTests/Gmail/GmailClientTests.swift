@@ -8,7 +8,6 @@ final class GmailClientTests: XCTestCase {
     private var sut: GmailClient!
 
     override func setUp() async throws {
-        try await super.setUp()
         fakeAuth = RecordingAuthService(token: "test-token")
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [URLProtocolStub.self]
@@ -19,7 +18,6 @@ final class GmailClientTests: XCTestCase {
 
     override func tearDown() async throws {
         URLProtocolStub.reset()
-        try await super.tearDown()
     }
 
     func testListMessagesEncodesQueryAndBearer() async throws {

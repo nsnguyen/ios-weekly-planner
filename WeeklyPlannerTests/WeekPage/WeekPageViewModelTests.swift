@@ -11,7 +11,6 @@ final class WeekPageViewModelTests: XCTestCase {
     private var inboxStore: SwiftDataInboxStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         taskStore = SwiftDataTaskStore(context: container.mainContext)
@@ -23,7 +22,6 @@ final class WeekPageViewModelTests: XCTestCase {
         taskStore = nil
         inboxStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     /// Date inside Saturday May 16, 2026 — same anchor used across the

@@ -10,7 +10,6 @@ final class GoogleAuthServiceTests: XCTestCase {
     private var sut: LiveGoogleAuthService!
 
     override func setUp() async throws {
-        try await super.setUp()
         serviceID = "com.weeklyplanner.tests.\(UUID().uuidString)"
         keychain = TokenKeychainStore<GoogleAccountInfo>(serviceID: serviceID)
         try keychain.clear()
@@ -22,7 +21,6 @@ final class GoogleAuthServiceTests: XCTestCase {
 
     override func tearDown() async throws {
         try? keychain.clear()
-        try await super.tearDown()
     }
 
     func testSignInPersistsTokensInKeychain() async throws {

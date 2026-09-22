@@ -11,7 +11,6 @@ final class AnnotationLayerTests: XCTestCase {
     private var annotationStore: SwiftDataAnnotationStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
@@ -25,7 +24,6 @@ final class AnnotationLayerTests: XCTestCase {
         inboxStore = nil
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     private static func may16_2026(hour: Int = 12) -> Date {

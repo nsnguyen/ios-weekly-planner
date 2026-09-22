@@ -10,7 +10,6 @@ import XCTest
 final class MonthGridViewTests: XCTestCase {
     override func tearDown() {
         WeekMath.preferredCalendar = WeekMath.mondayCalendar()
-        super.tearDown()
     }
 
     /// Reference date used throughout the suite: Saturday, May 16, 2026.

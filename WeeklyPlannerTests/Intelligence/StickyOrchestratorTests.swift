@@ -8,13 +8,11 @@ final class StickyOrchestratorTests: XCTestCase {
     private var container: ModelContainer!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
     }
 
     override func tearDown() async throws {
         container = nil
-        try await super.tearDown()
     }
 
     private func makeInsight(kind: InsightKind, text: String) -> AIInsight {

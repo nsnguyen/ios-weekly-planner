@@ -9,7 +9,6 @@ final class SettingsViewModelTests: XCTestCase {
     private var store: SwiftDataSettingsStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataSettingsStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class SettingsViewModelTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testDefaultsAfterFreshInstall() {

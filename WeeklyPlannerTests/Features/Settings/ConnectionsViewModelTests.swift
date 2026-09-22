@@ -11,7 +11,6 @@ final class ConnectionsViewModelTests: XCTestCase {
     private var sut: ConnectionsViewModel!
 
     override func setUp() async throws {
-        try await super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         container = try ModelContainer(for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
                                        configurations: config)

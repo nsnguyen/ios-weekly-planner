@@ -9,7 +9,6 @@ final class ScanInboxToolTests: XCTestCase {
     private var inbox: SwiftDataInboxStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         inbox = SwiftDataInboxStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class ScanInboxToolTests: XCTestCase {
     override func tearDown() async throws {
         inbox = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testReturnsPendingSuggestionsForRequestedWeek() async throws {

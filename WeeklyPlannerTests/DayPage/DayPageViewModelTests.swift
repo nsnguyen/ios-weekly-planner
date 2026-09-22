@@ -11,7 +11,6 @@ final class DayPageViewModelTests: XCTestCase {
     private var taskStore: SwiftDataTaskStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
@@ -23,7 +22,6 @@ final class DayPageViewModelTests: XCTestCase {
         inboxStore = nil
         taskStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     /// Saturday May 16, 2026 — same anchor used across the planner test

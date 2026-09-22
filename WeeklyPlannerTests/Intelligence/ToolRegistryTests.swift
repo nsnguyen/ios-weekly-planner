@@ -11,7 +11,6 @@ final class ToolRegistryTests: XCTestCase {
     private var inbox: SwiftDataInboxStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         events = SwiftDataEventStore(context: container.mainContext)
         tasks = SwiftDataTaskStore(context: container.mainContext)
@@ -23,7 +22,6 @@ final class ToolRegistryTests: XCTestCase {
         tasks = nil
         inbox = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testRegistryExposesFiveToolsInStableOrder() {

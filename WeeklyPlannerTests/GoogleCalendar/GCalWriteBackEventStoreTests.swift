@@ -16,7 +16,6 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
     private let end = Date(timeIntervalSince1970: 1_749_898_800)
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         swiftDataStore = SwiftDataEventStore(context: container.mainContext)
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
@@ -45,7 +44,6 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         settingsStore = nil
         swiftDataStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testCreateWhileConnectedPostsAndFlipsSource() async throws {

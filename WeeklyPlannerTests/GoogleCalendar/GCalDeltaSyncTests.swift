@@ -9,7 +9,6 @@ final class GCalDeltaSyncTests: XCTestCase {
     private var deltaSync: GCalDeltaSync!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         deltaSync = GCalDeltaSync(settingsStore: settingsStore)
@@ -19,7 +18,6 @@ final class GCalDeltaSyncTests: XCTestCase {
         deltaSync = nil
         settingsStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testCurrentTokenIsNilInitially() {

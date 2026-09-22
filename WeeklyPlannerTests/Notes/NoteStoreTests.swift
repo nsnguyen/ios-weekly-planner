@@ -8,7 +8,6 @@ final class NoteStoreTests: XCTestCase {
     private var store: SwiftDataNoteStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataNoteStore(context: container.mainContext)
     }
@@ -16,7 +15,6 @@ final class NoteStoreTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testUpsertNewNoteInsertsIt() async throws {

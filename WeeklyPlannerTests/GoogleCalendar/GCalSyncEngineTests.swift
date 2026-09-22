@@ -162,7 +162,6 @@ final class GCalSyncEngineTests: XCTestCase {
     private let fixedNow = Date(timeIntervalSince1970: 1_749_859_200)
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
@@ -181,7 +180,6 @@ final class GCalSyncEngineTests: XCTestCase {
         settingsStore = nil
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     // MARK: - 1. Full sync imports events and stores nextSyncToken

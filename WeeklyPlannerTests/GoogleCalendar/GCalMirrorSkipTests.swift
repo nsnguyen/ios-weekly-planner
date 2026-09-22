@@ -14,7 +14,6 @@ final class GCalMirrorSkipTests: XCTestCase {
     private var store: EventKitMirroringEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         base = SwiftDataEventStore(context: container.mainContext)
         gateway = FakeEventKitGateway()
@@ -28,7 +27,6 @@ final class GCalMirrorSkipTests: XCTestCase {
         gateway = nil
         base = nil
         container = nil
-        try await super.tearDown()
     }
 
     // MARK: - Helpers

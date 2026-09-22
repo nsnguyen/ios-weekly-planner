@@ -9,7 +9,6 @@ final class EncouragementInsightGeneratorTests: XCTestCase {
     private var eventStore: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class EncouragementInsightGeneratorTests: XCTestCase {
     override func tearDown() async throws {
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testPromptListsEventTitlesForWeekday() {

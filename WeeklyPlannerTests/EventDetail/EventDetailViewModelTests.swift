@@ -11,7 +11,6 @@ final class EventDetailViewModelTests: XCTestCase {
     private var fakeGeocoder: FakeGeocoder!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         fakeGeocoder = FakeGeocoder()
@@ -21,7 +20,6 @@ final class EventDetailViewModelTests: XCTestCase {
         fakeGeocoder = nil
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testToggleAlertAddsTimeBeforeReminder() async throws {
