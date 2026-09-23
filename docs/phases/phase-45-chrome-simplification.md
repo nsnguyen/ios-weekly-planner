@@ -95,6 +95,12 @@ New: none beyond the fallback test — this phase deletes more than it adds.
   week-picker UI suites green.
 - Grep proof of zero review references.
 
+Build & Test on `a236b11` (run `35825740700`) succeeded: 600 unit tests,
+26 UI tests, 0 failures. Two UI tests skipped for missing seed event rows
+(`testEventSheetPassesAudit`, `testTapEventRow_opensSheetWithDeleteButton`).
+The Review audit test is gone. A screenshot pass vs the mock, on-device
+keyboard timing, and a pre-phase `Streak` store open are still open.
+
 ## Out of Scope
 
 - Any replacement for Review's stats (if users miss it, that's a future
