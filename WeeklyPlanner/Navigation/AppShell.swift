@@ -5,7 +5,7 @@ import SwiftUI
 /// Root composition for the paper app. Sits above `RootView` (which only
 /// hosts the environment values) and below every page. Owns:
 ///
-/// - `TabSelection` — which of Calendar / Review / Notes / Settings is active.
+/// - `TabSelection` — which of Calendar / Notes / Settings is active.
 /// - `PageFlipController` + `paperView` — the Day-vs-Week state shared
 ///   inside the Calendar tab (lifted from `RootView` so a tab switch
 ///   doesn't reset the Day page's focused day or week offset).
@@ -100,8 +100,6 @@ struct AppShell: View {
                 case .calendar:
                     calendarTab
                         .id(weekLayoutEpoch)
-                case .review:
-                    PaperReviewView(weekOffset: controller.current.week)
                 case .notes:
                     PaperNotesView()
                 case .settings:

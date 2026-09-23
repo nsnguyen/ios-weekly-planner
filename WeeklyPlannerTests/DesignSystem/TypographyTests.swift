@@ -60,13 +60,6 @@ final class TypographyTests: XCTestCase {
         XCTAssertEqual(weekEyebrow.opacity, 0.65, accuracy: 0.001)
     }
 
-    func testReviewRampMatchesSpec() {
-        XCTAssertEqual(Typography.reviewTitle.size, 28)
-        XCTAssertEqual(Typography.reviewTitle.weight, .bold)
-        XCTAssertEqual(Typography.reviewPercent.size, 48)
-        XCTAssertEqual(Typography.reviewPercent.rotationDegrees, -3)
-    }
-
     func testFontResolvesForEveryHandwritingFamily() {
         let entry = Typography.eventTitle
         for family in PaperFont.allCases {

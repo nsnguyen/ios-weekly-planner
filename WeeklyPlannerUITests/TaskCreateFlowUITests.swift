@@ -21,7 +21,7 @@ final class TaskCreateFlowUITests: XCTestCase {
 
         // TabSelection is persisted across launches via UserSettings —
         // earlier ad-hoc dogfooding may have left the simulator on the
-        // Settings or Review tab. Explicitly navigate to Calendar so
+        // Settings or Notes tab. Explicitly navigate to Calendar so
         // the rest of the test can find Day-page identifiers.
         let calendarTab = app.buttons["tabbar.tab.calendar"]
         if calendarTab.waitForExistence(timeout: 3) {

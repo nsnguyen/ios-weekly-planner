@@ -15,8 +15,8 @@ final class UserSettingsLastTabTests: XCTestCase {
     func testLastTabRoundTripsThroughStore() throws {
         let container = try SwiftDataStack.inMemoryContainer()
         let store = SwiftDataSettingsStore(context: container.mainContext)
-        try store.update { $0.lastTabRaw = "review" }
+        try store.update { $0.lastTabRaw = "notes" }
         let reloaded = try store.current()
-        XCTAssertEqual(reloaded.lastTabRaw, "review")
+        XCTAssertEqual(reloaded.lastTabRaw, "notes")
     }
 }

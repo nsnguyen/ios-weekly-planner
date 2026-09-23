@@ -55,7 +55,6 @@ struct PaperTab: View {
     private var iconName: String {
         switch tab {
         case .calendar: "calendar"
-        case .review: "tray"
         case .notes: "note.text"
         case .settings: "gearshape"
         }
@@ -64,7 +63,6 @@ struct PaperTab: View {
     private var label: String {
         switch tab {
         case .calendar: "Calendar"
-        case .review: "Review"
         case .notes: "Notes"
         case .settings: "Settings"
         }
@@ -74,7 +72,7 @@ struct PaperTab: View {
 #Preview("PaperTab · active + inactive") {
     HStack(spacing: 0) {
         PaperTab(tab: .calendar, isActive: true, action: {})
-        PaperTab(tab: .review, isActive: false, action: {})
+        PaperTab(tab: .notes, isActive: false, action: {})
         PaperTab(tab: .settings, isActive: false, action: {})
     }
     .padding(.top, 6)

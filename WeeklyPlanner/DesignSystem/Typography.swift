@@ -109,9 +109,4 @@ enum Typography {
     static let aiOverlayTitle = TypographyEntry(size: 24, weight: .regular)
     static let aiOverlayInput = TypographyEntry(size: 22, weight: .regular)
     static let aiSuggestion = TypographyEntry(size: 18, weight: .regular)
-
-    // MARK: - Review
-
-    static let reviewTitle = TypographyEntry(size: 28, weight: .bold)
-    static let reviewPercent = TypographyEntry(size: 48, weight: .bold, rotationDegrees: -3)
 }

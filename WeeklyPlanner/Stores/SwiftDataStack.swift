@@ -13,7 +13,6 @@ enum SwiftDataStack {
         TaskItem.self,
         InboxSuggestion.self,
         AIInsight.self,
-        Streak.self,
         UserSettings.self,
         Note.self,
         Annotation.self,

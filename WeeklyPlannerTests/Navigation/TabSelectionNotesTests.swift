@@ -17,9 +17,9 @@ final class TabSelectionNotesTests: XCTestCase {
         container = nil
     }
 
-    func testTabOrderIsCalendarReviewNotesSettings() {
-        // User decision 2026-06-04: Notes sits between Review and Settings.
-        XCTAssertEqual(Tab.allCases, [.calendar, .review, .notes, .settings])
+    func testTabOrderIsCalendarNotesSettings() {
+        // Phase 45 (#74): Review is gone. Order is Calendar, Notes, Settings.
+        XCTAssertEqual(Tab.allCases, [.calendar, .notes, .settings])
     }
 
     func testNotesSelectionPersistsAcrossRelaunch() throws {

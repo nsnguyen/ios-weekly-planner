@@ -14,14 +14,15 @@ enum WeekSummaryOutcome: Equatable, Sendable {
     case noContent
 }
 
-/// Produces a `WeekSummary` for the Review page. Aggregates store data
-/// (tasks done/total, hours-by-category) deterministically, then asks the
-/// `IntelligenceService` for a handwritten one-paragraph headline.
+/// Produces a `WeekSummary` from the week's events and tasks. Aggregates
+/// store data (tasks done/total, hours-by-category) deterministically, then
+/// asks the `IntelligenceService` for a handwritten one-paragraph headline.
+/// Ask the Planner's summarize-week tool still uses this generator.
 ///
 /// Phase 32 (#38): never invents content. When the model is unavailable
 /// the outcome is `.unavailable`; when the week is genuinely empty or the
 /// model fails, the outcome is `.noContent`. The old canned
-/// `WeekSummary.fallback` (fabricated streak/notes copy) is gone.
+/// `WeekSummary.fallback` (fabricated notes copy) is gone.
 @MainActor
 final class WeekSummaryGenerator {
     private let intelligence: any IntelligenceService

@@ -25,9 +25,15 @@ final class TabSelectionTests: XCTestCase {
 
     func testSwitchingTabPersistsThroughSettingsStore() throws {
         let selection = TabSelection(settings: settingsStore)
-        selection.current = .review
+        selection.current = .notes
         let reloaded = try settingsStore.current()
-        XCTAssertEqual(reloaded.lastTabRaw, "review")
+        XCTAssertEqual(reloaded.lastTabRaw, "notes")
+    }
+
+    func testLegacyReviewRawFallsBackToCalendar() throws {
+        try settingsStore.update { $0.lastTabRaw = "review" }
+        let selection = TabSelection(settings: settingsStore)
+        XCTAssertEqual(selection.current, .calendar)
     }
 
     func testFreshInstanceRestoresPersistedTab() throws {

@@ -1,9 +1,9 @@
 import Foundation
 
-/// Per-week AI-generated reflection used by the Review page (Phase 14)
-/// and any future surface that wants a one-paragraph summary + structured
-/// bullets. Value-typed and Sendable so it can flow across actor hops and
-/// be cached in memory without copy hazards.
+/// Per-week AI-generated reflection: a one-paragraph summary plus structured
+/// bullets. Ask the Planner's summarize-week tool still consumes this type.
+/// Value-typed and Sendable so it can flow across actor hops and be cached
+/// in memory without copy hazards.
 struct WeekSummary: Equatable, Sendable {
     /// One-paragraph handwritten body shown in the blue-ink "AI SUMMARY"
     /// block. Two to three sentences; matches the Phase 13 system prompt's
@@ -41,5 +41,5 @@ struct WeekSummary: Equatable, Sendable {
 
 // Phase 32 (#38): the old `WeekSummary.fallback(...)` extension was removed.
 // It fabricated content ("kept Wednesday's run", "Sara's gift", canned
-// bullets) that rendered as if it were real AI output. The Review page now
-// degrades honestly via `WeekSummaryOutcome` / `ReviewViewModel.SummaryState`.
+// bullets) that rendered as if it were real AI output. Callers now degrade
+// honestly via `WeekSummaryOutcome`.
