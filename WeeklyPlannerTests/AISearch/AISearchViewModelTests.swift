@@ -9,7 +9,6 @@ final class AISearchViewModelTests: XCTestCase {
     private var eventStore: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,16 +16,13 @@ final class AISearchViewModelTests: XCTestCase {
     override func tearDown() async throws {
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     private func makeViewModel(clock: @escaping () -> Date = { Date() }) -> AISearchViewModel {
-        AISearchViewModel(
-            eventStore: eventStore,
-            intelligence: StubIntelligenceService(eventStore: eventStore, clock: clock),
-            settings: { true },
-            clock: clock
-        )
+        AISearchViewModel(eventStore: eventStore,
+                          intelligence: StubIntelligenceService(eventStore: eventStore, clock: clock),
+                          settings: { true },
+                          clock: clock)
     }
 
     func testAskDentistMapsToDentistAnswer() async {
@@ -81,18 +77,15 @@ final class AISearchViewModelTests: XCTestCase {
 
     func testFallbackPathUsedWhenAIDisabled() async throws {
         let saraStart = Self.may16_2026(hour: 9)
-        try await eventStore.upsert(Event(
-            title: "Sara's birthday breakfast",
-            start: saraStart,
-            end: saraStart.addingTimeInterval(3600),
-            category: .personal
-        ))
-        let viewModel = AISearchViewModel(
-            eventStore: eventStore,
-            intelligence: StubIntelligenceService(eventStore: eventStore, clock: { Self.may16_2026() }),
-            settings: { false },
-            clock: { Self.may16_2026() }
-        )
+        try await eventStore.upsert(Event(title: "Sara's birthday breakfast",
+                                          start: saraStart,
+                                          end: saraStart.addingTimeInterval(3600),
+                                          category: .personal))
+        let viewModel = AISearchViewModel(eventStore: eventStore,
+                                          intelligence: StubIntelligenceService(eventStore: eventStore,
+                                                                                clock: { Self.may16_2026() }),
+                                          settings: { false },
+                                          clock: { Self.may16_2026() })
         viewModel.thinkingDelay = .milliseconds(0)
         await viewModel.ask(text: "When did I last meet with Sara?")
         XCTAssertNotNil(viewModel.answer)

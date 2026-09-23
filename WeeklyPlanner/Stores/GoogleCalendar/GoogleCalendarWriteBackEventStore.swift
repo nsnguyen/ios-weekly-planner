@@ -15,12 +15,11 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     private let isConnected: @MainActor () -> Bool
     private let unlinkEventKitIdentifier: @MainActor (String) -> Void
 
-    init(
-        base: any EventStoring,
-        client: any GoogleCalendarClientProtocol,
-        isConnected: @escaping @MainActor () -> Bool,
-        unlinkEventKitIdentifier: @escaping @MainActor (String) -> Void
-    ) {
+    init(base: any EventStoring,
+         client: any GoogleCalendarClientProtocol,
+         isConnected: @escaping @MainActor () -> Bool,
+         unlinkEventKitIdentifier: @escaping @MainActor (String) -> Void)
+    {
         self.base = base
         self.client = client
         self.isConnected = isConnected
@@ -55,7 +54,8 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     func delete(id: UUID) async throws {
         if let event = try await base.event(id: id),
            shouldWriteBack(event),
-           let googleEventID = event.googleEventID {
+           let googleEventID = event.googleEventID
+        {
             do {
                 try await client.cancelEvent(id: googleEventID)
             } catch GoogleCalendarClientError.notFound {
@@ -94,11 +94,9 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
         }
 
         do {
-            let updated = try await client.updateEvent(
-                id: googleEventID,
-                body: GCalMapper.writeBody(from: event),
-                etag: remote.etag ?? event.googleEtag
-            )
+            let updated = try await client.updateEvent(id: googleEventID,
+                                                       body: GCalMapper.writeBody(from: event),
+                                                       etag: remote.etag ?? event.googleEtag)
             applyRemoteIdentity(updated, to: event)
         } catch GoogleCalendarClientError.preconditionFailed where allowRetry {
             let fresh = try await client.getEvent(id: googleEventID)
@@ -147,12 +145,11 @@ final class GoogleCalendarWriteBackEventStore: EventStoring {
     }
 
     private func reportWriteBackFailure(_ error: Error, event: Event) {
-        writeBackLog.error("GCal write-back failed for event \(event.id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
-        NotificationCenter.default.post(
-            name: .googleCalendarWriteBackDidFail,
-            object: event,
-            userInfo: ["error": error]
-        )
+        writeBackLog
+            .error("GCal write-back failed for event \(event.id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
+        NotificationCenter.default.post(name: .googleCalendarWriteBackDidFail,
+                                        object: event,
+                                        userInfo: ["error": error])
     }
 
     private nonisolated(unsafe) static let iso = ISO8601DateFormatter()

@@ -16,8 +16,14 @@ final class UserSettings {
     var fontKey: String
     var sizeKey: String
 
-    /// Week math
+    /// Week math. Legacy — superseded by `weekStartRaw` (Phase 36b); kept
+    /// for migration of installs that only persisted this Bool.
     var weekStartsOnMonday: Bool
+
+    /// Week-start day as `Calendar.firstWeekday` raw (1 = Sunday …
+    /// 7 = Saturday). `0` = unset → fall back to the legacy
+    /// `weekStartsOnMonday` (Phase 36b migration).
+    var weekStartRaw: Int = 0
 
     /// Reminders
     /// `nil | 5 | 15 | 30 | 60`. Default `15`.
@@ -42,8 +48,8 @@ final class UserSettings {
 
     // MARK: Google Calendar sync (Phase 37)
 
-    var gcalSyncToken: String? = nil
-    var googleCalendarAccountEmail: String? = nil
+    var gcalSyncToken: String?
+    var googleCalendarAccountEmail: String?
 
     // Style
     var styleRaw: String
@@ -62,6 +68,7 @@ final class UserSettings {
          fontKey: String = PaperFont.caveat.rawValue,
          sizeKey: String = PaperSize.m.rawValue,
          weekStartsOnMonday: Bool = true,
+         weekStartRaw: Int = 0,
          defaultReminderMinutes: Int? = 15,
          appleIntelligenceEnabled: Bool = true,
          aiStickyNotesEnabled: Bool = false,
@@ -84,6 +91,7 @@ final class UserSettings {
         self.fontKey = fontKey
         self.sizeKey = sizeKey
         self.weekStartsOnMonday = weekStartsOnMonday
+        self.weekStartRaw = weekStartRaw
         self.defaultReminderMinutes = defaultReminderMinutes
         self.appleIntelligenceEnabled = appleIntelligenceEnabled
         self.aiStickyNotesEnabled = aiStickyNotesEnabled
@@ -132,5 +140,15 @@ extension UserSettings {
     var paperView: PaperView {
         get { PaperView(rawValue: paperViewRaw) ?? .day }
         set { paperViewRaw = newValue.rawValue }
+    }
+
+    var weekStart: WeekStartDay {
+        get {
+            if let day = WeekStartDay(rawValue: weekStartRaw) {
+                return day
+            }
+            return weekStartsOnMonday ? .monday : .sunday
+        }
+        set { weekStartRaw = newValue.rawValue }
     }
 }

@@ -47,15 +47,14 @@ final class RealGIDSigningClient: GIDSigningClient {
         // NS_ERROR_ENUM Swift type alias is not reliably importable by name.
         let canceledCode = -5
         return try await withCancellableContinuation { completion in
-            GIDSignIn.sharedInstance.signIn(
-                withPresenting: presenting,
-                hint: nil,
-                additionalScopes: scopes
-            ) { result, error in
+            GIDSignIn.sharedInstance.signIn(withPresenting: presenting,
+                                            hint: nil,
+                                            additionalScopes: scopes)
+            { result, error in
                 // SDK callbacks are dispatched on the main queue, so it is
                 // safe to read GIDGoogleUser properties here.
                 if let error = error as NSError? {
-                    if error.domain == kGIDSignInErrorDomain && error.code == canceledCode {
+                    if error.domain == kGIDSignInErrorDomain, error.code == canceledCode {
                         completion(.failure(GoogleAuthError.userCancelled))
                     } else {
                         completion(.failure(GoogleAuthError.network(error.localizedDescription)))
@@ -73,15 +72,14 @@ final class RealGIDSigningClient: GIDSigningClient {
                     completion(.failure(GoogleAuthError.network("Missing email on Google profile")))
                     return
                 }
-                completion(.success(GoogleAccountInfo(
-                    email: email,
-                    accessToken: user.accessToken.tokenString,
-                    refreshToken: user.refreshToken.tokenString,
-                    // Nil expirationDate → .distantPast so LiveGoogleAuthService
-                    // treats the token as already-expired and proactively
-                    // refreshes on next accessToken() rather than trusting a
-                    // fabricated future timestamp.
-                    expiresAt: user.accessToken.expirationDate ?? .distantPast)))
+                completion(.success(GoogleAccountInfo(email: email,
+                                                      accessToken: user.accessToken.tokenString,
+                                                      refreshToken: user.refreshToken.tokenString,
+                                                      // Nil expirationDate → .distantPast so LiveGoogleAuthService
+                                                      // treats the token as already-expired and proactively
+                                                      // refreshes on next accessToken() rather than trusting a
+                                                      // fabricated future timestamp.
+                                                      expiresAt: user.accessToken.expirationDate ?? .distantPast)))
             }
         }
     }
@@ -93,9 +91,9 @@ final class RealGIDSigningClient: GIDSigningClient {
     /// `OneShotResult` keeps delivery one-shot, so a late SDK callback after a
     /// cancellation (or vice versa) is ignored and the continuation never
     /// double-resumes.
-    private func withCancellableContinuation<T: Sendable>(
-        _ start: (@escaping (Result<T, GoogleAuthError>) -> Void) -> Void
-    ) async throws -> T {
+    private func withCancellableContinuation<T: Sendable>(_ start: (@escaping (Result<T, GoogleAuthError>) -> Void)
+        -> Void) async throws -> T
+    {
         let oneShot = OneShotResult<T, GoogleAuthError>()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
@@ -117,7 +115,8 @@ final class RealGIDSigningClient: GIDSigningClient {
     /// continuation, so this can't leak/hang the way a re-run signIn(...) does.
     private func addScopes(_ scopes: [String],
                            to user: GIDGoogleUser,
-                           presenting: UIViewController) async throws -> GoogleAccountInfo {
+                           presenting: UIViewController) async throws -> GoogleAccountInfo
+    {
         let granted = Set(user.grantedScopes ?? [])
         let missing = scopes.filter { !granted.contains($0) }
         guard !missing.isEmpty else { return try snapshot(from: user) }
@@ -126,7 +125,7 @@ final class RealGIDSigningClient: GIDSigningClient {
             user.addScopes(missing, presenting: presenting) { result, error in
                 // SDK callbacks are dispatched on the main queue.
                 if let error = error as NSError? {
-                    if error.domain == kGIDSignInErrorDomain && error.code == canceledCode {
+                    if error.domain == kGIDSignInErrorDomain, error.code == canceledCode {
                         completion(.failure(GoogleAuthError.userCancelled))
                     } else {
                         completion(.failure(GoogleAuthError.network(error.localizedDescription)))
@@ -143,11 +142,10 @@ final class RealGIDSigningClient: GIDSigningClient {
                     completion(.failure(GoogleAuthError.network("Missing email on Google profile")))
                     return
                 }
-                completion(.success(GoogleAccountInfo(
-                    email: email,
-                    accessToken: updated.accessToken.tokenString,
-                    refreshToken: updated.refreshToken.tokenString,
-                    expiresAt: updated.accessToken.expirationDate ?? .distantPast)))
+                completion(.success(GoogleAccountInfo(email: email,
+                                                      accessToken: updated.accessToken.tokenString,
+                                                      refreshToken: updated.refreshToken.tokenString,
+                                                      expiresAt: updated.accessToken.expirationDate ?? .distantPast)))
             }
         }
     }
@@ -171,12 +169,12 @@ final class RealGIDSigningClient: GIDSigningClient {
                     completion(.failure(GoogleAuthError.network("Missing email on Google profile")))
                     return
                 }
-                completion(.success(GoogleAccountInfo(
-                    email: email,
-                    accessToken: updatedUser.accessToken.tokenString,
-                    refreshToken: updatedUser.refreshToken.tokenString,
-                    // See signIn() rationale: nil expiration → force re-refresh.
-                    expiresAt: updatedUser.accessToken.expirationDate ?? .distantPast)))
+                completion(.success(GoogleAccountInfo(email: email,
+                                                      accessToken: updatedUser.accessToken.tokenString,
+                                                      refreshToken: updatedUser.refreshToken.tokenString,
+                                                      // See signIn() rationale: nil expiration → force re-refresh.
+                                                      expiresAt: updatedUser.accessToken
+                                                          .expirationDate ?? .distantPast)))
             }
         }
     }
@@ -198,12 +196,10 @@ final class RealGIDSigningClient: GIDSigningClient {
         guard let email = user.profile?.email else {
             throw GoogleAuthError.network("Missing email on Google profile")
         }
-        return GoogleAccountInfo(
-            email: email,
-            accessToken: user.accessToken.tokenString,
-            refreshToken: user.refreshToken.tokenString,
-            // See signIn() rationale: nil expiration → force re-refresh.
-            expiresAt: user.accessToken.expirationDate ?? .distantPast
-        )
+        return GoogleAccountInfo(email: email,
+                                 accessToken: user.accessToken.tokenString,
+                                 refreshToken: user.refreshToken.tokenString,
+                                 // See signIn() rationale: nil expiration → force re-refresh.
+                                 expiresAt: user.accessToken.expirationDate ?? .distantPast)
     }
 }

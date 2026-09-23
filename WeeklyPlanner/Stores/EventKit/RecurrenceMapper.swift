@@ -50,15 +50,14 @@ enum RecurrenceMapper {
         @unknown default: return nil
         }
 
-        let end: RecurrenceEnd
-        if let ekEnd = rule.recurrenceEnd {
+        let end: RecurrenceEnd = if let ekEnd = rule.recurrenceEnd {
             if let date = ekEnd.endDate {
-                end = .onDate(date)
+                .onDate(date)
             } else {
-                end = .afterCount(ekEnd.occurrenceCount)
+                .afterCount(ekEnd.occurrenceCount)
             }
         } else {
-            end = .never
+            .never
         }
         return Recurrence(frequency: frequency, interval: rule.interval, end: end)
     }

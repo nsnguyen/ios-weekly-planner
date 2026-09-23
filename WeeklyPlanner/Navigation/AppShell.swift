@@ -1,6 +1,6 @@
-import SwiftUI
-import SwiftData
 import Combine
+import SwiftData
+import SwiftUI
 
 /// Root composition for the paper app. Sits above `RootView` (which only
 /// hosts the environment values) and below every page. Owns:
@@ -35,6 +35,9 @@ struct AppShell: View {
     @State private var paperView: PaperView = .day
     @State private var isPickerOpen: Bool = false
     @State private var isAISearchOpen: Bool = false
+    /// Bumped when week-start changes so week-anchored views rebuild against
+    /// the new `WeekMath.preferredCalendar`.
+    @State private var weekLayoutEpoch = 0
 
     /// Phase 24 — constructed once at `init` so the orchestrator's per-day
     /// TTL cache survives view re-renders. Computing a fresh orchestrator
@@ -54,11 +57,29 @@ struct AppShell: View {
     /// materialized one yet. `@Query` returns at most one element here
     /// because `SwiftDataSettingsStore.current()` lazy-creates exactly one
     /// `UserSettings` instance.
-    private var settings: UserSettings { settingsRows.first ?? UserSettings() }
+    private var settings: UserSettings {
+        settingsRows.first ?? UserSettings()
+    }
 
-    private var resolvedTheme: PaperTheme { settings.paperTheme.theme }
-    private var resolvedFont: PaperFont { settings.paperFont }
-    private var resolvedSize: PaperSize { settings.paperSize }
+    /// Re-seed the process-wide week calendar and rebuild week-anchored UI.
+    /// A week-start change is rare; a full rebuild is the correct cost.
+    private func applyWeekStartPreference() {
+        let day = settingsRows.first?.weekStart ?? .monday
+        WeekMath.preferredCalendar = WeekMath.calendar(startingOn: day)
+        weekLayoutEpoch += 1
+    }
+
+    private var resolvedTheme: PaperTheme {
+        settings.paperTheme.theme
+    }
+
+    private var resolvedFont: PaperFont {
+        settings.paperFont
+    }
+
+    private var resolvedSize: PaperSize {
+        settings.paperSize
+    }
 
     init(settingsStore: any SettingsStoring) {
         let today = Date()
@@ -78,6 +99,7 @@ struct AppShell: View {
                 switch selection.current {
                 case .calendar:
                     calendarTab
+                        .id(weekLayoutEpoch)
                 case .review:
                     PaperReviewView(weekOffset: controller.current.week)
                 case .notes:
@@ -96,6 +118,7 @@ struct AppShell: View {
                 controller.setWeek(offset)
                 isPickerOpen = false
             }
+            .id(weekLayoutEpoch)
 
             if isAISearchOpen {
                 PaperAISearchView(isOpen: $isAISearchOpen,
@@ -121,6 +144,9 @@ struct AppShell: View {
                 await engine?.sync()
             }
         }
+        .onChange(of: settingsRows.first?.weekStartRaw) { _, _ in
+            applyWeekStartPreference()
+        }
         .onChange(of: deepLinkRouter.pending) { _, new in
             guard new != nil else { return }
             selection.current = .calendar
@@ -128,10 +154,8 @@ struct AppShell: View {
             // calendar tab is visible.
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PaperTabBar(selection: Binding(
-                get: { selection.current },
-                set: { selection.current = $0 }
-            ))
+            PaperTabBar(selection: Binding(get: { selection.current },
+                                           set: { selection.current = $0 }))
         }
         .animation(AnimationTokens.aiOverlaySlide(reduced: reduceMotion),
                    value: isAISearchOpen)
@@ -231,17 +255,14 @@ struct AppShell: View {
                                     tasks: StubTaskStore(),
                                     inbox: StubInboxStore())
         let fallbackService = StubIntelligenceService(eventStore: StubEventStore())
-        let intelligence: any IntelligenceService = PlannerLanguageModel(
-            registry: registry, fallback: fallbackService)
+        let intelligence: any IntelligenceService = PlannerLanguageModel(registry: registry, fallback: fallbackService)
         let generators: [any InsightGenerator] = [
             TravelInsightGenerator(provider: LiveTravelProvider()),
             WeatherInsightGenerator(provider: LiveWeatherProvider()),
             KeywordInsightGenerator(model: LiveKeywordInsightModel()),
             InboxInsightGenerator(),
         ]
-        return StickyOrchestrator(
-            generators: generators,
-            fallback: EncouragementInsightGenerator(intelligence: intelligence))
+        return StickyOrchestrator(generators: generators,
+                                  fallback: EncouragementInsightGenerator(intelligence: intelligence))
     }
-
 }

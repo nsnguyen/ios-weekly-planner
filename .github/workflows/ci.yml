@@ -28,7 +28,20 @@ jobs:
       - name: Install build tools
         run: |
           brew update
-          brew install xcodegen swiftlint swiftformat
+          brew install xcodegen
+          # Pin the linters. swiftlint_baseline.json and the formatted tree
+          # match these releases; a floating Homebrew formula will fail the gates.
+          curl -fsSL -o /tmp/swiftlint.zip -L https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          unzip -q -o /tmp/swiftlint.zip -d /tmp/swiftlint-bin
+          curl -fsSL -o /tmp/swiftformat.zip -L https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat.zip
+          unzip -q -o /tmp/swiftformat.zip -d /tmp/swiftformat-bin
+          mkdir -p "$HOME/.local/bin"
+          install -m 755 /tmp/swiftlint-bin/swiftlint "$HOME/.local/bin/swiftlint"
+          install -m 755 /tmp/swiftformat-bin/swiftformat "$HOME/.local/bin/swiftformat"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          swiftlint version
+          swiftformat --version
 
       - name: Cache SPM packages
         uses: actions/cache@v4
@@ -39,11 +52,17 @@ jobs:
           key: ${{ runner.os }}-spm-${{ hashFiles('project.yml') }}
           restore-keys: ${{ runner.os }}-spm-
 
+      - name: Provide placeholder secrets
+        run: |
+          if [ ! -f Secrets.xcconfig ]; then
+            cp Secrets.example.xcconfig Secrets.xcconfig
+          fi
+
       - name: Generate Xcode project
         run: xcodegen generate
 
       - name: SwiftLint
-        run: swiftlint --strict --reporter github-actions-logging
+        run: swiftlint --strict --baseline swiftlint_baseline.json --reporter github-actions-logging
 
       - name: SwiftFormat lint
         run: swiftformat --lint .
@@ -59,7 +78,8 @@ jobs:
             -scheme WeeklyPlanner \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest' \
             -resultBundlePath TestResults.xcresult \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Upload xcresult on failure
         if: failure()

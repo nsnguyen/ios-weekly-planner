@@ -1,10 +1,9 @@
-import XCTest
 import SwiftData
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
 final class ConnectionsSectionTests: XCTestCase {
-
     // MARK: - ConnectionsAlert factory
 
     func testAlertConnectFailedShape() {
@@ -28,21 +27,19 @@ final class ConnectionsSectionTests: XCTestCase {
     // MARK: - gmailDidConnect notification
 
     func testGmailDidConnectNotificationName() {
-        XCTAssertEqual(
-            Notification.Name.gmailDidConnect.rawValue,
-            "WeeklyPlanner.gmailDidConnect"
-        )
+        XCTAssertEqual(Notification.Name.gmailDidConnect.rawValue,
+                       "WeeklyPlanner.gmailDidConnect")
     }
 
     // MARK: - View-model detail line via container
 
-    func testGmailDetailTextWhenDisconnected() async throws {
+    func testGmailDetailTextWhenDisconnected() {
         let vm = makeViewModel(connected: false, email: nil)
         XCTAssertFalse(vm.isGmailConnected)
         XCTAssertNil(vm.gmailAccountEmail)
     }
 
-    func testGmailDetailTextWhenConnected() async throws {
+    func testGmailDetailTextWhenConnected() {
         let vm = makeViewModel(connected: true, email: "sara@gmail.com")
         XCTAssertTrue(vm.isGmailConnected)
         XCTAssertEqual(vm.gmailAccountEmail, "sara@gmail.com")
@@ -52,19 +49,15 @@ final class ConnectionsSectionTests: XCTestCase {
 
     private func makeViewModel(connected: Bool, email: String?) -> ConnectionsViewModel {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(
-            for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
-            configurations: config
-        )
+        let container = try! ModelContainer(for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
+                                            configurations: config)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         try! settingsStore.update { s in
             s.gmailConnected = connected
             s.gmailAccountEmail = email
         }
-        return ConnectionsViewModel(
-            settingsStore: settingsStore,
-            inboxStore: SwiftDataInboxStore(context: container.mainContext),
-            auth: StubGoogleAuthService()
-        )
+        return ConnectionsViewModel(settingsStore: settingsStore,
+                                    inboxStore: SwiftDataInboxStore(context: container.mainContext),
+                                    auth: StubGoogleAuthService())
     }
 }

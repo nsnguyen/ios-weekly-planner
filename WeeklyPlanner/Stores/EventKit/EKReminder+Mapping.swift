@@ -13,7 +13,9 @@ enum EKReminderMapping {
 
     static func apply(_ task: TaskItem, to reminder: EKReminder, calendar: EKCalendar?) {
         reminder.title = task.title
-        if let calendar { reminder.calendar = calendar }
+        if let calendar {
+            reminder.calendar = calendar
+        }
         reminder.priority = priorityToEK(task.priority)
         reminder.isCompleted = task.done
 

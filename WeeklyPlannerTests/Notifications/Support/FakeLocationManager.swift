@@ -11,8 +11,13 @@ final class FakeLocationManager: LocationManaging {
     private(set) var whenInUseRequestCount = 0
     private(set) var alwaysRequestCount = 0
 
-    func requestWhenInUseAuthorization() { whenInUseRequestCount += 1 }
-    func requestAlwaysAuthorization()    { alwaysRequestCount += 1 }
+    func requestWhenInUseAuthorization() {
+        whenInUseRequestCount += 1
+    }
+
+    func requestAlwaysAuthorization() {
+        alwaysRequestCount += 1
+    }
 
     func startMonitoring(for region: CLRegion) {
         monitoredRegions.insert(region)

@@ -10,15 +10,15 @@ final class ReviewViewModelTests: XCTestCase {
     private var taskStore: SwiftDataTaskStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         taskStore = SwiftDataTaskStore(context: container.mainContext)
     }
 
     override func tearDown() async throws {
-        eventStore = nil; taskStore = nil; container = nil
-        try await super.tearDown()
+        eventStore = nil
+        taskStore = nil
+        container = nil
     }
 
     func testTimeByCategorySumsCorrectly() async throws {
@@ -33,10 +33,10 @@ final class ReviewViewModelTests: XCTestCase {
                                           category: .health))
 
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: nil,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: nil,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
 
         XCTAssertEqual(vm.timeByCategory[.work] ?? 0, 0.5, accuracy: 0.01)
@@ -54,10 +54,10 @@ final class ReviewViewModelTests: XCTestCase {
                                             priority: .med, category: .work))
 
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: nil,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: nil,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
 
         XCTAssertEqual(vm.tasksDone, 2)
@@ -69,39 +69,37 @@ final class ReviewViewModelTests: XCTestCase {
 
     func testSummaryStateIsAIOffWhenGeneratorNil() async {
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: nil,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: nil,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
         XCTAssertEqual(vm.summaryState, .aiOff)
     }
 
     func testSummaryStateIsAIOffWhenSettingsToggleOff() async {
-        let generator = WeekSummaryGenerator(
-            intelligence: StubIntelligenceService(eventStore: eventStore),
-            events: eventStore,
-            tasks: taskStore,
-            settings: { false })
+        let generator = WeekSummaryGenerator(intelligence: StubIntelligenceService(eventStore: eventStore),
+                                             events: eventStore,
+                                             tasks: taskStore,
+                                             settings: { false })
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: generator,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: generator,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
         XCTAssertEqual(vm.summaryState, .aiOff)
     }
 
     func testSummaryStateHiddenForEmptyWeekWithAIOn() async {
-        let generator = WeekSummaryGenerator(
-            intelligence: StubIntelligenceService(eventStore: eventStore),
-            events: eventStore,
-            tasks: taskStore)
+        let generator = WeekSummaryGenerator(intelligence: StubIntelligenceService(eventStore: eventStore),
+                                             events: eventStore,
+                                             tasks: taskStore)
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: generator,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: generator,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
         XCTAssertEqual(vm.summaryState, .hidden)
     }
@@ -112,17 +110,16 @@ final class ReviewViewModelTests: XCTestCase {
                                           start: monday,
                                           end: monday.addingTimeInterval(1800),
                                           category: .work))
-        let generator = WeekSummaryGenerator(
-            intelligence: StubIntelligenceService(eventStore: eventStore),
-            events: eventStore,
-            tasks: taskStore)
+        let generator = WeekSummaryGenerator(intelligence: StubIntelligenceService(eventStore: eventStore),
+                                             events: eventStore,
+                                             tasks: taskStore)
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: generator,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: generator,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
-        guard case .real(let summary) = vm.summaryState else {
+        guard case let .real(summary) = vm.summaryState else {
             return XCTFail("expected .real, got \(vm.summaryState)")
         }
         XCTAssertFalse(summary.headline.isEmpty)
@@ -132,10 +129,10 @@ final class ReviewViewModelTests: XCTestCase {
 
     func testNoFabricatedStreaksInAnyState() async {
         let vm = ReviewViewModel(weekOffset: 0,
-                                  eventStore: eventStore,
-                                  taskStore: taskStore,
-                                  summaryGenerator: nil,
-                                  clock: { Self.may18_2026(hour: 12) })
+                                 eventStore: eventStore,
+                                 taskStore: taskStore,
+                                 summaryGenerator: nil,
+                                 clock: { Self.may18_2026(hour: 12) })
         await vm.refresh()
         XCTAssertTrue(vm.streaks.isEmpty,
                       "no real StreakStore exists yet — streaks must never be fabricated")

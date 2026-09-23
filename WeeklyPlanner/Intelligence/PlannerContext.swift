@@ -24,10 +24,8 @@ struct PlannerContext: Sendable {
     let appleIntelligenceEnabled: Bool
 
     /// Default tuned for the AI overlay.
-    static let `default` = PlannerContext(
-        now: .init(),
-        viewedWeekOffset: 0,
-        maxResponseTokens: 256,
-        appleIntelligenceEnabled: true
-    )
+    static let `default` = PlannerContext(now: .init(),
+                                          viewedWeekOffset: 0,
+                                          maxResponseTokens: 256,
+                                          appleIntelligenceEnabled: true)
 }

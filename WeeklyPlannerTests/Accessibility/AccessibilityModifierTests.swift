@@ -2,11 +2,10 @@ import Foundation
 import XCTest
 @testable import WeeklyPlanner
 
-// AccessibilityFormatters are pure functions that read model fields —
-// no ModelContainer needed even though Event/TaskItem are @Model classes.
+/// AccessibilityFormatters are pure functions that read model fields —
+/// no ModelContainer needed even though Event/TaskItem are @Model classes.
 @MainActor
 final class AccessibilityModifierTests: XCTestCase {
-
     // MARK: - eventLabel
 
     func testEventLabel_includesAllFields() {
@@ -16,9 +15,9 @@ final class AccessibilityModifierTests: XCTestCase {
                               source: WeeklyPlanner.EventSource.manual)
         let label = AccessibilityFormatters.eventLabel(event)
         XCTAssertTrue(label.contains("Sara's birthday"), "label missing title: \(label)")
-        XCTAssertTrue(label.contains("Personal"),        "label missing category: \(label)")
-        XCTAssertTrue(label.contains("Maison's"),        "label missing location: \(label)")
-        XCTAssertTrue(label.contains("added by you"),    "label missing source: \(label)")
+        XCTAssertTrue(label.contains("Personal"), "label missing category: \(label)")
+        XCTAssertTrue(label.contains("Maison's"), "label missing location: \(label)")
+        XCTAssertTrue(label.contains("added by you"), "label missing source: \(label)")
     }
 
     func testEventLabel_noLocation_saysNoLocation() {
@@ -46,7 +45,7 @@ final class AccessibilityModifierTests: XCTestCase {
         let openTask = makeTask(title: "Buy milk", done: false)
         let doneLabel = AccessibilityFormatters.taskLabel(doneTask)
         let openLabel = AccessibilityFormatters.taskLabel(openTask)
-        XCTAssertTrue(doneLabel.contains("completed"),     "done label wrong: \(doneLabel)")
+        XCTAssertTrue(doneLabel.contains("completed"), "done label wrong: \(doneLabel)")
         XCTAssertTrue(openLabel.contains("not completed"), "open label wrong: \(openLabel)")
     }
 
@@ -63,7 +62,7 @@ final class AccessibilityModifierTests: XCTestCase {
     func testWeekRowLabel_includesWeekNumber() {
         let label = AccessibilityFormatters.weekRowLabel(range: "Mar 4 – Mar 10", weekNumber: 10)
         XCTAssertTrue(label.contains("Mar 4 – Mar 10"), "label missing range: \(label)")
-        XCTAssertTrue(label.contains("week 10"),        "label missing week number: \(label)")
+        XCTAssertTrue(label.contains("week 10"), "label missing week number: \(label)")
     }
 
     // MARK: - Helpers
@@ -74,7 +73,8 @@ final class AccessibilityModifierTests: XCTestCase {
     private func makeEvent(title: String,
                            category: WeeklyPlanner.Category,
                            location: String?,
-                           source: WeeklyPlanner.EventSource) -> Event {
+                           source: WeeklyPlanner.EventSource) -> Event
+    {
         Event(title: title,
               start: Date(),
               end: Date(timeIntervalSinceNow: 3600),

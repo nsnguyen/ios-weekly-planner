@@ -36,11 +36,13 @@ struct ReviewHeader: View {
                 .multilineTextAlignment(.trailing)
         }
         .overlay(alignment: .bottom) {
-            LinearGradient(colors: [theme.ink.opacity(0.45),
-                                     theme.ink.opacity(0.45),
-                                     .clear],
-                           startPoint: .leading,
-                           endPoint: .trailing)
+            LinearGradient(colors: [
+                theme.ink.opacity(0.45),
+                theme.ink.opacity(0.45),
+                .clear,
+            ],
+            startPoint: .leading,
+            endPoint: .trailing)
                 .frame(height: 2)
                 .offset(y: 8)
         }

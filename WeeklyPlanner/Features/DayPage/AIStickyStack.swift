@@ -47,43 +47,41 @@ struct AIStickyStack: View {
                         }
                     }
                     if let top = currentInsight {
-                        AIStickyNote(
-                            insight: top,
-                            onTap: { onTap(top) },
-                            onLongPress: { },
-                            onRefresh: onRefresh
-                        )
-                        .zIndex(10)
-                        .offset(x: dragOffset)
-                        .opacity(dragOpacity)
-                        .highPriorityGesture(swipeGesture)
-                        .contextMenu {
-                            if insights.count > 1 {
-                                Button {
-                                    navigateForward()
+                        AIStickyNote(insight: top,
+                                     onTap: { onTap(top) },
+                                     onLongPress: {},
+                                     onRefresh: onRefresh)
+                            .zIndex(10)
+                            .offset(x: dragOffset)
+                            .opacity(dragOpacity)
+                            .highPriorityGesture(swipeGesture)
+                            .contextMenu {
+                                if insights.count > 1 {
+                                    Button {
+                                        navigateForward()
+                                    } label: {
+                                        Label("Show another", systemImage: "arrow.triangle.2.circlepath")
+                                    }
+                                }
+                                Button(role: .destructive) {
+                                    onDismiss(top)
                                 } label: {
-                                    Label("Show another", systemImage: "arrow.triangle.2.circlepath")
+                                    Label("Dismiss this insight", systemImage: "xmark.circle")
+                                }
+                                Button {
+                                    onRefresh()
+                                } label: {
+                                    Label("Refresh", systemImage: "arrow.clockwise")
+                                }
+                                if let actionLabel = actionLabel(for: top.kind) {
+                                    Button {
+                                        onTap(top)
+                                    } label: {
+                                        Label(actionLabel, systemImage: actionIcon(for: top.kind))
+                                    }
                                 }
                             }
-                            Button(role: .destructive) {
-                                onDismiss(top)
-                            } label: {
-                                Label("Dismiss this insight", systemImage: "xmark.circle")
-                            }
-                            Button {
-                                onRefresh()
-                            } label: {
-                                Label("Refresh", systemImage: "arrow.clockwise")
-                            }
-                            if let actionLabel = actionLabel(for: top.kind) {
-                                Button {
-                                    onTap(top)
-                                } label: {
-                                    Label(actionLabel, systemImage: actionIcon(for: top.kind))
-                                }
-                            }
-                        }
-                        .accessibilityIdentifier("daypage.sticky.top")
+                            .accessibilityIdentifier("daypage.sticky.top")
                     }
                 }
                 .animation(AnimationTokens.stickySwipe(reduced: reduceMotion), value: currentIndex)
@@ -172,7 +170,7 @@ struct AIStickyStack: View {
 
     private var pageIndicator: some View {
         HStack(spacing: 4) {
-            ForEach(0..<insights.count, id: \.self) { idx in
+            ForEach(0 ..< insights.count, id: \.self) { idx in
                 Circle()
                     .fill(idx == safeIndex ? Color.black.opacity(0.4) : Color.clear)
                     .overlay(Circle().stroke(Color.black.opacity(0.3), lineWidth: 0.5))
@@ -187,48 +185,50 @@ struct AIStickyStack: View {
 
     private func peekPosition(of idx: Int) -> Int {
         let offset = idx - safeIndex
-        if offset > 0 { return offset }
-        if offset < 0 { return insights.count + offset }
+        if offset > 0 {
+            return offset
+        }
+        if offset < 0 {
+            return insights.count + offset
+        }
         return 0
     }
 
     private func peekInsight(for top: AIInsight, at position: Int) -> AIInsight {
-        AIInsight(
-            dayKey: top.dayKey,
-            dateGenerated: top.dateGenerated,
-            text: top.text,
-            colorHex: top.colorHex,
-            tiltDegrees: top.tiltDegrees - Double(2 * position),
-            kind: top.kind,
-            priority: top.priority
-        )
+        AIInsight(dayKey: top.dayKey,
+                  dateGenerated: top.dateGenerated,
+                  text: top.text,
+                  colorHex: top.colorHex,
+                  tiltDegrees: top.tiltDegrees - Double(2 * position),
+                  kind: top.kind,
+                  priority: top.priority)
     }
 
     private func peekOffset(at position: Int) -> CGSize {
         switch position {
-        case 1: return CGSize(width: -4, height: 8)
-        case 2: return CGSize(width: -8, height: 14)
-        default: return .zero
+        case 1: CGSize(width: -4, height: 8)
+        case 2: CGSize(width: -8, height: 14)
+        default: .zero
         }
     }
 
     private func actionLabel(for kind: InsightKind) -> String? {
         switch kind {
-        case .travel: return "Get directions"
-        case .weather: return "Open Weather"
-        case .keyword: return "Open event"
-        case .inbox: return "Open inbox"
-        case .encouragement: return nil
+        case .travel: "Get directions"
+        case .weather: "Open Weather"
+        case .keyword: "Open event"
+        case .inbox: "Open inbox"
+        case .encouragement: nil
         }
     }
 
     private func actionIcon(for kind: InsightKind) -> String {
         switch kind {
-        case .travel: return "map"
-        case .weather: return "cloud.rain"
-        case .keyword: return "calendar"
-        case .inbox: return "tray"
-        case .encouragement: return "sparkles"
+        case .travel: "map"
+        case .weather: "cloud.rain"
+        case .keyword: "calendar"
+        case .inbox: "tray"
+        case .encouragement: "sparkles"
         }
     }
 }

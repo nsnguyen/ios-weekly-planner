@@ -1,6 +1,7 @@
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class TimeSpentBarChartTests: XCTestCase {
     func testRowsFromEmptyDictionaryIsEmpty() {
         XCTAssertTrue(TimeSpentBarChart.rows(from: [:]).isEmpty)
@@ -14,9 +15,11 @@ final class TimeSpentBarChartTests: XCTestCase {
     }
 
     func testRowsSortedByHoursDescending() {
-        let rows = TimeSpentBarChart.rows(from: [.work: 1.5,
-                                                  .health: 3.0,
-                                                  .personal: 0.75])
+        let rows = TimeSpentBarChart.rows(from: [
+            .work: 1.5,
+            .health: 3.0,
+            .personal: 0.75,
+        ])
         XCTAssertEqual(rows.map(\.0), [.health, .work, .personal])
     }
 

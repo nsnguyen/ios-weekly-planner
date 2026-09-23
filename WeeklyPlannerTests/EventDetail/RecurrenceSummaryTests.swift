@@ -4,7 +4,10 @@ import XCTest
 final class RecurrenceSummaryTests: XCTestCase {
     private func monday() -> Date {
         var c = DateComponents()
-        c.year = 2026; c.month = 6; c.day = 1; c.hour = 9 // Mon Jun 1 2026
+        c.year = 2026
+        c.month = 6
+        c.day = 1
+        c.hour = 9 // Mon Jun 1 2026
         return WeekMath.mondayCalendar().date(from: c)!
     }
 
@@ -18,15 +21,19 @@ final class RecurrenceSummaryTests: XCTestCase {
         XCTAssertEqual(text, "Every 2 weeks on Mon")
     }
 
-    func testDailyUntilDate() {
-        var c = DateComponents(); c.year = 2026; c.month = 6; c.day = 30
-        let end = WeekMath.mondayCalendar().date(from: c)!
+    func testDailyUntilDate() throws {
+        var c = DateComponents()
+        c.year = 2026
+        c.month = 6
+        c.day = 30
+        let end = try XCTUnwrap(WeekMath.mondayCalendar().date(from: c))
         let text = RecurrenceSummary.text(for: Recurrence(frequency: .daily, end: .onDate(end)), seriesStart: monday())
         XCTAssertEqual(text, "Every day until Jun 30")
     }
 
     func testMonthlyAfterCount() {
-        let text = RecurrenceSummary.text(for: Recurrence(frequency: .monthly, end: .afterCount(5)), seriesStart: monday())
+        let text = RecurrenceSummary.text(for: Recurrence(frequency: .monthly, end: .afterCount(5)),
+                                          seriesStart: monday())
         XCTAssertEqual(text, "Every month, 5 times")
     }
 

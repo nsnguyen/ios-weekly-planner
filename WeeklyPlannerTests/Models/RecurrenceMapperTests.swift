@@ -51,23 +51,24 @@ final class RecurrenceMapperTests: XCTestCase {
 
     func testComplexRuleOutsideSubsetMapsToNil() {
         // "Weekly on Mon+Wed" — a BYDAY set we don't model.
-        let complex = EKRecurrenceRule(
-            recurrenceWith: .weekly,
-            interval: 1,
-            daysOfTheWeek: [EKRecurrenceDayOfWeek(.monday), EKRecurrenceDayOfWeek(.wednesday)],
-            daysOfTheMonth: nil, monthsOfTheYear: nil, weeksOfTheYear: nil,
-            daysOfTheYear: nil, setPositions: nil, end: nil)
+        let complex = EKRecurrenceRule(recurrenceWith: .weekly,
+                                       interval: 1,
+                                       daysOfTheWeek: [
+                                           EKRecurrenceDayOfWeek(.monday),
+                                           EKRecurrenceDayOfWeek(.wednesday),
+                                       ],
+                                       daysOfTheMonth: nil, monthsOfTheYear: nil, weeksOfTheYear: nil,
+                                       daysOfTheYear: nil, setPositions: nil, end: nil)
         XCTAssertNil(RecurrenceMapper.toRecurrence([complex]))
     }
 
     func testWeeklySingleDayOfWeekIsAcceptedAsPlainWeekly() {
         // Other apps commonly emit weekly rules carrying the anchor weekday.
-        let single = EKRecurrenceRule(
-            recurrenceWith: .weekly,
-            interval: 2,
-            daysOfTheWeek: [EKRecurrenceDayOfWeek(.friday)],
-            daysOfTheMonth: nil, monthsOfTheYear: nil, weeksOfTheYear: nil,
-            daysOfTheYear: nil, setPositions: nil, end: nil)
+        let single = EKRecurrenceRule(recurrenceWith: .weekly,
+                                      interval: 2,
+                                      daysOfTheWeek: [EKRecurrenceDayOfWeek(.friday)],
+                                      daysOfTheMonth: nil, monthsOfTheYear: nil, weeksOfTheYear: nil,
+                                      daysOfTheYear: nil, setPositions: nil, end: nil)
         XCTAssertEqual(RecurrenceMapper.toRecurrence([single]),
                        Recurrence(frequency: .weekly, interval: 2))
     }

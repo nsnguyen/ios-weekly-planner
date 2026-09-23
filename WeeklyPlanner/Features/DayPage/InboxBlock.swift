@@ -102,7 +102,7 @@ struct InboxBlock: View {
 // MARK: - Previews
 
 #Preview("InboxBlock · Two suggestions") {
-    let calendar = WeekMath.mondayCalendar()
+    let calendar = WeekMath.preferredCalendar
     var components = DateComponents()
     components.year = 2026
     components.month = 5

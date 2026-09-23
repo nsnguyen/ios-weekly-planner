@@ -55,17 +55,13 @@ struct PrefRow<Option: Hashable & CustomStringConvertible>: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(theme.ink)
                         .padding(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
-                        .background(
-                            Capsule().fill(option == value
+                        .background(Capsule().fill(option == value
                                 ? theme.blueInk.opacity(0.10)
-                                : Color.clear)
-                        )
-                        .overlay(
-                            Capsule().strokeBorder(option == value
+                                : Color.clear))
+                        .overlay(Capsule().strokeBorder(option == value
                                 ? theme.blueInk
                                 : theme.rule,
-                                lineWidth: option == value ? 1.0 : 0.5)
-                        )
+                            lineWidth: option == value ? 1.0 : 0.5))
                 }
                 .buttonStyle(.plain)
             }
@@ -97,11 +93,9 @@ struct WrappingHStack: Layout {
         for line in lines {
             var x = bounds.minX
             for entry in line.entries {
-                subviews[entry.index].place(
-                    at: CGPoint(x: x, y: y),
-                    anchor: .topLeading,
-                    proposal: ProposedViewSize(entry.size)
-                )
+                subviews[entry.index].place(at: CGPoint(x: x, y: y),
+                                            anchor: .topLeading,
+                                            proposal: ProposedViewSize(entry.size))
                 x += entry.size.width + spacing
             }
             y += line.height + lineSpacing
@@ -138,7 +132,9 @@ struct WrappingHStack: Layout {
             current.height = max(current.height, size.height)
             current.entries.append(Entry(index: i, size: size))
         }
-        if !current.entries.isEmpty { lines.append(current) }
+        if !current.entries.isEmpty {
+            lines.append(current)
+        }
         return lines
     }
 }

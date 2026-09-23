@@ -11,7 +11,6 @@ final class ToolRegistryTests: XCTestCase {
     private var inbox: SwiftDataInboxStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         events = SwiftDataEventStore(context: container.mainContext)
         tasks = SwiftDataTaskStore(context: container.mainContext)
@@ -19,8 +18,10 @@ final class ToolRegistryTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        events = nil; tasks = nil; inbox = nil; container = nil
-        try await super.tearDown()
+        events = nil
+        tasks = nil
+        inbox = nil
+        container = nil
     }
 
     func testRegistryExposesFiveToolsInStableOrder() {
@@ -31,15 +32,13 @@ final class ToolRegistryTests: XCTestCase {
 
     func testToolEventResultRoundTripsThroughCodable() throws {
         let id = UUID()
-        let result = ToolEventResult(
-            id: id,
-            title: "Dentist follow-up",
-            start: Date(timeIntervalSince1970: 1_780_000_000),
-            end: Date(timeIntervalSince1970: 1_780_003_600),
-            location: "4th Street Dental",
-            categoryRaw: "health",
-            sourceRaw: "manual"
-        )
+        let result = ToolEventResult(id: id,
+                                     title: "Dentist follow-up",
+                                     start: Date(timeIntervalSince1970: 1_780_000_000),
+                                     end: Date(timeIntervalSince1970: 1_780_003_600),
+                                     location: "4th Street Dental",
+                                     categoryRaw: "health",
+                                     sourceRaw: "manual")
         let data = try JSONEncoder().encode(result)
         let decoded = try JSONDecoder().decode(ToolEventResult.self, from: data)
         XCTAssertEqual(decoded, result)

@@ -27,12 +27,11 @@ final class SwiftDataInboxStore: InboxStoring {
     private let settingsStore: (any SettingsStoring)?
     private let notificationAuth: NotificationAuthorization?
 
-    init(
-        context: ModelContext,
-        eventStore: (any EventStoring)? = nil,
-        settingsStore: (any SettingsStoring)? = nil,
-        notificationAuth: NotificationAuthorization? = nil
-    ) {
+    init(context: ModelContext,
+         eventStore: (any EventStoring)? = nil,
+         settingsStore: (any SettingsStoring)? = nil,
+         notificationAuth: NotificationAuthorization? = nil)
+    {
         self.context = context
         self.eventStore = eventStore
         self.settingsStore = settingsStore
@@ -84,17 +83,15 @@ final class SwiftDataInboxStore: InboxStoring {
         // just flip the status).
         if let eventStore {
             let endDate = suggestion.proposedEnd ?? suggestion.proposedStart.addingTimeInterval(3600)
-            let event = Event(
-                title: suggestion.title,
-                start: suggestion.proposedStart,
-                end: endDate,
-                location: suggestion.proposedLocation,
-                category: suggestion.category,
-                source: .gmail,
-                gmailMessageID: suggestion.gmailMessageID,
-                gmailFrom: suggestion.fromEmail,
-                gmailSubject: suggestion.subject
-            )
+            let event = Event(title: suggestion.title,
+                              start: suggestion.proposedStart,
+                              end: endDate,
+                              location: suggestion.proposedLocation,
+                              category: suggestion.category,
+                              source: .gmail,
+                              gmailMessageID: suggestion.gmailMessageID,
+                              gmailFrom: suggestion.fromEmail,
+                              gmailSubject: suggestion.subject)
             if let settings = try? settingsStore?.current() {
                 DefaultReminderPolicy.apply(to: event, settings: settings)
             }
@@ -125,9 +122,8 @@ final class SwiftDataInboxStore: InboxStoring {
 
     func clearPending() async throws {
         let pendingRaw = InboxStatus.pending.rawValue
-        let descriptor = FetchDescriptor<InboxSuggestion>(
-            predicate: #Predicate<InboxSuggestion> { $0.statusRaw == pendingRaw }
-        )
+        let descriptor =
+            FetchDescriptor<InboxSuggestion>(predicate: #Predicate<InboxSuggestion> { $0.statusRaw == pendingRaw })
         for row in try context.fetch(descriptor) {
             context.delete(row)
         }
@@ -135,8 +131,8 @@ final class SwiftDataInboxStore: InboxStoring {
     }
 
     func anyStatus(forMessageID id: String) async throws -> InboxSuggestion? {
-        try context.fetch(FetchDescriptor<InboxSuggestion>(
-            predicate: #Predicate<InboxSuggestion> { $0.gmailMessageID == id }
-        )).first
+        try context
+            .fetch(FetchDescriptor<InboxSuggestion>(predicate: #Predicate<InboxSuggestion> { $0.gmailMessageID == id }))
+            .first
     }
 }

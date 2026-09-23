@@ -79,8 +79,8 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     func weightFor(legibility: LegibilityWeight) -> Font.Weight {
         guard legibility == .bold else { return .regular }
         switch self {
-        case .caveat:     return .semibold
-        case .kalam:      return .bold
+        case .caveat: return .semibold
+        case .kalam: return .bold
         case .architects, .indie,
              .patrick, .shadows, .gochi, .nanum:
             return .regular

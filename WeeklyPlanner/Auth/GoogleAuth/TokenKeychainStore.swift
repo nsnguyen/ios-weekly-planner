@@ -11,7 +11,9 @@ import KeychainAccess
 /// when nothing is stored; it does NOT throw for the empty case.
 struct TokenKeychainStore<Value: Codable> {
     private let keychain: Keychain
-    private static var slotKey: String { "value" }
+    private static var slotKey: String {
+        "value"
+    }
 
     init(serviceID: String) {
         keychain = Keychain(service: serviceID)

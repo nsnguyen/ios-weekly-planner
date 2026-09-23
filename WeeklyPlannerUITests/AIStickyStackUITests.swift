@@ -14,7 +14,8 @@ final class AIStickyStackUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testStickyTopIdentifier_eventuallyPresentOnDayPage() throws {
+    @MainActor
+    func testStickyTopIdentifier_eventuallyPresentOnDayPage() {
         let app = XCUIApplication()
         app.launch()
 
@@ -22,7 +23,9 @@ final class AIStickyStackUITests: XCTestCase {
         // harmless if so, useful guard if TabSelection persistence put
         // the user elsewhere).
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
 
         // The sticky may not appear immediately — the orchestrator runs
         // async on first `.task`. Give it 10s to land.

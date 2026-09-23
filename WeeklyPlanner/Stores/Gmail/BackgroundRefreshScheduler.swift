@@ -22,10 +22,9 @@ final class BackgroundRefreshScheduler {
 
     /// Called once from `WeeklyPlannerApp.init` before `body` is built.
     func registerHandler() {
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: Self.taskIdentifier,
-            using: nil
-        ) { [weak self] task in
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.taskIdentifier,
+                                        using: nil)
+        { [weak self] task in
             self?.handle(task: task as! BGAppRefreshTask)
         }
     }
@@ -36,10 +35,9 @@ final class BackgroundRefreshScheduler {
     /// dependency on `GCalSyncEngine` here.
     func registerGCalHandler(sync: @escaping () async -> Void) {
         gcalSyncAction = sync
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: Self.gcalTaskIdentifier,
-            using: nil
-        ) { [weak self] task in
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.gcalTaskIdentifier,
+                                        using: nil)
+        { [weak self] task in
             self?.handleGCal(task: task as! BGAppRefreshTask)
         }
     }
@@ -61,7 +59,7 @@ final class BackgroundRefreshScheduler {
     private func handle(task: BGAppRefreshTask) {
         // Always re-schedule so the queue stays primed.
         scheduleNext()
-        let engine = self.engine
+        let engine = engine
         let work = Task { @MainActor in
             do {
                 _ = try await engine.sync(now: Date())

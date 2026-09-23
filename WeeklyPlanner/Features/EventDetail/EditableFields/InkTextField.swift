@@ -41,9 +41,9 @@ struct InkTextField: View {
          focus: FocusState<Bool>.Binding? = nil)
     {
         self.placeholder = placeholder
-        self._text = text
+        _text = text
         self.variant = variant
-        self.externalFocus = focus
+        externalFocus = focus
     }
 
     var body: some View {
@@ -51,25 +51,23 @@ struct InkTextField: View {
         let scaledPoint = basePoint * size.scale
         let weight: Font.Weight = variant == .title ? .bold : .regular
 
-        return TextField(
-            "",
-            text: $text,
-            prompt: Text(placeholder)
-                .font(font.font(at: scaledPoint, weight: weight).italic())
-                .foregroundStyle(theme.ink2)
-        )
-        .font(font.font(at: scaledPoint, weight: weight))
-        .foregroundStyle(theme.ink)
-        .tint(theme.blueInk)
-        .textFieldStyle(.plain)
-        .focused(resolvedFocus)
-        .overlay(alignment: .bottom) {
-            if isFocused {
-                focusUnderline
-                    .offset(y: 4)
-                    .allowsHitTesting(false)
+        return TextField("",
+                         text: $text,
+                         prompt: Text(placeholder)
+                             .font(font.font(at: scaledPoint, weight: weight).italic())
+                             .foregroundStyle(theme.ink2))
+            .font(font.font(at: scaledPoint, weight: weight))
+            .foregroundStyle(theme.ink)
+            .tint(theme.blueInk)
+            .textFieldStyle(.plain)
+            .focused(resolvedFocus)
+            .overlay(alignment: .bottom) {
+                if isFocused {
+                    focusUnderline
+                        .offset(y: 4)
+                        .allowsHitTesting(false)
+                }
             }
-        }
     }
 
     /// The binding `TextField.focused` should resolve to: external if

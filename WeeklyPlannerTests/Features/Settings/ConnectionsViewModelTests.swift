@@ -1,5 +1,5 @@
-import XCTest
 import SwiftData
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
@@ -11,20 +11,15 @@ final class ConnectionsViewModelTests: XCTestCase {
     private var sut: ConnectionsViewModel!
 
     override func setUp() async throws {
-        try await super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        container = try ModelContainer(
-            for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
-            configurations: config
-        )
+        container = try ModelContainer(for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
+                                       configurations: config)
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
         auth = StubGoogleAuthService()
-        sut = ConnectionsViewModel(
-            settingsStore: settingsStore,
-            inboxStore: inboxStore,
-            auth: auth
-        )
+        sut = ConnectionsViewModel(settingsStore: settingsStore,
+                                   inboxStore: inboxStore,
+                                   auth: auth)
     }
 
     // MARK: - Connect
@@ -55,7 +50,7 @@ final class ConnectionsViewModelTests: XCTestCase {
         XCTAssertNil(sut.alert)
     }
 
-    func testConnectNetworkFailureShowsAlert() async throws {
+    func testConnectNetworkFailureShowsAlert() async {
         auth.nextSignInResult = .failure(GoogleAuthError.network("timeout"))
         let presenter = await MainActor.run { UIViewController() }
 
@@ -66,7 +61,7 @@ final class ConnectionsViewModelTests: XCTestCase {
         XCTAssertEqual(sut.alert?.title, "Couldn't connect Gmail")
     }
 
-    func testConnectNotConfiguredShowsHelpfulAlert() async throws {
+    func testConnectNotConfiguredShowsHelpfulAlert() async {
         auth.nextSignInResult = .failure(GoogleAuthError.notConfigured)
         let presenter = await MainActor.run { UIViewController() }
 
@@ -98,24 +93,20 @@ final class ConnectionsViewModelTests: XCTestCase {
 
         await sut.disconnectGmail()
 
-        let remaining = try await inboxStore.pending(
-            forWeekOffset: 0,
-            today: Date(timeIntervalSince1970: 1_700_000_000)
-        )
+        let remaining = try await inboxStore.pending(forWeekOffset: 0,
+                                                     today: Date(timeIntervalSince1970: 1_700_000_000))
         XCTAssertTrue(remaining.isEmpty)
     }
 
     // MARK: - Helpers
 
     private func makeSuggestion(id: String) -> InboxSuggestion {
-        InboxSuggestion(
-            gmailMessageID: id,
-            proposedStart: Date(timeIntervalSince1970: 1_700_050_000), // mid-week of the "today" used above
-            title: "Lunch with Sara",
-            fromName: "Resy",
-            fromEmail: "reservations@resy.com",
-            subject: "Confirmed: 1pm at Café Bleu",
-            bodySnippet: nil
-        )
+        InboxSuggestion(gmailMessageID: id,
+                        proposedStart: Date(timeIntervalSince1970: 1_700_050_000), // mid-week of the "today" used above
+                        title: "Lunch with Sara",
+                        fromName: "Resy",
+                        fromEmail: "reservations@resy.com",
+                        subject: "Confirmed: 1pm at Café Bleu",
+                        bodySnippet: nil)
     }
 }

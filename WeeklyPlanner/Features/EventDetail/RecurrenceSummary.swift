@@ -5,9 +5,9 @@ import Foundation
 enum RecurrenceSummary {
     static func text(for recurrence: Recurrence,
                      seriesStart: Date,
-                     calendar: Calendar = WeekMath.mondayCalendar()) -> String
+                     calendar: Calendar = WeekMath.preferredCalendar) -> String
     {
-        var base: String = if recurrence.interval == 1 {
+        var base = if recurrence.interval == 1 {
             "Every \(recurrence.frequency.unitName)"
         } else {
             "Every \(recurrence.interval) \(recurrence.frequency.unitName)s"

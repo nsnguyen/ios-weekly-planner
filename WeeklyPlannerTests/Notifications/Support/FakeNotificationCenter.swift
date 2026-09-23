@@ -17,11 +17,15 @@ final class FakeNotificationCenter: NotificationCentering {
     private(set) var removedIdentifiers: [String] = []
     private(set) var removeAllCount: Int = 0
 
-    func authorizationStatus() async -> UNAuthorizationStatus { stubAuthorizationStatus }
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        stubAuthorizationStatus
+    }
 
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
         requestedAuthorizationOptions = options
-        if let error = stubAuthorizationError { throw error }
+        if let error = stubAuthorizationError {
+            throw error
+        }
         return stubAuthorizationGranted
     }
 
@@ -33,7 +37,9 @@ final class FakeNotificationCenter: NotificationCentering {
         addedRequests.append(request)
     }
 
-    func pendingRequests() async -> [UNNotificationRequest] { addedRequests }
+    func pendingRequests() async -> [UNNotificationRequest] {
+        addedRequests
+    }
 
     func removePending(withIdentifiers identifiers: [String]) {
         addedRequests.removeAll { identifiers.contains($0.identifier) }

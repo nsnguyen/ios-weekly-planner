@@ -66,8 +66,8 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 33 | Notes Tab                                            | M — v1.1 Features   | ✅     |
 | 34 | Free-Text Annotations                                | M                   | ✅     |
 | 35 | Repeating Events                                     | M                   | ✅     |
-| 36 | Personalization Expansion (36a fonts/templates ✅ · 36b week-start 📋) | M | ⏳     |
-| 37 | Google Calendar Sync (37a import ✅ on-device · 37b write-back 📋) | M | ⏳     |
+| 36 | Personalization Expansion (36a fonts/templates ✅ · 36b week-start ✅) | M | ✅     |
+| 37 | Google Calendar Sync (37a import ✅ on-device · 37b write-back ✅ on `main`) | M | ✅     |
 | 38 | Localization & Real Translations                     | N — Future          | 💤     |
 | 39 | Voice Memos                                          | N — Future          | 💤     |
 | 40 | Final Polish, App Icon, Launch Screen, Privacy       | O — Ship (final)    | ⏳     |
@@ -116,12 +116,14 @@ user feedback (`docs/suggestions-round-2.md`, items #56–#85) is triaged in
 decomposed into Phases **42–46** (plan docs written same day under
 `docs/superpowers/plans/`). Part of the feedback reinforces existing
 phases rather than creating new ones: week-start options + tabs-don't-change
-(#60/#64/#65/#80) = **Phase 36b** (its TDD plan already exists — execute it
-first in this milestone); logo (#56) = Phase 40; language (#84) = Phase 38;
-voice memos (#85) = Phase 39. Recommended execution order:
-**36b → 45 → 42 → 44 → 43 → 46**, all before Phases 40/41 (which remain the
-final two). Feedback #75 deliberately reverses round-1 #28 (empty week days
-go back to blank).
+(#60/#64/#65/#80) = **Phase 36b** (shipped — all seven days, and the Day,
+Week, side-tab, and picker layouts follow the choice); logo (#56) = Phase 40;
+language (#84) = Phase 38; voice memos (#85) = Phase 39. Recommended
+execution order from here: **45 → 42 → 44 → 43 → 46**, all before Phases
+40/41 (which remain the final two). Feedback #75 deliberately reverses
+round-1 #28 (empty week days go back to blank).
+
+**Next up:** Phase 45 — Chrome & Navigation Simplification.
 
 ## Reading a Phase Doc
 

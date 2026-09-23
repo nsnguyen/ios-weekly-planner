@@ -8,7 +8,6 @@ final class NotesViewModelTests: XCTestCase {
     private var store: SwiftDataNoteStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataNoteStore(context: container.mainContext)
     }
@@ -16,16 +15,15 @@ final class NotesViewModelTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
-    func testLoadStartsEmpty() async throws {
+    func testLoadStartsEmpty() async {
         let vm = NotesViewModel(store: store)
         await vm.load()
         XCTAssertTrue(vm.notes.isEmpty)
     }
 
-    func testCreatePersistsTrimmedNoteAndReloads() async throws {
+    func testCreatePersistsTrimmedNoteAndReloads() async {
         let vm = NotesViewModel(store: store)
         await vm.load()
 
@@ -38,7 +36,7 @@ final class NotesViewModelTests: XCTestCase {
         XCTAssertEqual(vm.notes.first?.kind, .misc)
     }
 
-    func testCreateDiscardsEmptyDraft() async throws {
+    func testCreateDiscardsEmptyDraft() async {
         let vm = NotesViewModel(store: store)
         await vm.load()
 
@@ -75,8 +73,8 @@ final class NotesViewModelTests: XCTestCase {
     }
 
     func testOrderingMostRecentFirst() async throws {
-        try await store.upsert(Note(title: "Old", body: "", updatedAt: Date(timeIntervalSince1970: 1_000)))
-        try await store.upsert(Note(title: "New", body: "", updatedAt: Date(timeIntervalSince1970: 2_000)))
+        try await store.upsert(Note(title: "Old", body: "", updatedAt: Date(timeIntervalSince1970: 1000)))
+        try await store.upsert(Note(title: "New", body: "", updatedAt: Date(timeIntervalSince1970: 2000)))
 
         let vm = NotesViewModel(store: store)
         await vm.load()

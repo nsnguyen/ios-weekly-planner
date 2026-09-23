@@ -42,12 +42,10 @@ final class StubGoogleAuthService: GoogleAuthService {
     private(set) var accessTokenCount = 0
 
     nonisolated init() {
-        nextSignInResult = .success(.init(
-            email: "sara@gmail.com",
-            accessToken: "stub-access-token",
-            refreshToken: "stub-refresh-token",
-            expiresAt: Date(timeIntervalSinceNow: 3600)
-        ))
+        nextSignInResult = .success(.init(email: "sara@gmail.com",
+                                          accessToken: "stub-access-token",
+                                          refreshToken: "stub-refresh-token",
+                                          expiresAt: Date(timeIntervalSinceNow: 3600)))
     }
 
     func signIn(presenting _: UIViewController) async throws -> GoogleAccountInfo {

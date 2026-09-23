@@ -10,15 +10,15 @@ final class SummarizeWeekToolTests: XCTestCase {
     private var tasks: SwiftDataTaskStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         events = SwiftDataEventStore(context: container.mainContext)
         tasks = SwiftDataTaskStore(context: container.mainContext)
     }
 
     override func tearDown() async throws {
-        events = nil; tasks = nil; container = nil
-        try await super.tearDown()
+        events = nil
+        tasks = nil
+        container = nil
     }
 
     func testAggregatesHoursByCategoryAndTaskCounts() async throws {

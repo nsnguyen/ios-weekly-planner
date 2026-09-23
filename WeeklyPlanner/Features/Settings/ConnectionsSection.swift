@@ -35,12 +35,10 @@ struct ConnectionsSection: View {
         .task {
             notificationStatus = await notificationCenter.authorizationStatus()
             if viewModel == nil {
-                viewModel = ConnectionsViewModel(
-                    settingsStore: settingsStore,
-                    inboxStore: inboxStore,
-                    auth: auth,
-                    gcalSyncEngine: gcalSyncEngine
-                )
+                viewModel = ConnectionsViewModel(settingsStore: settingsStore,
+                                                 inboxStore: inboxStore,
+                                                 auth: auth,
+                                                 gcalSyncEngine: gcalSyncEngine)
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -53,21 +51,19 @@ struct ConnectionsSection: View {
         .alert(item: alertBinding) { a in
             Alert(title: Text(a.title), message: Text(a.message), dismissButton: .default(Text("OK")))
         }
-        .confirmationDialog(
-            "Disconnect Gmail?",
-            isPresented: $showDisconnectConfirm,
-            titleVisibility: .visible
-        ) {
+        .confirmationDialog("Disconnect Gmail?",
+                            isPresented: $showDisconnectConfirm,
+                            titleVisibility: .visible)
+        {
             Button("Disconnect", role: .destructive) { Task { await viewModel?.disconnectGmail() } }
             Button("Cancel", role: .cancel) { viewModel?.refreshFromSettings() }
         } message: {
             Text("Pending inbox suggestions for this account will be removed.")
         }
-        .confirmationDialog(
-            "Disconnect Google Calendar?",
-            isPresented: $showDisconnectCalendarConfirm,
-            titleVisibility: .visible
-        ) {
+        .confirmationDialog("Disconnect Google Calendar?",
+                            isPresented: $showDisconnectCalendarConfirm,
+                            titleVisibility: .visible)
+        {
             Button("Disconnect", role: .destructive) { Task { await viewModel?.disconnectGoogleCalendar() } }
             Button("Cancel", role: .cancel) { viewModel?.refreshFromSettings() }
         } message: {
@@ -95,9 +91,7 @@ struct ConnectionsSection: View {
         }
         .padding(12)
         .background(theme.creamHi)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(theme.rule, lineWidth: 0.5)
-        )
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(theme.rule, lineWidth: 0.5))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
@@ -118,42 +112,34 @@ struct ConnectionsSection: View {
         }
         .background(theme.creamHi)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14).strokeBorder(theme.rule, lineWidth: 0.5)
-        )
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(theme.rule, lineWidth: 0.5))
         .padding(.bottom, 14)
     }
 
     // MARK: - Rows
 
     private var gmailRow: some View {
-        ConnectionRow(
-            logo: { GmailBrandLogo() },
-            label: "Gmail",
-            detail: gmailDetail,
-            isOn: gmailToggleBinding
-        )
+        ConnectionRow(logo: { GmailBrandLogo() },
+                      label: "Gmail",
+                      detail: gmailDetail,
+                      isOn: gmailToggleBinding)
     }
 
     private var appleMailRow: some View {
         let connected = MFMailComposeViewController.canSendMail()
-        return ConnectionRow(
-            logo: { AppleBrandLogo() },
-            label: "Apple Mail",
-            detail: connected ? "Connected · iCloud" : "Sign in to Mail in iOS Settings",
-            isOn: .constant(connected),
-            isEnabled: false,
-            onTap: { viewModel?.alert = .appleMailManagedByiOS }
-        )
+        return ConnectionRow(logo: { AppleBrandLogo() },
+                             label: "Apple Mail",
+                             detail: connected ? "Connected · iCloud" : "Sign in to Mail in iOS Settings",
+                             isOn: .constant(connected),
+                             isEnabled: false,
+                             onTap: { viewModel?.alert = .appleMailManagedByiOS })
     }
 
     private var googleCalRow: some View {
-        ConnectionRow(
-            logo: { GoogleCalLogo() },
-            label: "Google Calendar",
-            detail: googleCalDetail,
-            isOn: googleCalToggleBinding
-        )
+        ConnectionRow(logo: { GoogleCalLogo() },
+                      label: "Google Calendar",
+                      detail: googleCalDetail,
+                      isOn: googleCalToggleBinding)
     }
 
     // MARK: - Bindings
@@ -166,17 +152,15 @@ struct ConnectionsSection: View {
     }
 
     private var gmailToggleBinding: Binding<Bool> {
-        Binding(
-            get: { viewModel?.isGmailConnected ?? false },
-            set: { newValue in
-                guard let vm = viewModel else { return }
-                if newValue, vm.isGmailConnected == false {
-                    Task { await vm.connectGmail(presenter: topPresenter()) }
-                } else if newValue == false, vm.isGmailConnected {
-                    showDisconnectConfirm = true
-                }
-            }
-        )
+        Binding(get: { viewModel?.isGmailConnected ?? false },
+                set: { newValue in
+                    guard let vm = viewModel else { return }
+                    if newValue, vm.isGmailConnected == false {
+                        Task { await vm.connectGmail(presenter: topPresenter()) }
+                    } else if newValue == false, vm.isGmailConnected {
+                        showDisconnectConfirm = true
+                    }
+                })
     }
 
     private var googleCalDetail: String {
@@ -187,17 +171,15 @@ struct ConnectionsSection: View {
     }
 
     private var googleCalToggleBinding: Binding<Bool> {
-        Binding(
-            get: { viewModel?.isGoogleCalendarConnected ?? false },
-            set: { newValue in
-                guard let vm = viewModel else { return }
-                if newValue, vm.isGoogleCalendarConnected == false {
-                    Task { await vm.connectGoogleCalendar(presenter: topPresenter()) }
-                } else if newValue == false, vm.isGoogleCalendarConnected {
-                    showDisconnectCalendarConfirm = true
-                }
-            }
-        )
+        Binding(get: { viewModel?.isGoogleCalendarConnected ?? false },
+                set: { newValue in
+                    guard let vm = viewModel else { return }
+                    if newValue, vm.isGoogleCalendarConnected == false {
+                        Task { await vm.connectGoogleCalendar(presenter: topPresenter()) }
+                    } else if newValue == false, vm.isGoogleCalendarConnected {
+                        showDisconnectCalendarConfirm = true
+                    }
+                })
     }
 
     private var alertBinding: Binding<ConnectionsAlert?> {
@@ -211,16 +193,16 @@ struct ConnectionsSection: View {
     private func topPresenter() -> UIViewController {
         let scenes = UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
-        let keyWindow = scenes.flatMap { $0.windows }.first(where: { $0.isKeyWindow })
+        let keyWindow = scenes.flatMap(\.windows).first(where: { $0.isKeyWindow })
         return keyWindow?.rootViewController ?? UIViewController()
     }
 }
 
 extension ConnectionsAlert: Identifiable {
-    var id: String { title + message }
+    var id: String {
+        title + message
+    }
 
-    static let appleMailManagedByiOS = ConnectionsAlert(
-        title: "Apple Mail",
-        message: "Apple Mail is managed by iOS Settings."
-    )
+    static let appleMailManagedByiOS = ConnectionsAlert(title: "Apple Mail",
+                                                        message: "Apple Mail is managed by iOS Settings.")
 }

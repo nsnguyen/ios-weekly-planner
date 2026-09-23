@@ -18,7 +18,6 @@ final class TodoBlockTests: XCTestCase {
     private var taskStore: SwiftDataTaskStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
@@ -30,7 +29,6 @@ final class TodoBlockTests: XCTestCase {
         inboxStore = nil
         taskStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     /// Saturday May 16, 2026 — the standard anchor used across the planner

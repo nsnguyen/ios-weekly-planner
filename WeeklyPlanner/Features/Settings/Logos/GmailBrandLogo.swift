@@ -4,7 +4,7 @@ import SwiftUI
 /// Gmail mark — used inside the Connections row's 28pt logo slot. NOT an SF
 /// Symbol (Gmail SF glyph is marketing-only per Apple HIG).
 struct GmailBrandLogo: View {
-    var size: CGSize = CGSize(width: 22, height: 16)
+    var size: CGSize = .init(width: 22, height: 16)
 
     var body: some View {
         Canvas { context, canvasSize in

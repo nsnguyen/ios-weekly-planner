@@ -9,7 +9,6 @@ final class EventStoreTests: XCTestCase {
     private var store: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class EventStoreTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     /// Anchor every test on Sat May 16, 2026 so week math is deterministic.
@@ -103,7 +101,7 @@ final class EventStoreTests: XCTestCase {
                              googleEtag: "\"old\"")
         try await store.upsert(original)
 
-        let updatedAt = Date(timeIntervalSince1970: 2_345)
+        let updatedAt = Date(timeIntervalSince1970: 2345)
         let imported = Event(id: importedID,
                              title: "Imported update",
                              start: Self.may16_2026(hour: 11),

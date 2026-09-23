@@ -63,12 +63,10 @@ final class AISearchViewModel {
         thinking = true
         answer = nil
 
-        let context = PlannerContext(
-            now: clock(),
-            viewedWeekOffset: 0,
-            maxResponseTokens: 256,
-            appleIntelligenceEnabled: settings()
-        )
+        let context = PlannerContext(now: clock(),
+                                     viewedWeekOffset: 0,
+                                     maxResponseTokens: 256,
+                                     appleIntelligenceEnabled: settings())
         let availability = await intelligence.availability(context: context)
         unavailableReason = availability
 
@@ -80,23 +78,19 @@ final class AISearchViewModel {
         do {
             let produced = try await intelligence.ask(query: text, context: context)
             let elapsed = Date().timeIntervalSince(started)
-            answer = AIAnswer(
-                query: produced.query,
-                body: produced.body,
-                citations: produced.citations,
-                actions: produced.actions,
-                elapsedSeconds: elapsed
-            )
+            answer = AIAnswer(query: produced.query,
+                              body: produced.body,
+                              citations: produced.citations,
+                              actions: produced.actions,
+                              elapsedSeconds: elapsed)
         } catch {
             // Last-ditch fallback — produce a short message rather than
             // leaving the overlay stuck in "thinking" forever.
-            answer = AIAnswer(
-                query: text,
-                body: "Something went wrong. Try again in a moment.",
-                citations: [],
-                actions: [],
-                elapsedSeconds: Date().timeIntervalSince(started)
-            )
+            answer = AIAnswer(query: text,
+                              body: "Something went wrong. Try again in a moment.",
+                              citations: [],
+                              actions: [],
+                              elapsedSeconds: Date().timeIntervalSince(started))
         }
         thinking = false
     }

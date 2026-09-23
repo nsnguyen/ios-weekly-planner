@@ -8,7 +8,6 @@ final class RecurringEventStoreTests: XCTestCase {
     private var store: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataEventStore(context: container.mainContext)
     }
@@ -16,17 +15,21 @@ final class RecurringEventStoreTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     private static func date(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 9) -> Date {
         var c = DateComponents()
-        c.year = y; c.month = m; c.day = d; c.hour = h
+        c.year = y
+        c.month = m
+        c.day = d
+        c.hour = h
         return WeekMath.mondayCalendar().date(from: c)!
     }
 
     /// "Today" = Sat Jun 6 2026; current week = Jun 1–7.
-    private static func today() -> Date { date(2026, 6, 6, 12) }
+    private static func today() -> Date {
+        date(2026, 6, 6, 12)
+    }
 
     func testRecurrencePersistsThroughUpsert() async throws {
         let event = Event(title: "Gym",

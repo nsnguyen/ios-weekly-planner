@@ -40,6 +40,7 @@ struct AISearchTopBar: View {
                 .foregroundStyle(theme.chromeText)
                 .padding(.vertical, 6)
                 .padding(.trailing, 6)
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

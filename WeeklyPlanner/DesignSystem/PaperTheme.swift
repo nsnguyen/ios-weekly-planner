@@ -26,7 +26,7 @@ struct PaperTheme: Equatable, Hashable {
     let ink: Color
     let ink2: Color
     let ink3: Color
-    let inkDecorative: Color   // 0.30 alpha — decorative-only uses (page numbers, hole-punch shadows, dashed seams)
+    let inkDecorative: Color // 0.30 alpha — decorative-only uses (page numbers, hole-punch shadows, dashed seams)
     let blueInk: Color
     let redInk: Color
     let greenInk: Color

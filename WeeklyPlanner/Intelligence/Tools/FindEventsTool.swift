@@ -14,17 +14,15 @@ final class FindEventsTool: PlannerTool {
     }
 
     func run(query: EventQuery) async throws -> [ToolEventResult] {
-        let events = (try? await store.events(matching: query)) ?? []
+        let events = await (try? store.events(matching: query)) ?? []
         return events.map { event in
-            ToolEventResult(
-                id: event.id,
-                title: event.title,
-                start: event.start,
-                end: event.end,
-                location: event.location,
-                categoryRaw: event.categoryRaw,
-                sourceRaw: event.sourceRaw
-            )
+            ToolEventResult(id: event.id,
+                            title: event.title,
+                            start: event.start,
+                            end: event.end,
+                            location: event.location,
+                            categoryRaw: event.categoryRaw,
+                            sourceRaw: event.sourceRaw)
         }
     }
 }

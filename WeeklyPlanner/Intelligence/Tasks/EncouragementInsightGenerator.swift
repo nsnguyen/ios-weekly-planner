@@ -31,33 +31,29 @@ final class EncouragementInsightGenerator: InsightGenerator {
     func generate(for day: DayContext) async -> AIInsight? {
         guard day.appleIntelligenceEnabled else { return nil }
 
-        let context = PlannerContext(
-            now: day.now,
-            viewedWeekOffset: day.weekOffset,
-            maxResponseTokens: 80,
-            appleIntelligenceEnabled: day.appleIntelligenceEnabled
-        )
+        let context = PlannerContext(now: day.now,
+                                     viewedWeekOffset: day.weekOffset,
+                                     maxResponseTokens: 80,
+                                     appleIntelligenceEnabled: day.appleIntelligenceEnabled)
         let availability = await intelligence.availability(context: context)
         guard availability.isAvailable else { return nil }
 
         let prompt = Self.prompt(weekOffset: day.weekOffset,
-                                  dayIdx: day.dayIdx,
-                                  events: day.events)
+                                 dayIdx: day.dayIdx,
+                                 events: day.events)
         do {
             let answer = try await intelligence.ask(query: prompt, context: context)
             let trimmed = answer.body.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return nil }
             let clamped = trimmed.count <= 80 ? trimmed : String(trimmed.prefix(80))
-            return AIInsight(
-                dayKey: day.dayKey,
-                dateGenerated: day.now,
-                text: clamped,
-                colorHex: Self.color(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
-                tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
-                kind: .encouragement,
-                actionURL: nil,
-                priority: InsightKind.encouragement.defaultPriority
-            )
+            return AIInsight(dayKey: day.dayKey,
+                             dateGenerated: day.now,
+                             text: clamped,
+                             colorHex: Self.color(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                             tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                             kind: .encouragement,
+                             actionURL: nil,
+                             priority: InsightKind.encouragement.defaultPriority)
         } catch {
             return nil
         }
@@ -66,7 +62,8 @@ final class EncouragementInsightGenerator: InsightGenerator {
     /// Pure prompt builder. Exposed for tests so the prompt shape stays
     /// stable across edits.
     static func prompt(weekOffset: Int, dayIdx: Int, events: [Event]) -> String {
-        let dayName = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][min(max(dayIdx, 0), 6)]
+        let dayName = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][min(max(dayIdx, 0),
+                                                                                                         6)]
         var lines = [
             "Write one short, encouraging, handwritten-style note (≤ 80 chars, no emoji) about the user's plans for \(dayName).",
         ]

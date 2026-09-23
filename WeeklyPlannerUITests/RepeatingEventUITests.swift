@@ -6,15 +6,20 @@ final class RepeatingEventUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testDailyEventAppearsOnAdjacentDayAndScopedDeleteWorks() throws {
+    @MainActor
+    func testDailyEventAppearsOnAdjacentDayAndScopedDeleteWorks() {
         let app = XCUIApplication()
         app.launchArguments += ["-UITestSeedEmptyStore"]
         app.launch()
 
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
         let daySeg = app.buttons["topbar.dayweek.day"]
-        if daySeg.waitForExistence(timeout: 3) { daySeg.tap() }
+        if daySeg.waitForExistence(timeout: 3) {
+            daySeg.tap()
+        }
 
         // Create a daily event.
         let addLink = app.buttons["daypage.events.addRow"]
@@ -25,13 +30,7 @@ final class RepeatingEventUITests: XCTestCase {
         let titleField = app.textFields.firstMatch
         XCTAssertTrue(titleField.waitForExistence(timeout: 3))
         titleField.tap()
-        _ = app.keyboards.firstMatch.waitForExistence(timeout: 2)
-        titleField.typeText(String(title))
-
-        app.buttons["paperEventSheet.repeat"].tap()
-        let daily = app.buttons["Daily"]
-        XCTAssertTrue(daily.waitForExistence(timeout: 3), "Repeat menu did not open")
-        daily.tap()
+        chooseDailyRepeat(app, title: String(title), field: titleField)
 
         let save = app.buttons["paperEventSheet.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 2))
@@ -72,7 +71,9 @@ final class RepeatingEventUITests: XCTestCase {
         if !deleteButton.waitForExistence(timeout: 3) {
             // Sheet may need edit mode for the delete affordance.
             let edit = app.buttons["paperEventSheet.edit"]
-            if edit.waitForExistence(timeout: 2) { edit.tap() }
+            if edit.waitForExistence(timeout: 2) {
+                edit.tap()
+            }
         }
         XCTAssertTrue(deleteButton.waitForExistence(timeout: 3))
         deleteButton.tap()
@@ -85,4 +86,43 @@ final class RepeatingEventUITests: XCTestCase {
         XCTAssertTrue(eventElement().waitForNonExistence(timeout: 5),
                       "Series not removed after delete-all")
     }
+}
+
+/// Types the title, resigns the field, and picks Daily.
+///
+/// A newline typed into the single-line title field does not resign it.
+/// The following tap is then consumed dismissing the keyboard, so the
+/// Repeat menu never opens. The Return key does resign it (same path as
+/// the event-create UI test). If that tap is still swallowed, try once more.
+@MainActor
+private func chooseDailyRepeat(_ app: XCUIApplication, title: String, field: XCUIElement) {
+    _ = app.keyboards.firstMatch.waitForExistence(timeout: 2)
+    field.typeText(title)
+    if app.keyboards.firstMatch.exists {
+        app.keyboards.buttons["Return"].tap()
+        _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 2)
+    }
+
+    let repeatMenu = app.buttons["paperEventSheet.repeat"]
+    XCTAssertTrue(repeatMenu.waitForExistence(timeout: 3), "Repeat menu missing")
+    // The sheet is not a scroll view. element.tap() asks the button to
+    // scroll on screen, that action fails, and the hit point stays {-1, -1}
+    // even though the control's frame is inside the window.
+    tapWindowPoint(of: repeatMenu, in: app)
+    let daily = app.buttons["Daily"]
+    if !daily.waitForExistence(timeout: 2) {
+        tapWindowPoint(of: repeatMenu, in: app)
+    }
+    XCTAssertTrue(daily.waitForExistence(timeout: 3), "Repeat menu did not open")
+    daily.tap()
+}
+
+/// Taps the element's window frame. Skips the scroll-to-visible path that
+/// `XCUIElement.tap()` takes for a control the sheet cannot scroll.
+@MainActor
+private func tapWindowPoint(of element: XCUIElement, in app: XCUIApplication) {
+    let frame = element.frame
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+        .withOffset(CGVector(dx: frame.midX, dy: frame.midY))
+        .tap()
 }

@@ -18,10 +18,15 @@ import XCTest
 ///   topbar.dayweek.{day,week} · topbar.daterange.pill · daypage.sticky.top
 final class StickySwipeUITests: XCTestCase {
     private enum ID {
-        static func dayWeekSegment(_ v: String) -> String { "topbar.dayweek.\(v)" }
+        static func dayWeekSegment(_ v: String) -> String {
+            "topbar.dayweek.\(v)"
+        }
+
         static let dateRangePill = "topbar.daterange.pill"
         static let stickyTop = "daypage.sticky.top"
-        static func sideTab(_ n: Int) -> String { "daypage.sidetab.\(n)" }
+        static func sideTab(_ n: Int) -> String {
+            "daypage.sidetab.\(n)"
+        }
     }
 
     override func setUp() {
@@ -29,6 +34,7 @@ final class StickySwipeUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     private func rangeValue(_ app: XCUIApplication) -> String {
         let pill = app.buttons[ID.dateRangePill]
         guard pill.waitForExistence(timeout: 3) else { return "" }
@@ -43,7 +49,9 @@ final class StickySwipeUITests: XCTestCase {
         app.launch()
 
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
 
         // Switch Day→Week→Day to confirm the shared controller is live (this is
         // exactly what the swipe-lock used to block).
@@ -69,7 +77,9 @@ final class StickySwipeUITests: XCTestCase {
         app.launch()
 
         let calendarTab = app.buttons["tabbar.tab.calendar"]
-        if calendarTab.waitForExistence(timeout: 3) { calendarTab.tap() }
+        if calendarTab.waitForExistence(timeout: 3) {
+            calendarTab.tap()
+        }
 
         let sticky = app.otherElements[ID.stickyTop].firstMatch
         guard sticky.waitForExistence(timeout: 10) else {

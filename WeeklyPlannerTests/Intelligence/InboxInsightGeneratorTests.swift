@@ -18,7 +18,8 @@ final class InboxInsightGeneratorTests: XCTestCase {
     /// doesn't exist on the real `InboxSuggestion` `@Model`. Adapted to the
     /// actual signature (gmailMessageID + fromName/fromEmail + subject).
     private func makeSuggestion(id: String = UUID().uuidString,
-                                 title: String = "Trade Confirmations") -> InboxSuggestion {
+                                title: String = "Trade Confirmations") -> InboxSuggestion
+    {
         InboxSuggestion(gmailMessageID: id,
                         proposedStart: Date(timeIntervalSince1970: 1_780_000_000),
                         title: title,
@@ -30,8 +31,10 @@ final class InboxInsightGeneratorTests: XCTestCase {
 
     func testEmitsCountWhenPending() async {
         let gen = InboxInsightGenerator()
-        let suggestions = [makeSuggestion(id: "a"),
-                           makeSuggestion(id: "b", title: "Lunch")]
+        let suggestions = [
+            makeSuggestion(id: "a"),
+            makeSuggestion(id: "b", title: "Lunch"),
+        ]
         let insight = await gen.generate(for: makeContext(suggestions: suggestions))
         XCTAssertNotNil(insight)
         XCTAssertEqual(insight?.text, "2 inbox suggestions for today")
@@ -54,7 +57,7 @@ final class InboxInsightGeneratorTests: XCTestCase {
         let three = await gen.generate(for: makeContext(suggestions: [
             makeSuggestion(id: "1"),
             makeSuggestion(id: "2", title: "B"),
-            makeSuggestion(id: "3", title: "C")
+            makeSuggestion(id: "3", title: "C"),
         ]))
         XCTAssertEqual(three?.text, "3 inbox suggestions for today")
     }

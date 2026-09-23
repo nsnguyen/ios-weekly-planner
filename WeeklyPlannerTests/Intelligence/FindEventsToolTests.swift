@@ -9,7 +9,6 @@ final class FindEventsToolTests: XCTestCase {
     private var store: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         store = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,25 +16,20 @@ final class FindEventsToolTests: XCTestCase {
     override func tearDown() async throws {
         store = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testRunReturnsCompactDTOs() async throws {
         let anchor = Self.may16_2026(hour: 9)
-        try await store.upsert(Event(
-            title: "Dentist follow-up",
-            start: anchor,
-            end: anchor.addingTimeInterval(1800),
-            location: "4th Street Dental",
-            category: .health
-        ))
+        try await store.upsert(Event(title: "Dentist follow-up",
+                                     start: anchor,
+                                     end: anchor.addingTimeInterval(1800),
+                                     location: "4th Street Dental",
+                                     category: .health))
         let tool = FindEventsTool(store: store)
-        let results = try await tool.run(query: EventQuery(
-            dateRange: anchor ... anchor.addingTimeInterval(7200),
-            categories: [.health],
-            keywords: [],
-            personName: nil
-        ))
+        let results = try await tool.run(query: EventQuery(dateRange: anchor ... anchor.addingTimeInterval(7200),
+                                                           categories: [.health],
+                                                           keywords: [],
+                                                           personName: nil))
         XCTAssertEqual(results.count, 1)
         XCTAssertEqual(results.first?.title, "Dentist follow-up")
         XCTAssertEqual(results.first?.categoryRaw, "health")
@@ -44,8 +38,14 @@ final class FindEventsToolTests: XCTestCase {
 
     func testRunReturnsEmptyOnThrowingStore() async throws {
         final class ThrowingStore: EventStoring {
-            func events(forWeekOffset: Int, today: Date) async throws -> [Event] { [] }
-            func event(id: UUID) async throws -> Event? { nil }
+            func events(forWeekOffset: Int, today: Date) async throws -> [Event] {
+                []
+            }
+
+            func event(id: UUID) async throws -> Event? {
+                nil
+            }
+
             func upsert(_ event: Event) async throws {}
             func delete(id: UUID) async throws {}
             func deleteOccurrence(eventID: UUID, occurrenceStart: Date) async throws {}
@@ -53,15 +53,16 @@ final class FindEventsToolTests: XCTestCase {
                 struct Boom: Error {}
                 throw Boom()
             }
-            func events(source _: EventSource) async throws -> [Event] { [] }
+
+            func events(source _: EventSource) async throws -> [Event] {
+                []
+            }
         }
         let tool = FindEventsTool(store: ThrowingStore())
-        let results = try await tool.run(query: EventQuery(
-            dateRange: Date() ... Date().addingTimeInterval(3600),
-            categories: nil,
-            keywords: [],
-            personName: nil
-        ))
+        let results = try await tool.run(query: EventQuery(dateRange: Date() ... Date().addingTimeInterval(3600),
+                                                           categories: nil,
+                                                           keywords: [],
+                                                           personName: nil))
         XCTAssertTrue(results.isEmpty)
     }
 

@@ -2,6 +2,7 @@ import SwiftUI
 import XCTest
 @testable import WeeklyPlanner
 
+@MainActor
 final class TypographyTests: XCTestCase {
     func testPageHeaderRampMatchesSpec() {
         XCTAssertEqual(Typography.pageWeekdayTitle.size, 30)

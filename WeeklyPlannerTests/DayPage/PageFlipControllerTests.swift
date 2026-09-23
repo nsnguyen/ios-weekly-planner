@@ -134,7 +134,7 @@ final class PageFlipControllerTests: XCTestCase {
     func testRapidFlipsNeverStrandIsFlipping() async {
         let controller = PageFlipController(current: PageCoordinate(week: 0, day: 0),
                                             autoCommitDelay: .milliseconds(1))
-        for _ in 0..<5 {
+        for _ in 0 ..< 5 {
             controller.flipDay(direction: .next)
             try? await Task.sleep(for: .milliseconds(25))
         }
@@ -143,6 +143,7 @@ final class PageFlipControllerTests: XCTestCase {
     }
 
     // MARK: - Phase 28: stickyDragActive consumer contract (the swipe-lock)
+
     //
     // The swipe-lock bug was a stranded `stickyDragActive` flag suppressing
     // page flips forever. The reset itself is now framework-guaranteed

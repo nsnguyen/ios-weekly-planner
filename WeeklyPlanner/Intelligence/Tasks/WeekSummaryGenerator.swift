@@ -41,8 +41,8 @@ final class WeekSummaryGenerator {
     }
 
     func generate(weekOffset: Int, today: Date) async -> WeekSummaryOutcome {
-        let weekEvents = (try? await events.events(forWeekOffset: weekOffset, today: today)) ?? []
-        let weekTasks = (try? await tasks.tasks(forWeekOffset: weekOffset, today: today)) ?? []
+        let weekEvents = await (try? events.events(forWeekOffset: weekOffset, today: today)) ?? []
+        let weekTasks = await (try? tasks.tasks(forWeekOffset: weekOffset, today: today)) ?? []
 
         var hoursByCategory: [String: Double] = [:]
         for event in weekEvents {
@@ -53,12 +53,10 @@ final class WeekSummaryGenerator {
         let tasksTotal = weekTasks.count
         let pct = tasksTotal == 0 ? 0.0 : Double(tasksDone) / Double(tasksTotal)
 
-        let context = PlannerContext(
-            now: today,
-            viewedWeekOffset: weekOffset,
-            maxResponseTokens: 256,
-            appleIntelligenceEnabled: settings()
-        )
+        let context = PlannerContext(now: today,
+                                     viewedWeekOffset: weekOffset,
+                                     maxResponseTokens: 256,
+                                     appleIntelligenceEnabled: settings())
         let availability = await intelligence.availability(context: context)
         guard availability.isAvailable else { return .unavailable }
 

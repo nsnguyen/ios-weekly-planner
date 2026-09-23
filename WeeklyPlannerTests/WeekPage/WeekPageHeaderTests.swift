@@ -11,7 +11,10 @@ final class WeekPageHeaderTests: XCTestCase {
     /// Saturday May 16, 2026 at noon — the standard planner test anchor.
     private static let anchor: Date = {
         var c = DateComponents()
-        c.year = 2026; c.month = 5; c.day = 16; c.hour = 12
+        c.year = 2026
+        c.month = 5
+        c.day = 16
+        c.hour = 12
         return WeekMath.mondayCalendar().date(from: c) ?? Date()
     }()
 

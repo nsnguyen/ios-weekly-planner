@@ -9,14 +9,13 @@ final class EncouragementInsightGeneratorTests: XCTestCase {
     private var eventStore: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
     }
 
     override func tearDown() async throws {
-        eventStore = nil; container = nil
-        try await super.tearDown()
+        eventStore = nil
+        container = nil
     }
 
     func testPromptListsEventTitlesForWeekday() {
@@ -69,7 +68,7 @@ final class EncouragementInsightGeneratorTests: XCTestCase {
     func testGenerateReturnsNilWhenAIDisabled() async {
         let service = StubIntelligenceService(eventStore: eventStore)
         let generator = EncouragementInsightGenerator(intelligence: service,
-                                                       settings: { false })
+                                                      settings: { false })
         let ctx = DayContext(weekOffset: 0,
                              dayIdx: 0,
                              events: [],

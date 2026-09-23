@@ -8,13 +8,11 @@ final class StickyOrchestratorTests: XCTestCase {
     private var container: ModelContainer!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
     }
 
     override func tearDown() async throws {
         container = nil
-        try await super.tearDown()
     }
 
     private func makeInsight(kind: InsightKind, text: String) -> AIInsight {
@@ -40,9 +38,9 @@ final class StickyOrchestratorTests: XCTestCase {
         ], fallback: FixedGenerator(kind: .encouragement, output: nil))
 
         await orch.run(for: ctx(), into: container.mainContext)
-        let all = try container.mainContext.fetch(
-            FetchDescriptor<AIInsight>(sortBy: [SortDescriptor(\.priority, order: .forward)]))
-        XCTAssertEqual(all.map { $0.kind }, [.travel, .keyword, .inbox])
+        let all = try container.mainContext.fetch(FetchDescriptor<AIInsight>(sortBy: [SortDescriptor(\.priority,
+                                                                                                     order: .forward)]))
+        XCTAssertEqual(all.map(\.kind), [.travel, .keyword, .inbox])
     }
 
     func testCapAt3_dropsLowestPriority() async throws {
@@ -64,7 +62,7 @@ final class StickyOrchestratorTests: XCTestCase {
             FixedGenerator(kind: .travel, output: nil),
             FixedGenerator(kind: .weather, output: nil),
         ], fallback: FixedGenerator(kind: .encouragement,
-                                     output: makeInsight(kind: .encouragement, text: "E")))
+                                    output: makeInsight(kind: .encouragement, text: "E")))
 
         await orch.run(for: ctx(), into: container.mainContext)
         let all = try container.mainContext.fetch(FetchDescriptor<AIInsight>())
@@ -75,12 +73,12 @@ final class StickyOrchestratorTests: XCTestCase {
     func testTTLCacheSkipsSecondCallWithinWindow() async {
         let recorder = CountingGenerator(kind: .travel)
         let orch = StickyOrchestrator(generators: [recorder],
-                                       fallback: FixedGenerator(kind: .encouragement, output: nil),
-                                       cacheTTL: 5 * 60)
+                                      fallback: FixedGenerator(kind: .encouragement, output: nil),
+                                      cacheTTL: 5 * 60)
         let now = Date(timeIntervalSince1970: 1_780_000_000)
         await orch.run(for: ctx(now: now), into: container.mainContext)
         await orch.run(for: ctx(now: now.addingTimeInterval(60)),
-                        into: container.mainContext)
+                       into: container.mainContext)
         XCTAssertEqual(recorder.callCount, 1,
                        "Second call within TTL must reuse the cache")
     }
@@ -91,7 +89,7 @@ final class StickyOrchestratorTests: XCTestCase {
         try container.mainContext.save()
 
         let orch = StickyOrchestrator(generators: [
-            FixedGenerator(kind: .travel, output: makeInsight(kind: .travel, text: "NEW"))
+            FixedGenerator(kind: .travel, output: makeInsight(kind: .travel, text: "NEW")),
         ], fallback: FixedGenerator(kind: .encouragement, output: nil))
         await orch.run(for: ctx(), into: container.mainContext)
 
@@ -108,12 +106,11 @@ final class StickyOrchestratorTests: XCTestCase {
 
         let orch = StickyOrchestrator(generators: [
             FixedGenerator(kind: .travel, output: nil),
-            FixedGenerator(kind: .weather, output: makeInsight(kind: .weather, text: "Rain at 2pm"))
+            FixedGenerator(kind: .weather, output: makeInsight(kind: .weather, text: "Rain at 2pm")),
         ], fallback: FixedGenerator(kind: .encouragement, output: nil))
         await orch.run(for: ctx(), into: container.mainContext)
 
-        let all = try container.mainContext.fetch(
-            FetchDescriptor<AIInsight>(predicate: #Predicate { !$0.dismissed }))
+        let all = try container.mainContext.fetch(FetchDescriptor<AIInsight>(predicate: #Predicate { !$0.dismissed }))
         XCTAssertEqual(all.count, 1, "Stale travel insight should be deleted")
         XCTAssertEqual(all.first?.kind, .weather)
     }
@@ -125,12 +122,12 @@ final class StickyOrchestratorTests: XCTestCase {
         try container.mainContext.save()
 
         let orch = StickyOrchestrator(generators: [
-            FixedGenerator(kind: .keyword, output: makeInsight(kind: .keyword, text: "Old keyword"))
+            FixedGenerator(kind: .keyword, output: makeInsight(kind: .keyword, text: "Old keyword")),
         ], fallback: FixedGenerator(kind: .encouragement, output: nil))
         await orch.run(for: ctx(), into: container.mainContext)
 
-        let undismissed = try container.mainContext.fetch(
-            FetchDescriptor<AIInsight>(predicate: #Predicate { !$0.dismissed }))
+        let undismissed = try container.mainContext
+            .fetch(FetchDescriptor<AIInsight>(predicate: #Predicate { !$0.dismissed }))
         XCTAssertEqual(undismissed.count, 0,
                        "If the new insight text matches a dismissed one, skip it")
     }
@@ -144,18 +141,24 @@ private final class FixedGenerator: InsightGenerator {
         self.kind = kind
         self.output = output
     }
-    func generate(for _: DayContext) async -> AIInsight? { output }
+
+    func generate(for _: DayContext) async -> AIInsight? {
+        output
+    }
 }
 
 @MainActor
 private final class CountingGenerator: InsightGenerator {
     let kind: InsightKind
     private(set) var callCount = 0
-    init(kind: InsightKind) { self.kind = kind }
+    init(kind: InsightKind) {
+        self.kind = kind
+    }
+
     func generate(for day: DayContext) async -> AIInsight? {
         callCount += 1
         return AIInsight(dayKey: day.dayKey, text: "T",
-                          colorHex: kind.colorHex, tiltDegrees: 0,
-                          kind: kind, priority: kind.defaultPriority)
+                         colorHex: kind.colorHex, tiltDegrees: 0,
+                         kind: kind, priority: kind.defaultPriority)
     }
 }

@@ -26,7 +26,7 @@ final class LocalizationTests: XCTestCase {
     }
 
     func testDateFormatStyle_respectsLocale() {
-        let date = Date(timeIntervalSince1970: 1_700_000_000)  // 2023-11-14
+        let date = Date(timeIntervalSince1970: 1_700_000_000) // 2023-11-14
         let usFormat = date.formatted(.dateTime.month(.wide).day().year().locale(Locale(identifier: "en_US")))
         let deFormat = date.formatted(.dateTime.month(.wide).day().year().locale(Locale(identifier: "de_DE")))
         XCTAssertNotEqual(usFormat, deFormat)

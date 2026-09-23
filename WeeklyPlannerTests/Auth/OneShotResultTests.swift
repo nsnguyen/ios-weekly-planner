@@ -52,7 +52,7 @@ final class OneShotResultTests: XCTestCase {
         oneShot.onReady { received.append($0) }
         oneShot.deliver(.failure(CancellationError()))
         XCTAssertEqual(received.count, 1)
-        guard case .failure(let error)? = received.first else { return XCTFail("expected failure") }
+        guard case let .failure(error)? = received.first else { return XCTFail("expected failure") }
         XCTAssertTrue(error is CancellationError)
     }
 }

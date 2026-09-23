@@ -13,15 +13,13 @@ final class ScanInboxTool: PlannerTool {
     /// Quietly swallows store errors — an inbox tool failure shouldn't kill
     /// the whole model run.
     func run(weekOffset: Int, today: Date, limit: Int = 10) async throws -> [ToolInboxResult] {
-        let raw = (try? await store.pending(forWeekOffset: weekOffset, today: today)) ?? []
+        let raw = await (try? store.pending(forWeekOffset: weekOffset, today: today)) ?? []
         return raw.prefix(max(0, limit)).map { suggestion in
-            ToolInboxResult(
-                id: suggestion.id,
-                title: suggestion.title,
-                proposedStart: suggestion.proposedStart,
-                fromName: suggestion.fromName,
-                subject: suggestion.subject
-            )
+            ToolInboxResult(id: suggestion.id,
+                            title: suggestion.title,
+                            proposedStart: suggestion.proposedStart,
+                            fromName: suggestion.fromName,
+                            subject: suggestion.subject)
         }
     }
 }

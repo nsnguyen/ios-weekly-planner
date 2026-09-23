@@ -14,16 +14,14 @@ final class InboxAcceptRecurrenceGuardTests: XCTestCase {
                                              eventStore: eventStore)
 
         // Fixture mirrors the existing InboxStore accept tests' construction.
-        let suggestion = InboxSuggestion(
-            gmailMessageID: "msg-1",
-            proposedStart: Date().addingTimeInterval(86_400),
-            proposedEnd: Date().addingTimeInterval(86_400 + 3600),
-            title: "Coffee with Alex",
-            fromName: "Alex",
-            fromEmail: "alex@example.com",
-            category: .personal,
-            subject: "Coffee?"
-        )
+        let suggestion = InboxSuggestion(gmailMessageID: "msg-1",
+                                         proposedStart: Date().addingTimeInterval(86400),
+                                         proposedEnd: Date().addingTimeInterval(86400 + 3600),
+                                         title: "Coffee with Alex",
+                                         fromName: "Alex",
+                                         fromEmail: "alex@example.com",
+                                         category: .personal,
+                                         subject: "Coffee?")
         container.mainContext.insert(suggestion)
         try container.mainContext.save()
 

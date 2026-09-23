@@ -58,7 +58,7 @@ final class TaskComposerStateTests: XCTestCase {
 
     func testSetDay_updatesDueDate() {
         let firstDay = Date(timeIntervalSince1970: 1_780_000_000)
-        let nextDay = firstDay.addingTimeInterval(86_400)
+        let nextDay = firstDay.addingTimeInterval(86400)
         let state = TaskComposerState(forDay: firstDay)
         state.setDay(nextDay)
         XCTAssertEqual(state.due, nextDay)

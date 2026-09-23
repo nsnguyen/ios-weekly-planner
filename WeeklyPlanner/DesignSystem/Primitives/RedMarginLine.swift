@@ -25,7 +25,7 @@ struct RedMarginLine: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, Spacing.redMarginLeading)
             .allowsHitTesting(false)
-        .accessibilityHidden(true)
+            .accessibilityHidden(true)
     }
 }
 

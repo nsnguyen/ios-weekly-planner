@@ -83,9 +83,10 @@ struct AskInputField: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 18))
                             .foregroundStyle(theme.ink3)
-                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
                     .accessibilityLabel("Clear and ask another question")
                 } else {
                     Button {
@@ -97,9 +98,11 @@ struct AskInputField: View {
                         Image(systemName: "mic")
                             .font(.system(size: 16))
                             .foregroundStyle(theme.ink3)
-                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel("Voice input")
                 }
             }
 

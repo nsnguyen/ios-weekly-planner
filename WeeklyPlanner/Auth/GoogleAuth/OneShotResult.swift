@@ -20,7 +20,10 @@ final class OneShotResult<Success, Failure: Error>: @unchecked Sendable {
     /// to be called once. If a result already arrived, it is delivered now.
     func onReady(_ sink: @escaping (Result<Success, Failure>) -> Void) {
         lock.lock()
-        if delivered { lock.unlock(); return }
+        if delivered {
+            lock.unlock()
+            return
+        }
         if let pending {
             delivered = true
             lock.unlock()
@@ -35,7 +38,9 @@ final class OneShotResult<Success, Failure: Error>: @unchecked Sendable {
     /// arriving after `delivered`) are ignored.
     func deliver(_ result: Result<Success, Failure>) {
         lock.lock()
-        guard !delivered, pending == nil else { lock.unlock(); return }
+        guard !delivered, pending == nil else { lock.unlock()
+            return
+        }
         if let sink {
             delivered = true
             self.sink = nil

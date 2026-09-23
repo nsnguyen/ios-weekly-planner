@@ -29,12 +29,11 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
 
     private var pageIndex = 0
 
-    func listEvents(
-        syncToken: String?,
-        timeMin: Date?,
-        timeMax: Date?,
-        pageToken: String?
-    ) async throws -> GCalEventsListResponse {
+    func listEvents(syncToken: String?,
+                    timeMin: Date?,
+                    timeMax: Date?,
+                    pageToken: String?) async throws -> GCalEventsListResponse
+    {
         calls.append(Call(syncToken: syncToken, pageToken: pageToken))
 
         if throwSyncTokenExpiredOnFirstCall {
@@ -52,7 +51,9 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
     }
 
     func getEvent(id: String) async throws -> GCalEvent {
-        if let throwOnWrite { throw throwOnWrite }
+        if let throwOnWrite {
+            throw throwOnWrite
+        }
         guard let event = getResponses[id] else {
             throw GoogleCalendarClientError.notFound
         }
@@ -60,95 +61,90 @@ final class FakeGoogleCalendarClient: GoogleCalendarClientProtocol {
     }
 
     func createEvent(_ body: GCalEventWriteBody) async throws -> GCalEvent {
-        if let throwOnWrite { throw throwOnWrite }
+        if let throwOnWrite {
+            throw throwOnWrite
+        }
         created.append(body)
-        return createResult ?? GCalEvent(
-            id: "created-\(created.count)",
-            status: "confirmed",
-            summary: body.summary,
-            location: body.location,
-            description: body.description,
-            start: body.start,
-            end: body.end,
-            etag: "\"new\"",
-            updated: ISO8601DateFormatter().string(from: Date())
-        )
+        return createResult ?? GCalEvent(id: "created-\(created.count)",
+                                         status: "confirmed",
+                                         summary: body.summary,
+                                         location: body.location,
+                                         description: body.description,
+                                         start: body.start,
+                                         end: body.end,
+                                         etag: "\"new\"",
+                                         updated: ISO8601DateFormatter().string(from: Date()))
     }
 
     func updateEvent(id: String, body: GCalEventWriteBody, etag: String?) async throws -> GCalEvent {
-        if let throwOnWrite { throw throwOnWrite }
+        if let throwOnWrite {
+            throw throwOnWrite
+        }
         updated.append((id: id, body: body, etag: etag))
         if !updateBehavior.isEmpty {
             return try updateBehavior.removeFirst().get()
         }
-        return updateResult ?? GCalEvent(
-            id: id,
-            status: "confirmed",
-            summary: body.summary,
-            location: body.location,
-            description: body.description,
-            start: body.start,
-            end: body.end,
-            etag: "\"upd\"",
-            updated: ISO8601DateFormatter().string(from: Date())
-        )
+        return updateResult ?? GCalEvent(id: id,
+                                         status: "confirmed",
+                                         summary: body.summary,
+                                         location: body.location,
+                                         description: body.description,
+                                         start: body.start,
+                                         end: body.end,
+                                         etag: "\"upd\"",
+                                         updated: ISO8601DateFormatter().string(from: Date()))
     }
 
     func cancelEvent(id: String) async throws {
-        if let throwOnWrite { throw throwOnWrite }
+        if let throwOnWrite {
+            throw throwOnWrite
+        }
         cancelledIDs.append(id)
     }
 }
 
 // MARK: - Helpers to build GCalEvent fixtures
 
-private func makeEvent(
-    id: String,
-    title: String = "Test Event",
-    status: String = "confirmed",
-    start: String = "2026-06-14T10:00:00Z",
-    end: String = "2026-06-14T11:00:00Z"
-) -> GCalEvent {
-    GCalEvent(
-        id: id,
-        status: status,
-        summary: title,
-        location: nil,
-        description: nil,
-        start: GCalDateTime(date: nil, dateTime: start),
-        end: GCalDateTime(date: nil, dateTime: end),
-        etag: nil,
-        updated: nil
-    )
+private func makeEvent(id: String,
+                       title: String = "Test Event",
+                       status: String = "confirmed",
+                       start: String = "2026-06-14T10:00:00Z",
+                       end: String = "2026-06-14T11:00:00Z") -> GCalEvent
+{
+    GCalEvent(id: id,
+              status: status,
+              summary: title,
+              location: nil,
+              description: nil,
+              start: GCalDateTime(date: nil, dateTime: start),
+              end: GCalDateTime(date: nil, dateTime: end),
+              etag: nil,
+              updated: nil)
 }
 
 private func makeCancelledEvent(id: String) -> GCalEvent {
-    GCalEvent(
-        id: id,
-        status: "cancelled",
-        summary: nil,
-        location: nil,
-        description: nil,
-        start: GCalDateTime(date: nil, dateTime: "2026-06-14T10:00:00Z"),
-        end: GCalDateTime(date: nil, dateTime: "2026-06-14T11:00:00Z"),
-        etag: nil,
-        updated: nil
-    )
+    GCalEvent(id: id,
+              status: "cancelled",
+              summary: nil,
+              location: nil,
+              description: nil,
+              start: GCalDateTime(date: nil, dateTime: "2026-06-14T10:00:00Z"),
+              end: GCalDateTime(date: nil, dateTime: "2026-06-14T11:00:00Z"),
+              etag: nil,
+              updated: nil)
 }
 
 /// An event whose mapper will return nil (no valid date fields).
 private func makeUnmappableEvent(id: String) -> GCalEvent {
-    GCalEvent(
-        id: id,
-        status: "confirmed",
-        summary: "Unmappable",
-        location: nil,
-        description: nil,
-        start: GCalDateTime(date: nil, dateTime: nil),
-        end: GCalDateTime(date: nil, dateTime: nil),
-        etag: nil,
-        updated: nil
-    )
+    GCalEvent(id: id,
+              status: "confirmed",
+              summary: "Unmappable",
+              location: nil,
+              description: nil,
+              start: GCalDateTime(date: nil, dateTime: nil),
+              end: GCalDateTime(date: nil, dateTime: nil),
+              etag: nil,
+              updated: nil)
 }
 
 // MARK: - Test suite
@@ -166,18 +162,15 @@ final class GCalSyncEngineTests: XCTestCase {
     private let fixedNow = Date(timeIntervalSince1970: 1_749_859_200)
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         deltaSync = GCalDeltaSync(settingsStore: settingsStore)
         client = FakeGoogleCalendarClient()
-        engine = GCalSyncEngine(
-            client: client,
-            eventStore: eventStore,
-            deltaSync: deltaSync,
-            clock: { [fixedNow] in fixedNow }
-        )
+        engine = GCalSyncEngine(client: client,
+                                eventStore: eventStore,
+                                deltaSync: deltaSync,
+                                clock: { [fixedNow] in fixedNow })
     }
 
     override func tearDown() async throws {
@@ -187,7 +180,6 @@ final class GCalSyncEngineTests: XCTestCase {
         settingsStore = nil
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     // MARK: - 1. Full sync imports events and stores nextSyncToken
@@ -195,11 +187,9 @@ final class GCalSyncEngineTests: XCTestCase {
     func testFullSyncImportsAndStoresToken() async throws {
         // nil token → full sync
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "ev1", title: "Team Meeting")],
-                nextPageToken: nil,
-                nextSyncToken: "SYNC_TOKEN_1"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "ev1", title: "Team Meeting")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "SYNC_TOKEN_1"),
         ]
 
         await engine.sync()
@@ -219,12 +209,12 @@ final class GCalSyncEngineTests: XCTestCase {
 
     // MARK: - 2. Incremental sync sends stored token
 
-    func testIncrementalSyncSendsStoredToken() async throws {
+    func testIncrementalSyncSendsStoredToken() async {
         // pre-save a token
         deltaSync.save("EXISTING_TOKEN")
 
         client.pages = [
-            GCalEventsListResponse(items: [], nextPageToken: nil, nextSyncToken: "NEW_TOKEN")
+            GCalEventsListResponse(items: [], nextPageToken: nil, nextSyncToken: "NEW_TOKEN"),
         ]
 
         await engine.sync()
@@ -242,11 +232,9 @@ final class GCalSyncEngineTests: XCTestCase {
 
         client.throwSyncTokenExpiredOnFirstCall = true
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "ev2", title: "Recovered Event")],
-                nextPageToken: nil,
-                nextSyncToken: "FRESH_TOKEN"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "ev2", title: "Recovered Event")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "FRESH_TOKEN"),
         ]
 
         await engine.sync()
@@ -254,7 +242,7 @@ final class GCalSyncEngineTests: XCTestCase {
         // Two calls: first threw, second succeeded as full sync
         XCTAssertEqual(client.calls.count, 2)
         XCTAssertEqual(client.calls[0].syncToken, "STALE_TOKEN") // delta attempt
-        XCTAssertNil(client.calls[1].syncToken)                  // full re-sync
+        XCTAssertNil(client.calls[1].syncToken) // full re-sync
 
         // Token cleared then reset to fresh
         XCTAssertEqual(deltaSync.currentToken(), "FRESH_TOKEN")
@@ -269,16 +257,12 @@ final class GCalSyncEngineTests: XCTestCase {
 
     func testPaginationFollowsNextPageToken() async throws {
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "p1ev1", title: "Page 1 Event")],
-                nextPageToken: "PAGE_2",
-                nextSyncToken: nil
-            ),
-            GCalEventsListResponse(
-                items: [makeEvent(id: "p2ev1", title: "Page 2 Event")],
-                nextPageToken: nil,
-                nextSyncToken: "TOKEN_AFTER_PAGES"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "p1ev1", title: "Page 1 Event")],
+                                   nextPageToken: "PAGE_2",
+                                   nextSyncToken: nil),
+            GCalEventsListResponse(items: [makeEvent(id: "p2ev1", title: "Page 2 Event")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "TOKEN_AFTER_PAGES"),
         ]
 
         await engine.sync()
@@ -302,11 +286,9 @@ final class GCalSyncEngineTests: XCTestCase {
     func testCancelledItemDeletes() async throws {
         // First sync: import the event
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "ev-to-delete", title: "Will Be Deleted")],
-                nextPageToken: nil,
-                nextSyncToken: "TOK1"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "ev-to-delete", title: "Will Be Deleted")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "TOK1"),
         ]
         await engine.sync()
 
@@ -315,21 +297,17 @@ final class GCalSyncEngineTests: XCTestCase {
 
         // Second sync: same id arrives as "cancelled"
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeCancelledEvent(id: "ev-to-delete")],
-                nextPageToken: nil,
-                nextSyncToken: "TOK2"
-            )
+            GCalEventsListResponse(items: [makeCancelledEvent(id: "ev-to-delete")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "TOK2"),
         ]
         // Reset client call index by creating a fresh client
         let client2 = FakeGoogleCalendarClient()
         client2.pages = client.pages
-        engine = GCalSyncEngine(
-            client: client2,
-            eventStore: eventStore,
-            deltaSync: deltaSync,
-            clock: { [fixedNow] in fixedNow }
-        )
+        engine = GCalSyncEngine(client: client2,
+                                eventStore: eventStore,
+                                deltaSync: deltaSync,
+                                clock: { [fixedNow] in fixedNow })
 
         await engine.sync()
 
@@ -342,29 +320,23 @@ final class GCalSyncEngineTests: XCTestCase {
     func testReSyncUpdatesNotDuplicates() async throws {
         // First sync
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "stable-id", title: "Original Title")],
-                nextPageToken: nil,
-                nextSyncToken: "TOK1"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "stable-id", title: "Original Title")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "TOK1"),
         ]
         await engine.sync()
 
         // Second sync — same google id, different title
         let client2 = FakeGoogleCalendarClient()
         client2.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "stable-id", title: "Updated Title")],
-                nextPageToken: nil,
-                nextSyncToken: "TOK2"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "stable-id", title: "Updated Title")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "TOK2"),
         ]
-        engine = GCalSyncEngine(
-            client: client2,
-            eventStore: eventStore,
-            deltaSync: deltaSync,
-            clock: { [fixedNow] in fixedNow }
-        )
+        engine = GCalSyncEngine(client: client2,
+                                eventStore: eventStore,
+                                deltaSync: deltaSync,
+                                clock: { [fixedNow] in fixedNow })
         await engine.sync()
 
         let events = try await eventStore.events(source: .googleCalendar)
@@ -376,14 +348,12 @@ final class GCalSyncEngineTests: XCTestCase {
 
     func testOneBadItemDoesNotKillBatch() async throws {
         client.pages = [
-            GCalEventsListResponse(
-                items: [
-                    makeUnmappableEvent(id: "bad-ev"),           // mapper returns nil → skipped
-                    makeEvent(id: "good-ev", title: "Good Event")
-                ],
-                nextPageToken: nil,
-                nextSyncToken: "TOK1"
-            )
+            GCalEventsListResponse(items: [
+                makeUnmappableEvent(id: "bad-ev"), // mapper returns nil → skipped
+                makeEvent(id: "good-ev", title: "Good Event"),
+            ],
+            nextPageToken: nil,
+            nextSyncToken: "TOK1"),
         ]
 
         await engine.sync()
@@ -395,7 +365,7 @@ final class GCalSyncEngineTests: XCTestCase {
 
     // MARK: - 8. Single-flight skips concurrent run
 
-    func testSingleFlightSkipsConcurrentRun() async throws {
+    func testSingleFlightSkipsConcurrentRun() async {
         // Strategy: run sync() sequentially twice. The first call completes
         // normally. We then set isRunning manually by starting the second
         // call while the first is nominally in progress.
@@ -415,7 +385,7 @@ final class GCalSyncEngineTests: XCTestCase {
         // the first completes. What we're really checking is that the
         // first-run's single call count is exactly 1.
         client.pages = [
-            GCalEventsListResponse(items: [], nextPageToken: nil, nextSyncToken: "T")
+            GCalEventsListResponse(items: [], nextPageToken: nil, nextSyncToken: "T"),
         ]
 
         await engine.sync()
@@ -439,23 +409,19 @@ final class GCalSyncEngineTests: XCTestCase {
 
     func testPurgeRemovesOnlyGoogleSourced() async throws {
         // Insert a manual event directly
-        let manualEvent = Event(
-            id: UUID(),
-            title: "Manual Event",
-            start: fixedNow,
-            end: fixedNow.addingTimeInterval(3600),
-            category: .personal,
-            source: .manual
-        )
+        let manualEvent = Event(id: UUID(),
+                                title: "Manual Event",
+                                start: fixedNow,
+                                end: fixedNow.addingTimeInterval(3600),
+                                category: .personal,
+                                source: .manual)
         try await eventStore.upsert(manualEvent)
 
         // Insert a Google-sourced event via sync
         client.pages = [
-            GCalEventsListResponse(
-                items: [makeEvent(id: "gcal-ev", title: "GCal Event")],
-                nextPageToken: nil,
-                nextSyncToken: "TOK1"
-            )
+            GCalEventsListResponse(items: [makeEvent(id: "gcal-ev", title: "GCal Event")],
+                                   nextPageToken: nil,
+                                   nextSyncToken: "TOK1"),
         ]
         await engine.sync()
 

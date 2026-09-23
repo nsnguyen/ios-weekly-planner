@@ -22,7 +22,9 @@ final class DayPageViewModel {
     let dayIdx: Int
 
     /// `"<weekOffset>:<dayIdx>"` — shared dayKey scheme.
-    var dayKey: String { Annotation.key(weekOffset: weekOffset, dayIdx: dayIdx) }
+    var dayKey: String {
+        Annotation.key(weekOffset: weekOffset, dayIdx: dayIdx)
+    }
 
     /// Events scheduled for this day, sorted ascending by `start`.
     var events: [Event] = []
@@ -114,7 +116,7 @@ final class DayPageViewModel {
         // even if the system date crosses midnight while the page is open.
         let days = WeekMath.weekDays(forOffset: weekOffset, today: clock())
         let anchor = days.indices.contains(dayIdx) ? days[dayIdx].date : clock()
-        self.taskComposer = TaskComposerState(forDay: anchor)
+        taskComposer = TaskComposerState(forDay: anchor)
     }
 
     /// `true` iff this page represents the current calendar day. Drives the
@@ -141,7 +143,7 @@ final class DayPageViewModel {
     /// filter them to this day. Errors from any store are surfaced via
     /// `loadError` while previously-loaded data is left in place.
     func refresh() async {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let now = clock()
 
         do {
@@ -185,11 +187,10 @@ final class DayPageViewModel {
         // enabled them. Read fresh each refresh so a Settings toggle takes
         // effect on the next page refresh. A `nil` settingsStore (tests /
         // previews that don't care about the toggle) leaves generation on.
-        let stickyEnabled: Bool
-        if let settingsStore {
-            stickyEnabled = (try? settingsStore.current())?.aiStickyNotesEnabled ?? false
+        let stickyEnabled: Bool = if let settingsStore {
+            (try? settingsStore.current())?.aiStickyNotesEnabled ?? false
         } else {
-            stickyEnabled = true
+            true
         }
 
         if stickyEnabled, let orchestrator, let modelContext {
@@ -364,15 +365,21 @@ final class DayPageViewModel {
         // Nothing to change — avoid a pointless upsert that would bump `updatedAt`.
         guard colorToken != nil || isBold != nil else { return }
         guard let annotation = annotations.first(where: { $0.id == id }) else { return }
-        if let colorToken { annotation.colorToken = colorToken }
-        if let isBold { annotation.isBold = isBold }
+        if let colorToken {
+            annotation.colorToken = colorToken
+        }
+        if let isBold {
+            annotation.isBold = isBold
+        }
         try? await annotationStore.upsert(annotation)
         await refreshAnnotations()
     }
 
     /// Ask the day view to re-compact (it holds the measured anchors). Bumped
     /// on a drag release; the view observes it and calls `compactNotes`.
-    func requestCompaction() { compactionRequest &+= 1 }
+    func requestCompaction() {
+        compactionRequest &+= 1
+    }
 
     /// Pack notes into a gapless stack below the content, in current vertical
     /// (`unitY`) order. Persists ONLY the notes whose position changed (>0.5pt);
@@ -382,13 +389,14 @@ final class DayPageViewModel {
     func compactNotes(contentBottom: CGFloat,
                       layerSize: CGSize,
                       noteHeights: [UUID: CGFloat],
-                      editingID: UUID?) async {
+                      editingID: UUID?) async
+    {
         guard editingID == nil, layerSize.width > 0, layerSize.height > 0, contentBottom > 0
         else { return }
-        let placements = DayPageLayout.compactedStack(
-            notes: annotations.map { (id: $0.id, unitY: $0.unitY, height: noteHeights[$0.id] ?? 0) },
-            contentBottom: contentBottom,
-            layerSize: layerSize)
+        let placements = DayPageLayout.compactedStack(notes: annotations.map { (id: $0.id, unitY: $0.unitY,
+                                                                                height: noteHeights[$0.id] ?? 0) },
+                                                      contentBottom: contentBottom,
+                                                      layerSize: layerSize)
         let target = Dictionary(uniqueKeysWithValues: placements.map { ($0.id, $0.unitY) })
         let threshold = 0.5 / Double(layerSize.height)
         let moved = annotations.filter { note in
@@ -398,7 +406,9 @@ final class DayPageViewModel {
         guard !moved.isEmpty else { return }
         // Animate so the re-pack reads as a deliberate snap, not a glitch.
         withAnimation {
-            for note in moved { note.unitY = target[note.id] ?? note.unitY }
+            for note in moved {
+                note.unitY = target[note.id] ?? note.unitY
+            }
         }
         // Upsert re-inserts unknown ids; safe here for the same reason as the
         // old nudge — deletes flow through the editor and editing defers
@@ -414,16 +424,21 @@ final class DayPageViewModel {
     }
 
     private func refreshAnnotations() async {
-        annotations = (try? await annotationStore.annotations(dayKey: dayKey)) ?? []
+        annotations = await (try? annotationStore.annotations(dayKey: dayKey)) ?? []
         compactionRequest &+= 1
     }
 }
 
 private extension Date {
-    /// Monday-based weekday index (0 = Mon … 6 = Sun). Mirrors
-    /// `Event.weekdayIndex(in:)` for non-`Event` date values.
+    /// Weekday index relative to `calendar.firstWeekday` (0 = week start).
+    /// Mirrors `Event.weekdayIndex(in:)` for non-`Event` date values.
+    /// The method name is historical; Monday-start calendars still return
+    /// the old `(weekday + 5) % 7` result.
     func mondayBasedWeekdayIndex(in calendar: Calendar) -> Int {
         let weekday = calendar.component(.weekday, from: self)
-        return (weekday + 5) % 7
+        // Index of this date's weekday relative to the calendar's first
+        // weekday (0 = week start). For Monday-start calendars this is the
+        // historical `(weekday + 5) % 7`.
+        return (weekday - calendar.firstWeekday + 7) % 7
     }
 }

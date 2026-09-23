@@ -99,7 +99,7 @@ final class PageFlipController {
     /// - Parameter current: The page the user starts on.
     init(current: PageCoordinate) {
         self.current = current
-        self.autoCommitDelay = .milliseconds(700)
+        autoCommitDelay = .milliseconds(700)
     }
 
     /// Test seam: inject a short fallback delay to exercise the auto-commit
@@ -163,7 +163,8 @@ final class PageFlipController {
     /// Direction is inferred from `idx` vs `current.day`. If `idx == current.day`,
     /// no-op.
     ///
-    /// - Parameter idx: Monday-based weekday index. Clamped to `0...6` for
+    /// - Parameter idx: Weekday index relative to the configured week start.
+    ///   Clamped to `0...6` for
     ///   defensiveness — out-of-range inputs are pinned to the nearest valid
     ///   index rather than crashing.
     func flipToDay(idx: Int) {

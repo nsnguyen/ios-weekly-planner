@@ -8,7 +8,9 @@ extension Color {
     /// Invalid strings collapse to fully transparent black so a typo is visible at runtime.
     init(hex: String) {
         var trimmed = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.hasPrefix("#") { trimmed.removeFirst() }
+        if trimmed.hasPrefix("#") {
+            trimmed.removeFirst()
+        }
 
         var value: UInt64 = 0
         Scanner(string: trimmed).scanHexInt64(&value)

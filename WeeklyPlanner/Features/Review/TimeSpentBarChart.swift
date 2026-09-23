@@ -18,8 +18,8 @@ struct TimeSpentBarChart: View {
                 .font(font.font(at: 20, weight: .bold))
                 .foregroundStyle(theme.ink)
                 .modifier(WavyUnderline(color: theme.ink.opacity(0.25),
-                                         amplitude: 1,
-                                         wavelength: 6))
+                                        amplitude: 1,
+                                        wavelength: 6))
                 .padding(.bottom, 8)
 
             let visibleRows = Self.rows(from: timeByCategory)
@@ -31,8 +31,8 @@ struct TimeSpentBarChart: View {
             } else {
                 ForEach(visibleRows, id: \.0) { entry in
                     CategoryTimeRow(category: entry.0,
-                                     hours: entry.1,
-                                     maxHours: maxHours)
+                                    hours: entry.1,
+                                    maxHours: maxHours)
                 }
             }
         }

@@ -1,6 +1,6 @@
 import Foundation
-import UserNotifications
 import os
+import UserNotifications
 
 /// Reads `event.reminders` and emits stable-identifier `UNNotificationRequest`s.
 ///
@@ -46,15 +46,14 @@ final class EventNotificationScheduler {
         locationRegistrar.unregister(eventID: event.id)
 
         if let recurrence = event.recurrence {
-            let calendar = WeekMath.mondayCalendar()
+            let calendar = WeekMath.preferredCalendar
             let now = Date()
             let windowEnd = calendar.date(byAdding: .day, value: Self.recurringWindowDays, to: now) ?? now
-            let starts = OccurrenceExpander.occurrenceStarts(
-                seriesStart: event.start,
-                recurrence: recurrence,
-                in: now ..< windowEnd,
-                excluding: event.excludedOccurrenceStarts,
-                calendar: calendar)
+            let starts = OccurrenceExpander.occurrenceStarts(seriesStart: event.start,
+                                                             recurrence: recurrence,
+                                                             in: now ..< windowEnd,
+                                                             excluding: event.excludedOccurrenceStarts,
+                                                             calendar: calendar)
                 .prefix(Self.recurringMaxOccurrences)
 
             for start in starts {
@@ -92,7 +91,8 @@ final class EventNotificationScheduler {
                     scheduleArrival(event: event, reminder: location)
                 }
             } catch {
-                Self.log.error("Schedule failed for event \(event.id, privacy: .public): \(String(describing: error), privacy: .public)")
+                Self.log
+                    .error("Schedule failed for event \(event.id, privacy: .public): \(String(describing: error), privacy: .public)")
             }
         }
     }
@@ -121,17 +121,21 @@ final class EventNotificationScheduler {
         let startOffset = Self.weekOffset(from: window.lowerBound, today: now)
         let endOffset = Self.weekOffset(from: window.upperBound, today: now)
         var events: [Event] = []
-        for offset in startOffset...endOffset {
+        for offset in startOffset ... endOffset {
             do {
                 let weekEvents = try await store.events(forWeekOffset: offset, today: now)
                 events.append(contentsOf: weekEvents)
             } catch {
-                Self.log.error("rescheduleAll fetch failed for offset \(offset, privacy: .public): \(String(describing: error), privacy: .public)")
+                Self.log
+                    .error("rescheduleAll fetch failed for offset \(offset, privacy: .public): \(String(describing: error), privacy: .public)")
             }
         }
         for event in events where window.contains(event.start) {
-            do { try await schedule(event: event) }
-            catch { Self.log.error("rescheduleAll schedule failed: \(String(describing: error), privacy: .public)") }
+            do {
+                try await schedule(event: event)
+            } catch {
+                Self.log.error("rescheduleAll schedule failed: \(String(describing: error), privacy: .public)")
+            }
         }
     }
 
@@ -148,17 +152,15 @@ final class EventNotificationScheduler {
                               occurrenceSuffix: String = "") async throws
     {
         let fireDate = occurrenceStart.addingTimeInterval(TimeInterval(-minutesBefore * 60))
-        guard fireDate > Date() else { return }   // Past — silently skip.
+        guard fireDate > Date() else { return } // Past — silently skip.
 
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute],
                                                          from: fireDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-        let content = NotificationContentBuilder.timeBased(
-            title: event.title,
-            startsAt: occurrenceStart,
-            location: event.location,
-            minutesBefore: minutesBefore
-        )
+        let content = NotificationContentBuilder.timeBased(title: event.title,
+                                                           startsAt: occurrenceStart,
+                                                           location: event.location,
+                                                           minutesBefore: minutesBefore)
         content.userInfo = ["event.id": event.id.uuidString]
 
         let id = "event-\(event.id.uuidString)-\(occurrenceSuffix)time-\(minutesBefore)"
@@ -172,18 +174,21 @@ final class EventNotificationScheduler {
         let identifier = "event-\(event.id.uuidString)-arrive"
         let title = event.title
         let location = event.location
-        _ = locationRegistrar.register(
-            eventID: event.id,
-            reminder: reminder,
-            content: {
-                let content = NotificationContentBuilder.locationBased(title: title, locationName: reminder.name)
-                if let location { content.subtitle = location }
-                content.userInfo = ["event.id": event.id.uuidString]
-                return content
-            },
-            proximityInDays: proximity
-        )
-        Self.log.info("Registered arrival region \(identifier, privacy: .public) proximityDays=\(proximity, privacy: .public)")
+        _ = locationRegistrar.register(eventID: event.id,
+                                       reminder: reminder,
+                                       content: {
+                                           let content = NotificationContentBuilder.locationBased(title: title,
+                                                                                                  locationName: reminder
+                                                                                                      .name)
+                                           if let location {
+                                               content.subtitle = location
+                                           }
+                                           content.userInfo = ["event.id": event.id.uuidString]
+                                           return content
+                                       },
+                                       proximityInDays: proximity)
+        Self.log
+            .info("Registered arrival region \(identifier, privacy: .public) proximityDays=\(proximity, privacy: .public)")
     }
 
     /// Crude Monday-based week offset from `today` to `date`. Mirrors

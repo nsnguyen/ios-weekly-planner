@@ -44,7 +44,8 @@ final class GmailClient {
     // MARK: - Public endpoints
 
     func listMessages(query: String, maxResults: Int) async throws -> [GmailMessageStub] {
-        var components = URLComponents(url: baseURL.appending(path: "/gmail/v1/users/me/messages"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appending(path: "/gmail/v1/users/me/messages"),
+                                       resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "q", value: query),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
@@ -54,13 +55,15 @@ final class GmailClient {
     }
 
     func fetchMessage(id: String, format: GmailMessageFormat) async throws -> GmailMessage {
-        var components = URLComponents(url: baseURL.appending(path: "/gmail/v1/users/me/messages/\(id)"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appending(path: "/gmail/v1/users/me/messages/\(id)"),
+                                       resolvingAgainstBaseURL: false)!
         components.queryItems = [URLQueryItem(name: "format", value: format.rawValue)]
         return try await get(url: components.url!)
     }
 
     func history(startHistoryId: String) async throws -> GmailHistoryResponse {
-        var components = URLComponents(url: baseURL.appending(path: "/gmail/v1/users/me/history"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appending(path: "/gmail/v1/users/me/history"),
+                                       resolvingAgainstBaseURL: false)!
         components.queryItems = [URLQueryItem(name: "startHistoryId", value: startHistoryId)]
         do {
             return try await get(url: components.url!)
@@ -91,7 +94,7 @@ final class GmailClient {
             let http = response as! HTTPURLResponse
 
             switch http.statusCode {
-            case 200..<300:
+            case 200 ..< 300:
                 do {
                     return try JSONDecoder().decode(T.self, from: data)
                 } catch {
@@ -109,7 +112,8 @@ final class GmailClient {
                 if attempts > Self.maxRetries {
                     throw GmailClientError.http(status: 429)
                 }
-                let retryAfter = http.value(forHTTPHeaderField: "Retry-After").flatMap(Double.init) ?? pow(2.0, Double(attempts))
+                let retryAfter = http.value(forHTTPHeaderField: "Retry-After").flatMap(Double.init) ?? pow(2.0,
+                                                                                                           Double(attempts))
                 try await Task.sleep(nanoseconds: UInt64(retryAfter * 1_000_000_000))
                 continue
 

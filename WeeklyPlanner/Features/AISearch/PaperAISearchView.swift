@@ -48,10 +48,8 @@ struct PaperAISearchView: View {
          onTapCitation: @escaping (UUID) -> Void)
     {
         _isOpen = isOpen
-        _viewModel = State(initialValue: AISearchViewModel(
-            eventStore: eventStore,
-            intelligence: intelligence
-        ))
+        _viewModel = State(initialValue: AISearchViewModel(eventStore: eventStore,
+                                                           intelligence: intelligence))
         self.onTapCitation = onTapCitation
     }
 

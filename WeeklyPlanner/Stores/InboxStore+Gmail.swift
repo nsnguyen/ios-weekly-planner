@@ -4,15 +4,14 @@ import Foundation
 /// outputs. Kept here so `InboxSyncEngine.upsert(...)` reads naturally
 /// without inlining all the field mapping.
 extension InboxSuggestion {
-    static func fromExtractedEvent(
-        _ extracted: ExtractedEvent,
-        message: GmailMessage,
-        fallbackCategory: Category = .personal
-    ) -> InboxSuggestion? {
+    static func fromExtractedEvent(_ extracted: ExtractedEvent,
+                                   message: GmailMessage,
+                                   fallbackCategory: Category = .personal) -> InboxSuggestion?
+    {
         guard extracted.isEvent,
               !extracted.title.isEmpty,
               !extracted.startISO.isEmpty,
-              let start = Self.parseDate(extracted.startISO)
+              let start = parseDate(extracted.startISO)
         else { return nil }
 
         let end = extracted.endISO.isEmpty ? nil : Self.parseDate(extracted.endISO)
@@ -20,18 +19,16 @@ extension InboxSuggestion {
         let fromHeader = message.header("From") ?? ""
         let (fromName, fromEmail) = parseFromHeader(fromHeader)
 
-        return InboxSuggestion(
-            gmailMessageID: message.id,
-            proposedStart: start,
-            proposedEnd: end,
-            title: extracted.title,
-            fromName: fromName,
-            fromEmail: fromEmail,
-            category: category,
-            subject: message.header("Subject") ?? "",
-            bodySnippet: message.snippet,
-            proposedLocation: extracted.location.isEmpty ? nil : extracted.location
-        )
+        return InboxSuggestion(gmailMessageID: message.id,
+                               proposedStart: start,
+                               proposedEnd: end,
+                               title: extracted.title,
+                               fromName: fromName,
+                               fromEmail: fromEmail,
+                               category: category,
+                               subject: message.header("Subject") ?? "",
+                               bodySnippet: message.snippet,
+                               proposedLocation: extracted.location.isEmpty ? nil : extracted.location)
     }
 
     /// Tolerant ISO 8601 parser. Foundation Models sometimes returns dates
@@ -40,13 +37,23 @@ extension InboxSuggestion {
     private static func parseDate(_ raw: String) -> Date? {
         let strict = ISO8601DateFormatter()
         strict.formatOptions = [.withInternetDateTime]
-        if let date = strict.date(from: raw) { return date }
+        if let date = strict.date(from: raw) {
+            return date
+        }
         let loose = ISO8601DateFormatter()
         loose.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = loose.date(from: raw) { return date }
+        if let date = loose.date(from: raw) {
+            return date
+        }
         let noTZ = ISO8601DateFormatter()
-        noTZ.formatOptions = [.withYear, .withMonth, .withDay, .withTime,
-                              .withDashSeparatorInDate, .withColonSeparatorInTime]
+        noTZ.formatOptions = [
+            .withYear,
+            .withMonth,
+            .withDay,
+            .withTime,
+            .withDashSeparatorInDate,
+            .withColonSeparatorInTime,
+        ]
         return noTZ.date(from: raw)
     }
 
@@ -62,7 +69,7 @@ extension InboxSuggestion {
         }
         let name = String(value[..<openBracket])
             .trimmingCharacters(in: CharacterSet(charactersIn: " \""))
-        let email = String(value[value.index(after: openBracket)..<closeBracket])
+        let email = String(value[value.index(after: openBracket) ..< closeBracket])
         return (name, email)
     }
 }

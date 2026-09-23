@@ -17,12 +17,11 @@ final class GCalSyncEngine {
 
     private var isRunning = false
 
-    init(
-        client: any GoogleCalendarClientProtocol,
-        eventStore: any EventStoring,
-        deltaSync: GCalDeltaSync,
-        clock: @escaping () -> Date = { Date() }
-    ) {
+    init(client: any GoogleCalendarClientProtocol,
+         eventStore: any EventStoring,
+         deltaSync: GCalDeltaSync,
+         clock: @escaping () -> Date = { Date() })
+    {
         self.client = client
         self.eventStore = eventStore
         self.deltaSync = deltaSync
@@ -36,7 +35,8 @@ final class GCalSyncEngine {
             syncLog.info("GCalSync skipped — already running")
             return
         }
-        isRunning = true; defer { isRunning = false }
+        isRunning = true
+        defer { isRunning = false }
 
         // Mutable locals so the 410-restart path can reset without recursion.
         var token: String? = deltaSync.currentToken()
@@ -55,12 +55,10 @@ final class GCalSyncEngine {
             repeat {
                 let page: GCalEventsListResponse
                 do {
-                    page = try await client.listEvents(
-                        syncToken: token,
-                        timeMin: timeMin,
-                        timeMax: timeMax,
-                        pageToken: pageToken
-                    )
+                    page = try await client.listEvents(syncToken: token,
+                                                       timeMin: timeMin,
+                                                       timeMax: timeMax,
+                                                       pageToken: pageToken)
                 } catch GoogleCalendarClientError.syncTokenExpired {
                     syncLog.info("GCalSync 410 syncTokenExpired — falling back to full re-sync")
                     // Reset cursor and switch to full mode; restart the outer loop.
@@ -78,7 +76,8 @@ final class GCalSyncEngine {
                 // Process items — per-item isolation so one bad item can't kill the batch.
                 for item in page.items {
                     do { try await apply(item) } catch {
-                        syncLog.error("GCalSync item \(item.id, privacy: .public) error: \(String(describing: error), privacy: .public)")
+                        syncLog
+                            .error("GCalSync item \(item.id, privacy: .public) error: \(String(describing: error), privacy: .public)")
                         continue
                     }
                 }
@@ -92,10 +91,14 @@ final class GCalSyncEngine {
                 pageToken = page.nextPageToken
             } while pageToken != nil
 
-            if continueFromTop { continue }
+            if continueFromTop {
+                continue
+            }
             break
         } while true
 
+        // String interpolation is a closure, so the capture must say self.
+        // swiftformat:disable:next redundantSelf
         syncLog.info("GCalSync done token=\(self.deltaSync.currentToken() ?? "nil", privacy: .public)")
     }
 

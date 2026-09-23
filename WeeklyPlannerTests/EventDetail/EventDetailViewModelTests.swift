@@ -11,7 +11,6 @@ final class EventDetailViewModelTests: XCTestCase {
     private var fakeGeocoder: FakeGeocoder!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         fakeGeocoder = FakeGeocoder()
@@ -21,7 +20,6 @@ final class EventDetailViewModelTests: XCTestCase {
         fakeGeocoder = nil
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testToggleAlertAddsTimeBeforeReminder() async throws {
@@ -38,7 +36,11 @@ final class EventDetailViewModelTests: XCTestCase {
         await vm.toggleAlert(true)
         let reloaded = try await eventStore.event(id: event.id)
         let hasTimeBefore = reloaded?.reminders.contains {
-            if case .timeBefore = $0 { true } else { false }
+            if case .timeBefore = $0 {
+                true
+            } else {
+                false
+            }
         } ?? false
         XCTAssertTrue(hasTimeBefore)
         XCTAssertTrue(vm.alertOn)
@@ -59,7 +61,11 @@ final class EventDetailViewModelTests: XCTestCase {
         await vm.toggleAlert(false)
         let reloaded = try await eventStore.event(id: event.id)
         let stillHasTimeBefore = reloaded?.reminders.contains {
-            if case .timeBefore = $0 { true } else { false }
+            if case .timeBefore = $0 {
+                true
+            } else {
+                false
+            }
         } ?? true
         XCTAssertFalse(stillHasTimeBefore)
     }
@@ -81,7 +87,11 @@ final class EventDetailViewModelTests: XCTestCase {
         XCTAssertNotNil(vm.cachedCoordinate)
         let reloaded = try await eventStore.event(id: event.id)
         let hasOnArrive = reloaded?.reminders.contains {
-            if case .onArrive = $0 { true } else { false }
+            if case .onArrive = $0 {
+                true
+            } else {
+                false
+            }
         } ?? false
         XCTAssertTrue(hasOnArrive)
     }
@@ -198,7 +208,9 @@ final class FakeGeocoder: AddressGeocoding, @unchecked Sendable {
     init() {}
 
     func geocode(address _: String) async throws -> CLLocationCoordinate2D {
-        if let nextError { throw nextError }
+        if let nextError {
+            throw nextError
+        }
         guard let next else { throw NSError(domain: "Fake", code: -1) }
         return next
     }

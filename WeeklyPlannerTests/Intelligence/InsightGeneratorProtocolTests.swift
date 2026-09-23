@@ -27,11 +27,11 @@ final class InsightGeneratorProtocolTests: XCTestCase {
 
     func testDayContext_constructsCleanly() {
         let ctx = DayContext(weekOffset: 0,
-                              dayIdx: 5,
-                              events: [],
-                              inbox: [],
-                              now: Date(timeIntervalSince1970: 1_780_000_000),
-                              appleIntelligenceEnabled: true)
+                             dayIdx: 5,
+                             events: [],
+                             inbox: [],
+                             now: Date(timeIntervalSince1970: 1_780_000_000),
+                             appleIntelligenceEnabled: true)
         XCTAssertEqual(ctx.weekOffset, 0)
         XCTAssertEqual(ctx.dayIdx, 5)
         XCTAssertEqual(ctx.dayKey, "0:5")

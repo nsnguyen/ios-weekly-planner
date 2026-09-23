@@ -6,6 +6,7 @@ final class NotesTabUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    @MainActor
     func testCreateNotePersistsAcrossRelaunchAndDeletes() {
         let app = XCUIApplication()
         app.launch()
@@ -45,7 +46,9 @@ final class NotesTabUITests: XCTestCase {
         app.terminate()
         app.launch()
         let notesTabAgain = app.buttons["tabbar.tab.notes"]
-        if notesTabAgain.waitForExistence(timeout: 5) { notesTabAgain.tap() }
+        if notesTabAgain.waitForExistence(timeout: 5) {
+            notesTabAgain.tap()
+        }
         let rowAfterRelaunch = matchingTitle()
         XCTAssertTrue(rowAfterRelaunch.waitForExistence(timeout: 5), "Note did not survive relaunch")
 

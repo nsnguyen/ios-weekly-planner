@@ -8,7 +8,6 @@ final class GmailClientTests: XCTestCase {
     private var sut: GmailClient!
 
     override func setUp() async throws {
-        try await super.setUp()
         fakeAuth = RecordingAuthService(token: "test-token")
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [URLProtocolStub.self]
@@ -19,7 +18,6 @@ final class GmailClientTests: XCTestCase {
 
     override func tearDown() async throws {
         URLProtocolStub.reset()
-        try await super.tearDown()
     }
 
     func testListMessagesEncodesQueryAndBearer() async throws {
@@ -28,10 +26,8 @@ final class GmailClientTests: XCTestCase {
             XCTAssertEqual(request.url?.query?.contains("q=from:resy"), true)
             XCTAssertEqual(request.url?.query?.contains("maxResults=50"), true)
             XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-token")
-            return URLProtocolStub.Response(
-                status: 200,
-                data: #"{"messages":[{"id":"abc","threadId":"t1"}]}"#.data(using: .utf8)!
-            )
+            return URLProtocolStub.Response(status: 200,
+                                            data: #"{"messages":[{"id":"abc","threadId":"t1"}]}"#.data(using: .utf8)!)
         }
 
         let stubs = try await sut.listMessages(query: "from:resy", maxResults: 50)
@@ -45,16 +41,13 @@ final class GmailClientTests: XCTestCase {
         URLProtocolStub.respond { _ in
             calls += 1
             if calls == 1 {
-                return URLProtocolStub.Response(
-                    status: 429,
-                    headers: ["Retry-After": "0"],
-                    data: Data()
-                )
+                return URLProtocolStub.Response(status: 429,
+                                                headers: ["Retry-After": "0"],
+                                                data: Data())
             }
-            return URLProtocolStub.Response(
-                status: 200,
-                data: #"{"id":"abc","threadId":"t1","snippet":"hello","payload":{"headers":[]}}"#.data(using: .utf8)!
-            )
+            return URLProtocolStub.Response(status: 200,
+                                            data: #"{"id":"abc","threadId":"t1","snippet":"hello","payload":{"headers":[]}}"#
+                                                .data(using: .utf8)!)
         }
 
         let message = try await sut.fetchMessage(id: "abc", format: .full)
@@ -72,10 +65,8 @@ final class GmailClientTests: XCTestCase {
                 return URLProtocolStub.Response(status: 401, data: Data())
             }
             XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer refreshed-token")
-            return URLProtocolStub.Response(
-                status: 200,
-                data: #"{"emailAddress":"a@b.com","historyId":"42"}"#.data(using: .utf8)!
-            )
+            return URLProtocolStub.Response(status: 200,
+                                            data: #"{"emailAddress":"a@b.com","historyId":"42"}"#.data(using: .utf8)!)
         }
         fakeAuth.nextRefreshedToken = "refreshed-token"
 
@@ -163,8 +154,13 @@ final class URLProtocolStub: URLProtocol, @unchecked Sendable {
         lock.withLock { handler = nil }
     }
 
-    override class func canInit(with _: URLRequest) -> Bool { true }
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override class func canInit(with _: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
 
     override func startLoading() {
         let resp: Response = Self.lock.withLock {
@@ -173,12 +169,10 @@ final class URLProtocolStub: URLProtocol, @unchecked Sendable {
             }
             return h(self.request)
         }
-        let httpResp = HTTPURLResponse(
-            url: request.url!,
-            statusCode: resp.status,
-            httpVersion: "HTTP/1.1",
-            headerFields: resp.headers
-        )!
+        let httpResp = HTTPURLResponse(url: request.url!,
+                                       statusCode: resp.status,
+                                       httpVersion: "HTTP/1.1",
+                                       headerFields: resp.headers)!
         client?.urlProtocol(self, didReceive: httpResp, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: resp.data)
         client?.urlProtocolDidFinishLoading(self)

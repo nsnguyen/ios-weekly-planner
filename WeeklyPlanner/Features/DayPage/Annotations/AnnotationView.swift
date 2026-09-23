@@ -25,11 +25,17 @@ struct AnnotationView: View {
     @GestureState private var isDragging: Bool = false
     @FocusState private var focused: Bool
 
-    private var isEditing: Bool { editingID == annotation.id }
+    private var isEditing: Bool {
+        editingID == annotation.id
+    }
 
     var body: some View {
         Group {
-            if isEditing { editor } else { display }
+            if isEditing {
+                editor
+            } else {
+                display
+            }
         }
         .onChange(of: isDragging) { _, dragging in
             flipController?.annotationDragActive = dragging
@@ -95,10 +101,9 @@ struct AnnotationView: View {
                 // request a compaction: the note re-sorts into its slot by unitY
                 // and the stack re-packs gapless. Persistence flows through the
                 // compaction (it writes every note's final slot).
-                let newUnit = DayPageLayout.verticalDragUnit(
-                    currentUnitY: annotation.unitY,
-                    translationHeight: value.translation.height,
-                    layerSize: layerSize)
+                let newUnit = DayPageLayout.verticalDragUnit(currentUnitY: annotation.unitY,
+                                                             translationHeight: value.translation.height,
+                                                             layerSize: layerSize)
                 annotation.unitX = newUnit.x
                 annotation.unitY = newUnit.y
                 viewModel.requestCompaction()
@@ -107,20 +112,19 @@ struct AnnotationView: View {
 
     private var editor: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextStyleBar(
-                selectedColor: annotation.colorToken,
-                isBold: annotation.isBold,
-                onColor: { token in
-                    Task { await viewModel.setAnnotationStyle(id: annotation.id, colorToken: token) }
-                },
-                onBoldToggle: {
-                    Task { await viewModel.setAnnotationStyle(id: annotation.id, isBold: !annotation.isBold) }
-                },
-                onDelete: {
-                    editingID = nil
-                    Task { await viewModel.deleteAnnotation(id: annotation.id) }
-                },
-                onDone: { focused = false })
+            TextStyleBar(selectedColor: annotation.colorToken,
+                         isBold: annotation.isBold,
+                         onColor: { token in
+                             Task { await viewModel.setAnnotationStyle(id: annotation.id, colorToken: token) }
+                         },
+                         onBoldToggle: {
+                             Task { await viewModel.setAnnotationStyle(id: annotation.id, isBold: !annotation.isBold) }
+                         },
+                         onDelete: {
+                             editingID = nil
+                             Task { await viewModel.deleteAnnotation(id: annotation.id) }
+                         },
+                         onDone: { focused = false })
 
             TextField("Write…", text: $draft, axis: .vertical)
                 .font(font.font(at: 16 * size.scale, weight: annotation.isBold ? .bold : .regular))
@@ -136,7 +140,9 @@ struct AnnotationView: View {
         .onChange(of: focused) { _, isFocused in
             // Losing focus relinquishes editorship; the body-level
             // `.onChange(of: editingID)` performs the single commit.
-            if !isFocused, isEditing { editingID = nil }
+            if !isFocused, isEditing {
+                editingID = nil
+            }
         }
     }
 }

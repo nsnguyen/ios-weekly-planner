@@ -171,7 +171,7 @@ private struct CheckmarkShape: Shape {
 // MARK: - Previews
 
 #Preview("TodoRow · Three states (cream)") {
-    let calendar = WeekMath.mondayCalendar()
+    let calendar = WeekMath.preferredCalendar
     var components = DateComponents()
     components.year = 2026
     components.month = 5

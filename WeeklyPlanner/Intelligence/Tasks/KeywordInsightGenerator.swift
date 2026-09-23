@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(FoundationModels)
-import FoundationModels
+    import FoundationModels
 #endif
 
 /// Structured output from the keyword-insight Foundation Models prompt.
@@ -64,16 +64,14 @@ final class KeywordInsightGenerator: InsightGenerator {
             ? nil
             : "weeklyplanner://event/\(d.relatedEventID)"
 
-        return AIInsight(
-            dayKey: day.dayKey,
-            dateGenerated: day.now,
-            text: String(d.text.prefix(60)),
-            colorHex: InsightKind.keyword.colorHex,
-            tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
-            kind: .keyword,
-            actionURL: actionURL,
-            priority: InsightKind.keyword.defaultPriority
-        )
+        return AIInsight(dayKey: day.dayKey,
+                         dateGenerated: day.now,
+                         text: String(d.text.prefix(60)),
+                         colorHex: InsightKind.keyword.colorHex,
+                         tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                         kind: .keyword,
+                         actionURL: actionURL,
+                         priority: InsightKind.keyword.defaultPriority)
     }
 
     /// Pure prompt builder — exposed for tests so the wording stays
@@ -101,24 +99,24 @@ final class KeywordInsightGenerator: InsightGenerator {
 final class LiveKeywordInsightModel: KeywordInsightModeling {
     func generateKeyword(prompt: String, day _: DayContext) async throws -> KeywordInsightDraft? {
         #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            // The actual @Generable struct lives here; the Phase 18 pattern
-            // is to define it alongside the live call so the FoundationModels
-            // import stays local. We re-parse the JSON via JSONDecoder
-            // because Generable + AIInsight cross-type pinning is brittle.
-            let session = LanguageModelSession()
-            do {
-                let response = try await session.respond(to: prompt)
-                let text = response.content
-                guard let data = text.data(using: .utf8) else { return nil }
-                let decoded = try JSONDecoder().decode(WireKeywordDraft.self, from: data)
-                return KeywordInsightDraft(text: decoded.text,
-                                            relatedEventID: decoded.relatedEventID,
-                                            confidence: decoded.confidence)
-            } catch {
-                return nil
+            if #available(iOS 26.0, *) {
+                // The actual @Generable struct lives here; the Phase 18 pattern
+                // is to define it alongside the live call so the FoundationModels
+                // import stays local. We re-parse the JSON via JSONDecoder
+                // because Generable + AIInsight cross-type pinning is brittle.
+                let session = LanguageModelSession()
+                do {
+                    let response = try await session.respond(to: prompt)
+                    let text = response.content
+                    guard let data = text.data(using: .utf8) else { return nil }
+                    let decoded = try JSONDecoder().decode(WireKeywordDraft.self, from: data)
+                    return KeywordInsightDraft(text: decoded.text,
+                                               relatedEventID: decoded.relatedEventID,
+                                               confidence: decoded.confidence)
+                } catch {
+                    return nil
+                }
             }
-        }
         #endif
         return nil
     }

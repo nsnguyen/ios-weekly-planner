@@ -28,12 +28,10 @@ final class EventSuggestionGenerator {
     /// caller can fall back to its canned-text path without surfacing
     /// an error to the user.
     func generate(for event: Event) async -> String? {
-        let context = PlannerContext(
-            now: clock(),
-            viewedWeekOffset: 0,
-            maxResponseTokens: 120,
-            appleIntelligenceEnabled: settings()
-        )
+        let context = PlannerContext(now: clock(),
+                                     viewedWeekOffset: 0,
+                                     maxResponseTokens: 120,
+                                     appleIntelligenceEnabled: settings())
         let availability = await intelligence.availability(context: context)
         guard availability.isAvailable else { return nil }
 

@@ -36,9 +36,15 @@ enum OccurrenceExpander {
         var index = 0
 
         while index < limit {
-            if case let .afterCount(count) = recurrence.end, index >= count { break }
-            if let endCutoff, current > endCutoff { break }
-            if current >= window.upperBound { break }
+            if case let .afterCount(count) = recurrence.end, index >= count {
+                break
+            }
+            if let endCutoff, current > endCutoff {
+                break
+            }
+            if current >= window.upperBound {
+                break
+            }
 
             if current >= window.lowerBound,
                !excluded.contains(where: { abs($0.timeIntervalSince(current)) < 1 })

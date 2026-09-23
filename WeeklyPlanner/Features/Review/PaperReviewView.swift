@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Root of the Review page. Wraps the existing paper chrome (BookPage +
 /// PaperSurface + RuledLines + RedMarginLine + HolePunches) around a
@@ -34,13 +34,13 @@ struct PaperReviewView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             if let viewModel {
                                 ReviewHeader(weekOffset: viewModel.weekOffset,
-                                              dateRange: Self.formatWeekRange(weekOffset: viewModel.weekOffset,
-                                                                              today: Date()),
-                                              completionPercent: viewModel.completionPercent)
+                                             dateRange: Self.formatWeekRange(weekOffset: viewModel.weekOffset,
+                                                                             today: Date()),
+                                             completionPercent: viewModel.completionPercent)
                                 // Phase 32 (#38): three honest states — real
                                 // AI output, an enable-AI prompt, or nothing.
                                 switch viewModel.summaryState {
-                                case .real(let summary):
+                                case let .real(summary):
                                     ReviewSummaryBlock(summaryBody: summary.headline)
                                 case .aiOff:
                                     ReviewAIOffPrompt()
@@ -49,10 +49,10 @@ struct PaperReviewView: View {
                                 }
                                 TimeSpentBarChart(timeByCategory: viewModel.timeByCategory,
                                                   maxHours: viewModel.maxHours)
-                                if case .real(let summary) = viewModel.summaryState {
+                                if case let .real(summary) = viewModel.summaryState {
                                     AINotesList(bullets: summary.bullets) // self-hides when empty
                                 }
-                                StreaksBlock(streaks: viewModel.streaks)  // self-hides when empty
+                                StreaksBlock(streaks: viewModel.streaks) // self-hides when empty
                             } else {
                                 ProgressView()
                                     .padding(.top, 60)
@@ -71,16 +71,16 @@ struct PaperReviewView: View {
                 // (Phase 32 #38 — the AI-off prompt depends on this).
                 let generator = intelligenceService.map { [settingsStore] service in
                     WeekSummaryGenerator(intelligence: service,
-                                          events: eventStore,
-                                          tasks: taskStore,
-                                          settings: {
-                                              (try? settingsStore.current())?.appleIntelligenceEnabled ?? true
-                                          })
+                                         events: eventStore,
+                                         tasks: taskStore,
+                                         settings: {
+                                             (try? settingsStore.current())?.appleIntelligenceEnabled ?? true
+                                         })
                 }
                 viewModel = ReviewViewModel(weekOffset: weekOffset,
-                                             eventStore: eventStore,
-                                             taskStore: taskStore,
-                                             summaryGenerator: generator)
+                                            eventStore: eventStore,
+                                            taskStore: taskStore,
+                                            summaryGenerator: generator)
             }
             await viewModel?.refresh()
         }
@@ -89,7 +89,7 @@ struct PaperReviewView: View {
     /// Formatter shared by the header. POSIX-locked so unit tests stay
     /// deterministic.
     private static func formatWeekRange(weekOffset: Int, today: Date) -> String {
-        let calendar = WeekMath.mondayCalendar()
+        let calendar = WeekMath.preferredCalendar
         let monday = WeekMath.weekDays(forOffset: weekOffset, today: today).first?.date ?? today
         let sunday = calendar.date(byAdding: .day, value: 6, to: monday) ?? monday
         let day = DateFormatter()

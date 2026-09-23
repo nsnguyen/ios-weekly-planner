@@ -19,11 +19,11 @@ final class ToolRegistry {
     let lastInteraction: LastInteractionTool
 
     init(events: any EventStoring, tasks: any TaskStoring, inbox: any InboxStoring) {
-        self.findEvents = FindEventsTool(store: events)
-        self.findFreeSlots = FindFreeSlotsTool(store: events)
-        self.scanInbox = ScanInboxTool(store: inbox)
-        self.summarizeWeek = SummarizeWeekTool(events: events, tasks: tasks)
-        self.lastInteraction = LastInteractionTool(store: events)
+        findEvents = FindEventsTool(store: events)
+        findFreeSlots = FindFreeSlotsTool(store: events)
+        scanInbox = ScanInboxTool(store: inbox)
+        summarizeWeek = SummarizeWeekTool(events: events, tasks: tasks)
+        lastInteraction = LastInteractionTool(store: events)
     }
 
     /// Stable ordering — referenced by `SystemPrompt` to enumerate

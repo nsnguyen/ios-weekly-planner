@@ -69,7 +69,11 @@ struct WeekPageView: View {
             if let id = openEventID {
                 PaperEventSheet(initialMode: .view(id),
                                 isOpen: Binding(get: { openEventID != nil },
-                                                set: { if !$0 { openEventID = nil } }))
+                                                set: {
+                                                    if !$0 {
+                                                        openEventID = nil
+                                                    }
+                                                }))
             }
         }
         .task {
@@ -108,16 +112,15 @@ struct WeekPageView: View {
                                    onTapEvent: { id in
                                        openEventID = id
                                    })
-                            .accessibleWeekDayRow(weekdayFull: day.weekdayLong, dayN: offset + 1)
-                            .accessibilityIdentifier(AccessibilityIDs.weekpageDayRow(day.idx))
+                                   .accessibleWeekDayRow(weekdayFull: day.weekdayLong, dayN: offset + 1)
+                                   .accessibilityIdentifier(AccessibilityIDs.weekpageDayRow(day.idx))
                     }
                 }
                 .accessibilityRotor("Days") {
                     ForEach(Array(days.enumerated()), id: \.element.idx) { offset, day in
-                        AccessibilityRotorEntry(
-                            AccessibilityFormatters.sideTabLabel(weekdayFull: day.weekdayLong, dayN: offset + 1),
-                            id: day.idx
-                        )
+                        AccessibilityRotorEntry(AccessibilityFormatters.sideTabLabel(weekdayFull: day.weekdayLong,
+                                                                                     dayN: offset + 1),
+                                                id: day.idx)
                     }
                 }
             }

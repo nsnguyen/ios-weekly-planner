@@ -19,12 +19,20 @@ import XCTest
 ///   topbar.daterange.pill · daypage.sidetab.{n} · weekpicker.weekrow.{offset}
 final class WeekNavigationStabilityUITests: XCTestCase {
     private enum ID {
-        static func dayWeekSegment(_ v: String) -> String { "topbar.dayweek.\(v)" }
+        static func dayWeekSegment(_ v: String) -> String {
+            "topbar.dayweek.\(v)"
+        }
+
         static let weekChevronPrev = "topbar.week.chevron.prev"
         static let weekChevronNext = "topbar.week.chevron.next"
         static let dateRangePill = "topbar.daterange.pill"
-        static func sideTab(_ n: Int) -> String { "daypage.sidetab.\(n)" }
-        static func weekpickerWeekRow(_ offset: Int) -> String { "weekpicker.weekrow.\(offset)" }
+        static func sideTab(_ n: Int) -> String {
+            "daypage.sidetab.\(n)"
+        }
+
+        static func weekpickerWeekRow(_ offset: Int) -> String {
+            "weekpicker.weekrow.\(offset)"
+        }
     }
 
     override func setUp() {
@@ -43,10 +51,14 @@ final class WeekNavigationStabilityUITests: XCTestCase {
     /// freeze fix — they only prove basic navigation.
     private func idleSeconds(default def: Double = 65) -> Double {
         if let raw = ProcessInfo.processInfo.environment["WP_IDLE_SECONDS"],
-           let v = Double(raw) { return v }
+           let v = Double(raw)
+        {
+            return v
+        }
         return def
     }
 
+    @MainActor
     private func launchOnWeekView() -> XCUIApplication {
         let app = XCUIApplication()
         app.launch()
@@ -58,6 +70,7 @@ final class WeekNavigationStabilityUITests: XCTestCase {
         return app
     }
 
+    @MainActor
     private func rangeValue(_ app: XCUIApplication) -> String {
         let pill = app.buttons[ID.dateRangePill]
         XCTAssertTrue(pill.waitForExistence(timeout: 3), "Date-range pill not found")

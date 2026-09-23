@@ -10,24 +10,22 @@ final class WeekSummaryGeneratorTests: XCTestCase {
     private var taskStore: SwiftDataTaskStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
         taskStore = SwiftDataTaskStore(context: container.mainContext)
     }
 
     override func tearDown() async throws {
-        eventStore = nil; taskStore = nil; container = nil
-        try await super.tearDown()
+        eventStore = nil
+        taskStore = nil
+        container = nil
     }
 
     func testPromptIncludesWeekStatsLines() {
-        let prompt = WeekSummaryGenerator.prompt(
-            weekOffset: 0,
-            tasksDone: 4,
-            tasksTotal: 9,
-            hoursByCategory: ["work": 12.5, "health": 2.0]
-        )
+        let prompt = WeekSummaryGenerator.prompt(weekOffset: 0,
+                                                 tasksDone: 4,
+                                                 tasksTotal: 9,
+                                                 hoursByCategory: ["work": 12.5, "health": 2.0])
         XCTAssertTrue(prompt.contains("Week offset: 0"))
         XCTAssertTrue(prompt.contains("Tasks: 4 of 9 done"))
         XCTAssertTrue(prompt.contains("work: 12.5h"))
@@ -42,13 +40,11 @@ final class WeekSummaryGeneratorTests: XCTestCase {
                                           end: saturday.addingTimeInterval(-1800),
                                           category: .work))
         let service = StubIntelligenceService(eventStore: eventStore)
-        let generator = WeekSummaryGenerator(
-            intelligence: service,
-            events: eventStore,
-            tasks: taskStore
-        )
+        let generator = WeekSummaryGenerator(intelligence: service,
+                                             events: eventStore,
+                                             tasks: taskStore)
         let outcome = await generator.generate(weekOffset: 0, today: saturday)
-        guard case .generated(let summary) = outcome else {
+        guard case let .generated(summary) = outcome else {
             return XCTFail("expected .generated, got \(outcome)")
         }
         XCTAssertFalse(summary.headline.isEmpty)
@@ -60,23 +56,19 @@ final class WeekSummaryGeneratorTests: XCTestCase {
 
     func testGenerateReturnsUnavailableWhenAIDisabled() async {
         let service = StubIntelligenceService(eventStore: eventStore)
-        let generator = WeekSummaryGenerator(
-            intelligence: service,
-            events: eventStore,
-            tasks: taskStore,
-            settings: { false }
-        )
+        let generator = WeekSummaryGenerator(intelligence: service,
+                                             events: eventStore,
+                                             tasks: taskStore,
+                                             settings: { false })
         let outcome = await generator.generate(weekOffset: 0, today: Self.may16_2026())
         XCTAssertEqual(outcome, .unavailable)
     }
 
     func testGenerateReturnsNoContentForGenuinelyEmptyWeek() async {
         let service = StubIntelligenceService(eventStore: eventStore)
-        let generator = WeekSummaryGenerator(
-            intelligence: service,
-            events: eventStore,
-            tasks: taskStore
-        )
+        let generator = WeekSummaryGenerator(intelligence: service,
+                                             events: eventStore,
+                                             tasks: taskStore)
         let outcome = await generator.generate(weekOffset: 0, today: Self.may16_2026())
         XCTAssertEqual(outcome, .noContent,
                        "an empty week must not invoke the model or fabricate a summary")

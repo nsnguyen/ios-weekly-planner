@@ -8,6 +8,9 @@ struct PreferencesGroup<Content: View>: View {
     @Environment(\.paperTheme) private var theme
     @ViewBuilder let content: () -> Content
 
+    // The parameter attribute is what lets call sites pass multiple rows.
+    // redundantMemberwiseInit copies it onto the property and leaves both.
+    // swiftformat:disable:next redundantMemberwiseInit
     init(@ViewBuilder content: @escaping () -> Content) {
         self.content = content
     }
@@ -16,12 +19,8 @@ struct PreferencesGroup<Content: View>: View {
         VStack(spacing: 0) {
             content()
         }
-        .background(
-            RoundedRectangle(cornerRadius: 14).fill(theme.creamHi)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14).strokeBorder(theme.rule, lineWidth: 0.5)
-        )
+        .background(RoundedRectangle(cornerRadius: 14).fill(theme.creamHi))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(theme.rule, lineWidth: 0.5))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .padding(.bottom, 14)
     }

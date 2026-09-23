@@ -9,21 +9,23 @@ private let clientLog = Logger(subsystem: "com.weeklyplanner.WeeklyPlanner", cat
 
 @MainActor
 protocol GoogleCalendarClientProtocol: AnyObject {
-    func listEvents(syncToken: String?, timeMin: Date?, timeMax: Date?, pageToken: String?) async throws -> GCalEventsListResponse
+    func listEvents(syncToken: String?, timeMin: Date?, timeMax: Date?, pageToken: String?) async throws
+        -> GCalEventsListResponse
     func getEvent(id: String) async throws -> GCalEvent
     func createEvent(_ body: GCalEventWriteBody) async throws -> GCalEvent
     func updateEvent(id: String, body: GCalEventWriteBody, etag: String?) async throws -> GCalEvent
     func cancelEvent(id: String) async throws
 }
+
 extension GoogleCalendarClient: GoogleCalendarClientProtocol {}
 
 enum GoogleCalendarClientError: Error, Equatable {
     /// The sync token we passed is too old. Caller should do a full re-sync.
-    case syncTokenExpired   // 410 Gone
+    case syncTokenExpired // 410 Gone
     /// Caller attempted to update an event whose remote etag has changed.
     case preconditionFailed // 412 Precondition Failed
     /// The requested remote event no longer exists.
-    case notFound           // 404 Not Found
+    case notFound // 404 Not Found
     /// Server returned non-success after retries.
     case http(status: Int)
     /// Response body wasn't valid JSON for the expected DTO.
@@ -48,20 +50,31 @@ final class GoogleCalendarClient {
 
     // MARK: - Public endpoints
 
-    func listEvents(syncToken: String?, timeMin: Date?, timeMax: Date?, pageToken: String?) async throws -> GCalEventsListResponse {
-        var c = URLComponents(url: baseURL.appending(path: "/calendar/v3/calendars/primary/events"), resolvingAgainstBaseURL: false)!
-        var q = [URLQueryItem(name: "singleEvents", value: "true"),
-                 URLQueryItem(name: "maxResults", value: "250")]
+    func listEvents(syncToken: String?, timeMin: Date?, timeMax: Date?,
+                    pageToken: String?) async throws -> GCalEventsListResponse
+    {
+        var c = URLComponents(url: baseURL.appending(path: "/calendar/v3/calendars/primary/events"),
+                              resolvingAgainstBaseURL: false)!
+        var q = [
+            URLQueryItem(name: "singleEvents", value: "true"),
+            URLQueryItem(name: "maxResults", value: "250"),
+        ]
         if let syncToken {
             // incremental sync: timeMin/Max not allowed alongside syncToken
             q.append(URLQueryItem(name: "syncToken", value: syncToken))
         } else {
             // full sync: bound the window
             let iso = ISO8601DateFormatter()
-            if let timeMin { q.append(URLQueryItem(name: "timeMin", value: iso.string(from: timeMin))) }
-            if let timeMax { q.append(URLQueryItem(name: "timeMax", value: iso.string(from: timeMax))) }
+            if let timeMin {
+                q.append(URLQueryItem(name: "timeMin", value: iso.string(from: timeMin)))
+            }
+            if let timeMax {
+                q.append(URLQueryItem(name: "timeMax", value: iso.string(from: timeMax)))
+            }
         }
-        if let pageToken { q.append(URLQueryItem(name: "pageToken", value: pageToken)) }
+        if let pageToken {
+            q.append(URLQueryItem(name: "pageToken", value: pageToken))
+        }
         c.queryItems = q
         do {
             return try await send(url: c.url!, method: "GET", body: nil, ifMatch: nil)
@@ -130,7 +143,7 @@ final class GoogleCalendarClient {
             let http = response as! HTTPURLResponse
 
             switch http.statusCode {
-            case 200..<300:
+            case 200 ..< 300:
                 do {
                     return try JSONDecoder().decode(T.self, from: data)
                 } catch {
@@ -148,7 +161,8 @@ final class GoogleCalendarClient {
                 if attempts > Self.maxRetries {
                     throw GoogleCalendarClientError.http(status: 429)
                 }
-                let retryAfter = http.value(forHTTPHeaderField: "Retry-After").flatMap(Double.init) ?? pow(2.0, Double(attempts))
+                let retryAfter = http.value(forHTTPHeaderField: "Retry-After").flatMap(Double.init) ?? pow(2.0,
+                                                                                                           Double(attempts))
                 try await Task.sleep(nanoseconds: UInt64(retryAfter * 1_000_000_000))
                 continue
 
@@ -158,7 +172,8 @@ final class GoogleCalendarClient {
                 // "ACCESS_TOKEN_SCOPE_INSUFFICIENT"). Without this it's an opaque
                 // status code.
                 let body = String(data: data, encoding: .utf8) ?? "<\(data.count) bytes, non-utf8>"
-                clientLog.error("GCal API \(http.statusCode, privacy: .public) at \(url.path, privacy: .public): \(body, privacy: .public)")
+                clientLog
+                    .error("GCal API \(http.statusCode, privacy: .public) at \(url.path, privacy: .public): \(body, privacy: .public)")
                 throw GoogleCalendarClientError.http(status: http.statusCode)
             }
         }

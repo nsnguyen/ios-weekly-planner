@@ -16,7 +16,6 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
     private let end = Date(timeIntervalSince1970: 1_749_898_800)
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         swiftDataStore = SwiftDataEventStore(context: container.mainContext)
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
@@ -24,22 +23,18 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         client = FakeGoogleCalendarClient()
         unlinkedEventKitIdentifiers = []
 
-        let eventKitStore = EventKitMirroringEventStore(
-            base: swiftDataStore,
-            gateway: gateway,
-            calendarManager: CategoryCalendarManager(gateway: gateway)
-        )
+        let eventKitStore = EventKitMirroringEventStore(base: swiftDataStore,
+                                                        gateway: gateway,
+                                                        calendarManager: CategoryCalendarManager(gateway: gateway))
         let settingsStore = settingsStore!
-        store = GoogleCalendarWriteBackEventStore(
-            base: eventKitStore,
-            client: client,
-            isConnected: {
-                (try? settingsStore.current().googleCalendarConnected) ?? false
-            },
-            unlinkEventKitIdentifier: { [weak self] identifier in
-                self?.unlinkedEventKitIdentifiers.append(identifier)
-            }
-        )
+        store = GoogleCalendarWriteBackEventStore(base: eventKitStore,
+                                                  client: client,
+                                                  isConnected: {
+                                                      (try? settingsStore.current().googleCalendarConnected) ?? false
+                                                  },
+                                                  unlinkEventKitIdentifier: { [weak self] identifier in
+                                                      self?.unlinkedEventKitIdentifiers.append(identifier)
+                                                  })
     }
 
     override func tearDown() async throws {
@@ -49,7 +44,6 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         settingsStore = nil
         swiftDataStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testCreateWhileConnectedPostsAndFlipsSource() async throws {
@@ -57,11 +51,9 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarConnected = true
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
-        client.createResult = makeRemoteEvent(
-            id: "remote-created-1",
-            etag: "\"remote-etag\"",
-            updated: "2026-06-14T12:34:56.789Z"
-        )
+        client.createResult = makeRemoteEvent(id: "remote-created-1",
+                                              etag: "\"remote-etag\"",
+                                              updated: "2026-06-14T12:34:56.789Z")
         let event = makeLocalEvent(eventKitIdentifier: "ek-local-id")
 
         try await store.upsert(event)
@@ -77,9 +69,11 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         XCTAssertEqual(fetched.source, .googleCalendar)
         XCTAssertNil(fetched.eventKitIdentifier)
         XCTAssertEqual(unlinkedEventKitIdentifiers, ["ek-local-id"])
-        XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T12:34:56.789Z")))
+        XCTAssertEqual(fetched.updatedAt,
+                       try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T12:34:56.789Z")))
 
-        XCTAssertEqual(event.googleEventID, "remote-created-1", "Event is a class, so the decorator should mutate in place")
+        XCTAssertEqual(event.googleEventID, "remote-created-1",
+                       "Event is a class, so the decorator should mutate in place")
         XCTAssertEqual(event.source, .googleCalendar)
     }
 
@@ -93,7 +87,8 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         try await store.upsert(event)
 
         XCTAssertTrue(client.created.isEmpty)
-        XCTAssertFalse(gateway.savedEvents.isEmpty, "Disconnected manual writes should continue through EventKit mirroring")
+        XCTAssertFalse(gateway.savedEvents.isEmpty,
+                       "Disconnected manual writes should continue through EventKit mirroring")
 
         let storedEvent = try await swiftDataStore.event(id: event.id)
         let fetched = try XCTUnwrap(storedEvent)
@@ -107,9 +102,7 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarConnected = true
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
-        let event = makeLocalEvent(
-            recurrence: Recurrence(frequency: .weekly, interval: 1, end: .never)
-        )
+        let event = makeLocalEvent(recurrence: Recurrence(frequency: .weekly, interval: 1, end: .never))
 
         try await store.upsert(event)
 
@@ -128,24 +121,18 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
         let localUpdated = try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:00:00.250Z"))
-        let event = makeLocalEvent(
-            title: "Local wins",
-            googleEventID: "remote-update-1",
-            googleEtag: "\"old-local-etag\"",
-            updatedAt: localUpdated
-        )
-        client.getResponses["remote-update-1"] = makeRemoteEvent(
-            id: "remote-update-1",
-            title: "Remote older",
-            etag: "\"remote-old\"",
-            updated: "2026-06-14T12:00:00.125Z"
-        )
-        client.updateResult = makeRemoteEvent(
-            id: "remote-update-1",
-            title: "Local wins",
-            etag: "\"remote-after-update\"",
-            updated: "2026-06-14T13:01:00.500Z"
-        )
+        let event = makeLocalEvent(title: "Local wins",
+                                   googleEventID: "remote-update-1",
+                                   googleEtag: "\"old-local-etag\"",
+                                   updatedAt: localUpdated)
+        client.getResponses["remote-update-1"] = makeRemoteEvent(id: "remote-update-1",
+                                                                 title: "Remote older",
+                                                                 etag: "\"remote-old\"",
+                                                                 updated: "2026-06-14T12:00:00.125Z")
+        client.updateResult = makeRemoteEvent(id: "remote-update-1",
+                                              title: "Local wins",
+                                              etag: "\"remote-after-update\"",
+                                              updated: "2026-06-14T13:01:00.500Z")
 
         try await store.upsert(event)
 
@@ -158,7 +145,8 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         let fetched = try XCTUnwrap(storedEvent)
         XCTAssertEqual(fetched.title, "Local wins")
         XCTAssertEqual(fetched.googleEtag, "\"remote-after-update\"")
-        XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:01:00.500Z")))
+        XCTAssertEqual(fetched.updatedAt,
+                       try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:01:00.500Z")))
     }
 
     func testUpdateRemoteNewerAppliesRemoteSkipsPush() async throws {
@@ -167,18 +155,14 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
         let localUpdated = try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:00:00.250Z"))
-        let event = makeLocalEvent(
-            title: "Local edit",
-            googleEventID: "remote-update-2",
-            googleEtag: "\"stale-local-etag\"",
-            updatedAt: localUpdated
-        )
-        client.getResponses["remote-update-2"] = makeRemoteEvent(
-            id: "remote-update-2",
-            title: "Remote wins",
-            etag: "\"remote-newer\"",
-            updated: "2026-06-14T13:30:00.750Z"
-        )
+        let event = makeLocalEvent(title: "Local edit",
+                                   googleEventID: "remote-update-2",
+                                   googleEtag: "\"stale-local-etag\"",
+                                   updatedAt: localUpdated)
+        client.getResponses["remote-update-2"] = makeRemoteEvent(id: "remote-update-2",
+                                                                 title: "Remote wins",
+                                                                 etag: "\"remote-newer\"",
+                                                                 updated: "2026-06-14T13:30:00.750Z")
 
         try await store.upsert(event)
 
@@ -188,7 +172,8 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         let fetched = try XCTUnwrap(storedEvent)
         XCTAssertEqual(fetched.title, "Remote wins")
         XCTAssertEqual(fetched.googleEtag, "\"remote-newer\"")
-        XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:30:00.750Z")))
+        XCTAssertEqual(fetched.updatedAt,
+                       try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:30:00.750Z")))
     }
 
     func testUpdate412RetriesOnce() async throws {
@@ -197,26 +182,20 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
         let localUpdated = try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:00:00.250Z"))
-        let event = makeLocalEvent(
-            title: "Retry local wins",
-            googleEventID: "remote-update-3",
-            googleEtag: "\"stale-local-etag\"",
-            updatedAt: localUpdated
-        )
-        client.getResponses["remote-update-3"] = makeRemoteEvent(
-            id: "remote-update-3",
-            title: "Remote older",
-            etag: "\"fresh-remote-etag\"",
-            updated: "2026-06-14T12:00:00.125Z"
-        )
+        let event = makeLocalEvent(title: "Retry local wins",
+                                   googleEventID: "remote-update-3",
+                                   googleEtag: "\"stale-local-etag\"",
+                                   updatedAt: localUpdated)
+        client.getResponses["remote-update-3"] = makeRemoteEvent(id: "remote-update-3",
+                                                                 title: "Remote older",
+                                                                 etag: "\"fresh-remote-etag\"",
+                                                                 updated: "2026-06-14T12:00:00.125Z")
         client.updateBehavior = [
             .failure(GoogleCalendarClientError.preconditionFailed),
-            .success(makeRemoteEvent(
-                id: "remote-update-3",
-                title: "Retry local wins",
-                etag: "\"remote-after-retry\"",
-                updated: "2026-06-14T13:02:00.500Z"
-            ))
+            .success(makeRemoteEvent(id: "remote-update-3",
+                                     title: "Retry local wins",
+                                     etag: "\"remote-after-retry\"",
+                                     updated: "2026-06-14T13:02:00.500Z")),
         ]
 
         try await store.upsert(event)
@@ -230,7 +209,8 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         let fetched = try XCTUnwrap(storedEvent)
         XCTAssertEqual(fetched.title, "Retry local wins")
         XCTAssertEqual(fetched.googleEtag, "\"remote-after-retry\"")
-        XCTAssertEqual(fetched.updatedAt, try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:02:00.500Z")))
+        XCTAssertEqual(fetched.updatedAt,
+                       try XCTUnwrap(Self.isoWithFractionalSeconds.date(from: "2026-06-14T13:02:00.500Z")))
     }
 
     func testDeleteCancelsRemoteThenRemovesLocal() async throws {
@@ -238,11 +218,9 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarConnected = true
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
-        let event = makeLocalEvent(
-            source: .googleCalendar,
-            googleEventID: "remote-delete-1",
-            googleEtag: "\"delete-etag\""
-        )
+        let event = makeLocalEvent(source: .googleCalendar,
+                                   googleEventID: "remote-delete-1",
+                                   googleEtag: "\"delete-etag\"")
         try await swiftDataStore.upsert(event)
 
         try await store.delete(id: event.id)
@@ -257,11 +235,9 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarConnected = true
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
-        let event = makeLocalEvent(
-            source: .googleCalendar,
-            googleEventID: "already-gone",
-            googleEtag: "\"delete-etag\""
-        )
+        let event = makeLocalEvent(source: .googleCalendar,
+                                   googleEventID: "already-gone",
+                                   googleEtag: "\"delete-etag\"")
         try await swiftDataStore.upsert(event)
         client.throwOnWrite = GoogleCalendarClientError.notFound
 
@@ -276,11 +252,9 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarConnected = true
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
-        let event = makeLocalEvent(
-            source: .googleCalendar,
-            googleEventID: "remote-purge-1",
-            googleEtag: "\"purge-etag\""
-        )
+        let event = makeLocalEvent(source: .googleCalendar,
+                                   googleEventID: "remote-purge-1",
+                                   googleEtag: "\"purge-etag\"")
         try await swiftDataStore.upsert(event)
 
         try await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
@@ -297,11 +271,9 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
             $0.googleCalendarConnected = true
             $0.googleCalendarAccountEmail = "planner@example.com"
         }
-        let event = makeLocalEvent(
-            source: .googleCalendar,
-            googleEventID: "remote-import-1",
-            googleEtag: "\"import-etag\""
-        )
+        let event = makeLocalEvent(source: .googleCalendar,
+                                   googleEventID: "remote-import-1",
+                                   googleEtag: "\"import-etag\"")
 
         try await GCalWriteBackContext.$suppressWriteBack.withValue(true) {
             try await store.upsert(event)
@@ -314,48 +286,42 @@ final class GCalWriteBackEventStoreTests: XCTestCase {
         XCTAssertEqual(fetched.googleEventID, "remote-import-1")
     }
 
-    private func makeLocalEvent(
-        title: String = "Write-back meeting",
-        eventKitIdentifier: String? = nil,
-        source: EventSource = .manual,
-        googleEventID: String? = nil,
-        googleEtag: String? = nil,
-        updatedAt: Date = .init(),
-        recurrence: Recurrence? = nil
-    ) -> Event {
-        Event(
-            eventKitIdentifier: eventKitIdentifier,
-            title: title,
-            start: start,
-            end: end,
-            location: "Conference Room",
-            notes: "Discuss calendar write-back",
-            category: .work,
-            source: source,
-            googleEventID: googleEventID,
-            googleEtag: googleEtag,
-            recurrence: recurrence,
-            updatedAt: updatedAt
-        )
+    private func makeLocalEvent(title: String = "Write-back meeting",
+                                eventKitIdentifier: String? = nil,
+                                source: EventSource = .manual,
+                                googleEventID: String? = nil,
+                                googleEtag: String? = nil,
+                                updatedAt: Date = .init(),
+                                recurrence: Recurrence? = nil) -> Event
+    {
+        Event(eventKitIdentifier: eventKitIdentifier,
+              title: title,
+              start: start,
+              end: end,
+              location: "Conference Room",
+              notes: "Discuss calendar write-back",
+              category: .work,
+              source: source,
+              googleEventID: googleEventID,
+              googleEtag: googleEtag,
+              recurrence: recurrence,
+              updatedAt: updatedAt)
     }
 
-    private func makeRemoteEvent(
-        id: String,
-        title: String = "Write-back meeting",
-        etag: String?,
-        updated: String?
-    ) -> GCalEvent {
-        GCalEvent(
-            id: id,
-            status: "confirmed",
-            summary: title,
-            location: "Conference Room",
-            description: "Discuss calendar write-back",
-            start: GCalDateTime(date: nil, dateTime: Self.iso.string(from: start)),
-            end: GCalDateTime(date: nil, dateTime: Self.iso.string(from: end)),
-            etag: etag,
-            updated: updated
-        )
+    private func makeRemoteEvent(id: String,
+                                 title: String = "Write-back meeting",
+                                 etag: String?,
+                                 updated: String?) -> GCalEvent
+    {
+        GCalEvent(id: id,
+                  status: "confirmed",
+                  summary: title,
+                  location: "Conference Room",
+                  description: "Discuss calendar write-back",
+                  start: GCalDateTime(date: nil, dateTime: Self.iso.string(from: start)),
+                  end: GCalDateTime(date: nil, dateTime: Self.iso.string(from: end)),
+                  etag: etag,
+                  updated: updated)
     }
 
     private nonisolated(unsafe) static let iso = ISO8601DateFormatter()

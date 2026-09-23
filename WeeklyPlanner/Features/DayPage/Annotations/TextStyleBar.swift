@@ -19,12 +19,10 @@ struct TextStyleBar: View {
                     Circle()
                         .fill(token.resolve(in: theme))
                         .frame(width: 18, height: 18)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(theme.ink, lineWidth: 2)
-                                .opacity(token == selectedColor ? 1 : 0)
-                                .padding(-3)
-                        )
+                        .overlay(Circle()
+                            .strokeBorder(theme.ink, lineWidth: 2)
+                            .opacity(token == selectedColor ? 1 : 0)
+                            .padding(-3))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(token.rawValue) ink")
@@ -64,11 +62,9 @@ struct TextStyleBar: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(theme.creamHi)
-                .shadow(color: .black.opacity(0.18), radius: 6, y: 2)
-        )
+        .background(RoundedRectangle(cornerRadius: 10)
+            .fill(theme.creamHi)
+            .shadow(color: .black.opacity(0.18), radius: 6, y: 2))
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(theme.rule, lineWidth: 0.5))
     }
 }

@@ -106,11 +106,9 @@ struct NoteEditorView: View {
                 .foregroundStyle(kind == value ? theme.redInk : theme.ink2)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 3)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(kind == value ? theme.redInk : theme.ink3,
-                                      lineWidth: kind == value ? 1 : 0.5)
-                )
+                .overlay(RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(kind == value ? theme.redInk : theme.ink3,
+                                  lineWidth: kind == value ? 1 : 0.5))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

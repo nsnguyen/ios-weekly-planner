@@ -46,8 +46,8 @@ final class Event {
 
     // MARK: Google Calendar provenance (Phase 37)
 
-    var googleEventID: String? = nil
-    var googleEtag: String? = nil
+    var googleEventID: String?
+    var googleEtag: String?
 
     /// Reminders attached to this event. Stored as a JSON-encoded blob by
     /// SwiftData because `Reminder` is a Codable enum with associated values.
@@ -156,10 +156,14 @@ extension Event {
         end.timeIntervalSince(start) / 3600.0
     }
 
-    /// Monday-based weekday index (0 = Monday … 6 = Sunday).
+    /// Weekday index relative to `calendar.firstWeekday` (0 = week start).
+    /// For Monday-start calendars this is the historical `(weekday + 5) % 7`.
     func weekdayIndex(in calendar: Calendar) -> Int {
         let weekday = calendar.component(.weekday, from: start)
-        return (weekday + 5) % 7
+        // Index of this date's weekday relative to the calendar's first
+        // weekday (0 = week start). For Monday-start calendars this is the
+        // historical `(weekday + 5) % 7`.
+        return (weekday - calendar.firstWeekday + 7) % 7
     }
 
     /// Per-category handwritten-pen color for this event under `theme`.

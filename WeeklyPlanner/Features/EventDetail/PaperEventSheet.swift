@@ -35,8 +35,8 @@ struct PaperEventSheet: View {
 
         var existingEventID: UUID? {
             switch self {
-            case let .view(id), let .edit(id): return id
-            case .create: return nil
+            case let .view(id), let .edit(id): id
+            case .create: nil
             }
         }
     }
@@ -104,7 +104,7 @@ struct PaperEventSheet: View {
             // A freshly-seeded event starts with the AI suggestion collapsed.
             showAISuggestion = false
             switch initialMode {
-            case .view(let id), .edit(let id):
+            case let .view(id), let .edit(id):
                 if viewModel == nil || viewModel?.eventID != id {
                     let generator = intelligenceService.map {
                         EventSuggestionGenerator(intelligence: $0)
@@ -115,14 +115,16 @@ struct PaperEventSheet: View {
                 }
                 await viewModel?.load()
                 await viewModel?.refreshAISuggestion()
-                if case .edit = initialMode { viewModel?.beginEditing() }
-            case .create(let date):
+                if case .edit = initialMode {
+                    viewModel?.beginEditing()
+                }
+            case let .create(date):
                 if viewModel == nil {
                     viewModel = EventDetailViewModel(eventID: UUID(),
                                                      eventStore: eventStore)
                 }
                 viewModel?.beginCreating(at: date,
-                                         calendar: WeekMath.mondayCalendar())
+                                         calendar: WeekMath.preferredCalendar)
             }
         }
         .alert("Delete this event?", isPresented: $showDeleteConfirm) {
@@ -148,7 +150,8 @@ struct PaperEventSheet: View {
         }
         .confirmationDialog("This is a repeating event",
                             isPresented: $showRecurringDeleteDialog,
-                            titleVisibility: .visible) {
+                            titleVisibility: .visible)
+        {
             Button("Delete this occurrence", role: .destructive) {
                 if let id = viewModel?.eventID {
                     let start = occurrenceStart ?? viewModel?.event?.start
@@ -257,8 +260,16 @@ struct PaperEventSheet: View {
                 }
             case .edit, .create:
                 if let viewModel, let composer = viewModel.composer {
-                    let isCreate: Bool = { if case .create = currentMode { return true } else { return false } }()
-                    let isEdit: Bool = { if case .edit = currentMode { return true } else { return false } }()
+                    let isCreate = if case .create = currentMode {
+                        true
+                    } else {
+                        false
+                    }
+                    let isEdit = if case .edit = currentMode {
+                        true
+                    } else {
+                        false
+                    }
                     EditableEventContent(composer: composer,
                                          canSave: composer.canSave,
                                          isCreate: isCreate,

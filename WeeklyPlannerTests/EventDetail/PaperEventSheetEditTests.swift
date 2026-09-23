@@ -9,7 +9,6 @@ final class PaperEventSheetEditTests: XCTestCase {
     private var eventStore: SwiftDataEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         eventStore = SwiftDataEventStore(context: container.mainContext)
     }
@@ -17,7 +16,6 @@ final class PaperEventSheetEditTests: XCTestCase {
     override func tearDown() async throws {
         eventStore = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testEditMode_saveUpdatesExistingEvent() async throws {
@@ -55,13 +53,13 @@ final class PaperEventSheetEditTests: XCTestCase {
         XCTAssertNil(vm.composer)
     }
 
-    func testCanSave_falseWhenTitleEmptyOrTimesInvalid() async throws {
+    func testCanSave_falseWhenTitleEmptyOrTimesInvalid() throws {
         let vm = EventDetailViewModel(eventID: UUID(), eventStore: eventStore)
         vm.beginCreating(at: Date(), calendar: WeekMath.mondayCalendar())
         XCTAssertFalse(vm.composer?.canSave ?? true)
         vm.composer?.title = "Lunch"
         XCTAssertTrue(vm.composer?.canSave ?? false)
-        vm.composer?.end = vm.composer!.start.addingTimeInterval(-60)
+        vm.composer?.end = try XCTUnwrap(vm.composer?.start.addingTimeInterval(-60))
         XCTAssertFalse(vm.composer?.canSave ?? true)
     }
 

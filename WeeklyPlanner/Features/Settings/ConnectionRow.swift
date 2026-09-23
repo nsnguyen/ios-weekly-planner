@@ -11,18 +11,17 @@ struct ConnectionRow<Logo: View>: View {
     let detail: String
     @Binding var isOn: Bool
     var isEnabled: Bool = true
-    var onTap: (() -> Void)? = nil
+    var onTap: (() -> Void)?
 
     @Environment(\.paperTheme) private var theme
 
-    init(
-        @ViewBuilder logo: () -> Logo,
-        label: String,
-        detail: String,
-        isOn: Binding<Bool>,
-        isEnabled: Bool = true,
-        onTap: (() -> Void)? = nil
-    ) {
+    init(@ViewBuilder logo: () -> Logo,
+         label: String,
+         detail: String,
+         isOn: Binding<Bool>,
+         isEnabled: Bool = true,
+         onTap: (() -> Void)? = nil)
+    {
         self.logo = logo()
         self.label = label
         self.detail = detail
@@ -34,11 +33,11 @@ struct ConnectionRow<Logo: View>: View {
     /// Single label read by VoiceOver for the entire row.
     private var combinedAccessibilityLabel: String {
         if isOn {
-            return "\(label), connected, \(detail)"
+            "\(label), connected, \(detail)"
         } else if !isEnabled {
-            return "\(label), \(detail)"
+            "\(label), \(detail)"
         } else {
-            return "\(label), not connected"
+            "\(label), not connected"
         }
     }
 
@@ -73,7 +72,11 @@ struct ConnectionRow<Logo: View>: View {
         // Disabled rows (e.g. Google Calendar "Coming soon") must be
         // non-actionable so testers stop filing them as broken (Phase 27 /
         // suggestion 5). Real Google Calendar sync arrives in Phase 37.
-        .onTapGesture { if isEnabled { onTap?() } }
+        .onTapGesture {
+            if isEnabled {
+                onTap?()
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(combinedAccessibilityLabel)
         .accessibilityHint(accessibilityHintText)
@@ -83,15 +86,13 @@ struct ConnectionRow<Logo: View>: View {
 
 #Preview("ConnectionRow — Gmail off") {
     StatefulPreview(initial: false) { binding in
-        ConnectionRow(
-            logo: { GmailBrandLogo() },
-            label: "Gmail",
-            detail: "Tap to connect — pulls events & reminders from your inbox",
-            isOn: binding
-        )
-        .padding()
-        .background(PaperTheme.cream.creamHi)
-        .paperTheme(.cream)
+        ConnectionRow(logo: { GmailBrandLogo() },
+                      label: "Gmail",
+                      detail: "Tap to connect — pulls events & reminders from your inbox",
+                      isOn: binding)
+            .padding()
+            .background(PaperTheme.cream.creamHi)
+            .paperTheme(.cream)
     }
 }
 
@@ -106,5 +107,7 @@ private struct StatefulPreview<Content: View>: View {
         self.content = content
     }
 
-    var body: some View { content($value) }
+    var body: some View {
+        content($value)
+    }
 }

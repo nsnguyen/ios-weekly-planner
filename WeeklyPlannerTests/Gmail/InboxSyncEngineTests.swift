@@ -1,5 +1,5 @@
-import XCTest
 import SwiftData
+import XCTest
 @testable import WeeklyPlanner
 
 @MainActor
@@ -12,27 +12,23 @@ final class InboxSyncEngineTests: XCTestCase {
     private var sut: InboxSyncEngine!
 
     override func setUp() async throws {
-        try await super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        container = try ModelContainer(
-            for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
-            configurations: config
-        )
+        container = try ModelContainer(for: UserSettings.self, InboxSuggestion.self, Event.self, TaskItem.self,
+                                       configurations: config)
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
         inboxStore = SwiftDataInboxStore(context: container.mainContext)
         fakeClient = FakeGmailClient()
         fakeExtractor = FakeEventExtractor()
-        sut = InboxSyncEngine(
-            client: fakeClient,
-            extractor: fakeExtractor,
-            inboxStore: inboxStore,
-            deltaSync: GmailDeltaSync(settingsStore: settingsStore)
-        )
+        sut = InboxSyncEngine(client: fakeClient,
+                              extractor: fakeExtractor,
+                              inboxStore: inboxStore,
+                              deltaSync: GmailDeltaSync(settingsStore: settingsStore))
     }
 
     func testInitialFullSyncInsertsSuggestions() async throws {
         fakeClient.listResponse = [GmailMessageStub(id: "m1", threadId: nil)]
-        fakeClient.messageResponses["m1"] = makeMessage(id: "m1", subject: "Reservation at Café Bleu", from: "Resy <reservations@resy.com>")
+        fakeClient.messageResponses["m1"] = makeMessage(id: "m1", subject: "Reservation at Café Bleu",
+                                                        from: "Resy <reservations@resy.com>")
         fakeExtractor.nextResult = futureExtractedEvent(title: "Dinner at Café Bleu")
         fakeClient.profileResponse = GmailProfile(emailAddress: "u@x.com", historyId: "100", messagesTotal: 1)
 
@@ -40,7 +36,7 @@ final class InboxSyncEngineTests: XCTestCase {
 
         XCTAssertEqual(result.added, 1)
         // suggestion startISO is 2026-06-12T19:00:00Z; query pending for that week
-        let suggestionDate = ISO8601DateFormatter().date(from: "2026-06-12T19:00:00Z")!
+        let suggestionDate = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-06-12T19:00:00Z"))
         let stored = try await inboxStore.pending(forWeekOffset: 0, today: suggestionDate)
         XCTAssertEqual(stored.first?.title, "Dinner at Café Bleu")
         XCTAssertEqual(try settingsStore.current().gmailLastHistoryId, "100")
@@ -50,14 +46,15 @@ final class InboxSyncEngineTests: XCTestCase {
         try settingsStore.update { $0.gmailLastHistoryId = "50" }
         try await inboxStore.upsert(makeSuggestion(id: "m1"))
 
-        fakeClient.historyResponse = GmailHistoryResponse(
-            history: [GmailHistoryRecord(id: "51", messages: nil, messagesAdded: [
+        fakeClient.historyResponse = GmailHistoryResponse(history: [
+            GmailHistoryRecord(id: "51", messages: nil, messagesAdded: [
                 GmailMessageAdded(message: GmailMessageStub(id: "m2", threadId: nil)),
-            ])],
-            nextPageToken: nil,
-            historyId: "51"
-        )
-        fakeClient.messageResponses["m2"] = makeMessage(id: "m2", subject: "Tickets for the show", from: "Ticketmaster <noreply@ticketmaster.com>")
+            ]),
+        ],
+        nextPageToken: nil,
+        historyId: "51")
+        fakeClient.messageResponses["m2"] = makeMessage(id: "m2", subject: "Tickets for the show",
+                                                        from: "Ticketmaster <noreply@ticketmaster.com>")
         fakeExtractor.nextResult = futureExtractedEvent(title: "Show")
         fakeClient.profileResponse = GmailProfile(emailAddress: "u@x.com", historyId: "51", messagesTotal: 1)
 
@@ -69,16 +66,13 @@ final class InboxSyncEngineTests: XCTestCase {
 
     func testAcceptedSuggestionCreatesEventThroughStore() async throws {
         let inMemoryEvents = InMemoryEventStore()
-        let storeWithEvents = SwiftDataInboxStore(
-            context: container.mainContext,
-            eventStore: inMemoryEvents,
-            settingsStore: settingsStore
-        )
+        let storeWithEvents = SwiftDataInboxStore(context: container.mainContext,
+                                                  eventStore: inMemoryEvents,
+                                                  settingsStore: settingsStore)
         try await storeWithEvents.upsert(makeSuggestion(id: "m1"))
-        let id = try await storeWithEvents.pending(
-            forWeekOffset: 0,
-            today: Date(timeIntervalSince1970: 1_700_000_000)
-        ).first!.id
+        let pending = try await storeWithEvents.pending(forWeekOffset: 0,
+                                                        today: Date(timeIntervalSince1970: 1_700_000_000))
+        let id = try XCTUnwrap(pending.first?.id)
 
         try await storeWithEvents.accept(id: id)
 
@@ -88,11 +82,14 @@ final class InboxSyncEngineTests: XCTestCase {
 
     func testDismissPreventsResuggestionOnNextSync() async throws {
         try await inboxStore.upsert(makeSuggestion(id: "m1"))
-        let id = try await inboxStore.pending(forWeekOffset: 0, today: Date(timeIntervalSince1970: 1_700_000_000)).first!.id
+        let pending = try await inboxStore.pending(forWeekOffset: 0,
+                                                   today: Date(timeIntervalSince1970: 1_700_000_000))
+        let id = try XCTUnwrap(pending.first?.id)
         try await inboxStore.dismiss(id: id)
 
         fakeClient.listResponse = [GmailMessageStub(id: "m1", threadId: nil)]
-        fakeClient.messageResponses["m1"] = makeMessage(id: "m1", subject: "Reservation at Café Bleu", from: "Resy <reservations@resy.com>")
+        fakeClient.messageResponses["m1"] = makeMessage(id: "m1", subject: "Reservation at Café Bleu",
+                                                        from: "Resy <reservations@resy.com>")
         fakeExtractor.nextResult = futureExtractedEvent(title: "Dinner again")
         fakeClient.profileResponse = GmailProfile(emailAddress: "u@x.com", historyId: "100", messagesTotal: 1)
 
@@ -104,11 +101,9 @@ final class InboxSyncEngineTests: XCTestCase {
     func testPastDatedSuggestionSkipped() async throws {
         fakeClient.listResponse = [GmailMessageStub(id: "m1", threadId: nil)]
         fakeClient.messageResponses["m1"] = makeMessage(id: "m1", subject: "Yesterday's event", from: "x <x@y.com>")
-        fakeExtractor.nextResult = ExtractedEvent(
-            isEvent: true, title: "Yesterday",
-            startISO: "2025-01-01T10:00:00Z",
-            endISO: "", location: "", categoryHint: "", confidence: 0.9
-        )
+        fakeExtractor.nextResult = ExtractedEvent(isEvent: true, title: "Yesterday",
+                                                  startISO: "2025-01-01T10:00:00Z",
+                                                  endISO: "", location: "", categoryHint: "", confidence: 0.9)
         fakeClient.profileResponse = GmailProfile(emailAddress: "u@x.com", historyId: "100", messagesTotal: 1)
 
         let result = try await sut.sync(now: Date(timeIntervalSince1970: 1_700_000_000))
@@ -120,8 +115,8 @@ final class InboxSyncEngineTests: XCTestCase {
         fakeClient.listResponse = []
         fakeClient.profileResponse = GmailProfile(emailAddress: "u@x.com", historyId: "100", messagesTotal: 0)
 
-        let engine = sut!
-        let client = fakeClient!
+        let engine = try XCTUnwrap(sut)
+        let client = try XCTUnwrap(fakeClient)
         let now = Date()
         async let a: SyncResult = engine.sync(now: now)
         async let b: SyncResult = engine.sync(now: now)
@@ -134,46 +129,38 @@ final class InboxSyncEngineTests: XCTestCase {
     // MARK: - Fixtures
 
     private func makeMessage(id: String, subject: String, from: String) -> GmailMessage {
-        GmailMessage(
-            id: id,
-            threadId: nil,
-            snippet: subject,
-            historyId: nil,
-            internalDate: nil,
-            payload: GmailPayload(
-                mimeType: "text/plain",
-                headers: [
-                    GmailHeader(name: "Subject", value: subject),
-                    GmailHeader(name: "From", value: from),
-                ],
-                body: nil,
-                parts: nil
-            )
-        )
+        GmailMessage(id: id,
+                     threadId: nil,
+                     snippet: subject,
+                     historyId: nil,
+                     internalDate: nil,
+                     payload: GmailPayload(mimeType: "text/plain",
+                                           headers: [
+                                               GmailHeader(name: "Subject", value: subject),
+                                               GmailHeader(name: "From", value: from),
+                                           ],
+                                           body: nil,
+                                           parts: nil))
     }
 
     private func makeSuggestion(id: String) -> InboxSuggestion {
-        InboxSuggestion(
-            gmailMessageID: id,
-            proposedStart: Date(timeIntervalSince1970: 1_700_050_000),
-            title: "Existing",
-            fromName: "Resy",
-            fromEmail: "reservations@resy.com",
-            subject: "Existing",
-            bodySnippet: nil
-        )
+        InboxSuggestion(gmailMessageID: id,
+                        proposedStart: Date(timeIntervalSince1970: 1_700_050_000),
+                        title: "Existing",
+                        fromName: "Resy",
+                        fromEmail: "reservations@resy.com",
+                        subject: "Existing",
+                        bodySnippet: nil)
     }
 
     private func futureExtractedEvent(title: String) -> ExtractedEvent {
-        ExtractedEvent(
-            isEvent: true,
-            title: title,
-            startISO: "2026-06-12T19:00:00Z",
-            endISO: "",
-            location: "Café Bleu",
-            categoryHint: "",
-            confidence: 0.9
-        )
+        ExtractedEvent(isEvent: true,
+                       title: title,
+                       startISO: "2026-06-12T19:00:00Z",
+                       endISO: "",
+                       location: "Café Bleu",
+                       categoryHint: "",
+                       confidence: 0.9)
     }
 }
 
@@ -184,7 +171,7 @@ final class FakeGmailClient: GmailClientProtocol {
     var listResponse: [GmailMessageStub] = []
     var messageResponses: [String: GmailMessage] = [:]
     var historyResponse: GmailHistoryResponse?
-    var profileResponse: GmailProfile = GmailProfile(emailAddress: "x@y.com", historyId: "0", messagesTotal: 0)
+    var profileResponse: GmailProfile = .init(emailAddress: "x@y.com", historyId: "0", messagesTotal: 0)
     private(set) var messageFetchCalls: [String] = []
     private(set) var maxConcurrentCalls = 0
     private var currentCalls = 0
@@ -226,11 +213,25 @@ final class FakeGmailClient: GmailClientProtocol {
 final class InMemoryEventStore: EventStoring {
     private(set) var upsertedEvents: [Event] = []
     nonisolated init() {}
-    func events(forWeekOffset _: Int, today _: Date) async throws -> [Event] { [] }
-    func event(id _: UUID) async throws -> Event? { nil }
-    func upsert(_ event: Event) async throws { upsertedEvents.append(event) }
+    func events(forWeekOffset _: Int, today _: Date) async throws -> [Event] {
+        []
+    }
+
+    func event(id _: UUID) async throws -> Event? {
+        nil
+    }
+
+    func upsert(_ event: Event) async throws {
+        upsertedEvents.append(event)
+    }
+
     func delete(id _: UUID) async throws {}
     func deleteOccurrence(eventID _: UUID, occurrenceStart _: Date) async throws {}
-    func events(matching _: EventQuery) async throws -> [Event] { [] }
-    func events(source _: EventSource) async throws -> [Event] { [] }
+    func events(matching _: EventQuery) async throws -> [Event] {
+        []
+    }
+
+    func events(source _: EventSource) async throws -> [Event] {
+        []
+    }
 }

@@ -24,12 +24,14 @@ final class NotificationReschedulingObserver {
 
     deinit {
         let center = NotificationCenter.default
-        for token in observers { center.removeObserver(token) }
+        for token in observers {
+            center.removeObserver(token)
+        }
     }
 
     /// Called once after a permission grant.
     func rescheduleNext30Days() async {
-        let window = Date()...Date().addingTimeInterval(60 * 60 * 24 * 30)
+        let window = Date() ... Date().addingTimeInterval(60 * 60 * 24 * 30)
         await eventScheduler.rescheduleAll(in: window)
         await taskScheduler.rescheduleAll(in: window)
     }

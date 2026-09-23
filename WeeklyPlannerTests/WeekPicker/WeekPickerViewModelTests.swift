@@ -3,6 +3,10 @@ import XCTest
 
 @MainActor
 final class WeekPickerViewModelTests: XCTestCase {
+    override func tearDown() {
+        WeekMath.preferredCalendar = WeekMath.mondayCalendar()
+    }
+
     /// Reference date used throughout the mock: Saturday, May 16, 2026.
     /// Matches the constant the rest of the test suite uses for week-math.
     private static func may16_2026(hour: Int = 12) -> Date {
@@ -180,6 +184,24 @@ final class WeekPickerViewModelTests: XCTestCase {
         }
         XCTAssertEqual(last - first + 1, offsets.count,
                        "Offsets must be gapless: \(first)...\(last)")
+    }
+
+    func testSundayStartWeeksBeginOnSunday() {
+        WeekMath.preferredCalendar = WeekMath.sundayCalendar()
+        let vm = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        let firstWeek = vm.months.first?.weeks.first
+        let firstDay = firstWeek?.days.first
+        XCTAssertEqual(firstDay.map { WeekMath.sundayCalendar().component(.weekday, from: $0.date) }, 1,
+                       "Picker weeks must start on Sunday under a Sunday week-start")
+    }
+
+    func testSundayStartOffsetZeroContainsToday() {
+        WeekMath.preferredCalendar = WeekMath.sundayCalendar()
+        let vm = WeekPickerViewModel(baseDate: Self.may16_2026(), focusWeekOffset: 0)
+        // The week with offset 0 must contain the picker's `today`.
+        let zero = vm.months.flatMap(\.weeks).first { $0.offset == 0 }
+        XCTAssertNotNil(zero)
+        XCTAssertTrue(zero?.days.contains(where: \.isToday) == true)
     }
 
     func testSyncDisplayedMonthToScrolledID() {

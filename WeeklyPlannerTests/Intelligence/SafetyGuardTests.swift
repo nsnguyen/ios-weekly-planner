@@ -18,22 +18,18 @@ final class SafetyGuardTests: XCTestCase {
     }
 
     func testDisabledReturnsCannedFallback() {
-        let context = PlannerContext(
-            now: Date(),
-            viewedWeekOffset: 0,
-            maxResponseTokens: 256,
-            appleIntelligenceEnabled: false
-        )
+        let context = PlannerContext(now: Date(),
+                                     viewedWeekOffset: 0,
+                                     maxResponseTokens: 256,
+                                     appleIntelligenceEnabled: false)
         XCTAssertTrue(SafetyGuard.shouldShortCircuit(context: context))
     }
 
     func testEnabledDoesNotShortCircuit() {
-        let context = PlannerContext(
-            now: Date(),
-            viewedWeekOffset: 0,
-            maxResponseTokens: 256,
-            appleIntelligenceEnabled: true
-        )
+        let context = PlannerContext(now: Date(),
+                                     viewedWeekOffset: 0,
+                                     maxResponseTokens: 256,
+                                     appleIntelligenceEnabled: true)
         XCTAssertFalse(SafetyGuard.shouldShortCircuit(context: context))
     }
 }

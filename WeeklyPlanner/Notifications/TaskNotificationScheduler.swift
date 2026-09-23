@@ -1,6 +1,6 @@
 import Foundation
-import UserNotifications
 import os
+import UserNotifications
 
 /// Mirrors `EventNotificationScheduler` for `TaskItem` — `reminderTime`
 /// becomes a `UNCalendarNotificationTrigger`, `locationReminder` becomes a
@@ -47,16 +47,18 @@ final class TaskNotificationScheduler {
 
         if let region = task.locationReminder {
             let title = task.title
-            _ = locationRegistrar.register(
-                eventID: task.id,
-                reminder: region,
-                content: {
-                    let content = NotificationContentBuilder.taskLocationBased(title: title, locationName: region.name)
-                    content.userInfo = ["task.id": task.id.uuidString]
-                    return content
-                },
-                proximityInDays: max(0, Calendar.current.dateComponents([.day], from: Date(), to: task.due).day ?? 0)
-            )
+            _ = locationRegistrar.register(eventID: task.id,
+                                           reminder: region,
+                                           content: {
+                                               let content = NotificationContentBuilder.taskLocationBased(title: title,
+                                                                                                          locationName: region
+                                                                                                              .name)
+                                               content.userInfo = ["task.id": task.id.uuidString]
+                                               return content
+                                           },
+                                           proximityInDays: max(0,
+                                                                Calendar.current.dateComponents([.day], from: Date(),
+                                                                                                to: task.due).day ?? 0))
             Self.log.info("Registered task arrival region \(task.id, privacy: .public)")
         }
     }
@@ -82,13 +84,19 @@ final class TaskNotificationScheduler {
         let startOffset = cal.dateComponents([.weekOfYear], from: now, to: window.lowerBound).weekOfYear ?? 0
         let endOffset = cal.dateComponents([.weekOfYear], from: now, to: window.upperBound).weekOfYear ?? 0
         var tasks: [TaskItem] = []
-        for offset in startOffset...endOffset {
-            do { tasks.append(contentsOf: try await store.tasks(forWeekOffset: offset, today: now)) }
-            catch { Self.log.error("rescheduleAll task fetch failed: \(String(describing: error), privacy: .public)") }
+        for offset in startOffset ... endOffset {
+            do {
+                try await tasks.append(contentsOf: store.tasks(forWeekOffset: offset, today: now))
+            } catch {
+                Self.log.error("rescheduleAll task fetch failed: \(String(describing: error), privacy: .public)")
+            }
         }
         for task in tasks where task.done == false && window.contains(task.due) {
-            do { try await schedule(task: task) }
-            catch { Self.log.error("rescheduleAll task schedule failed: \(String(describing: error), privacy: .public)") }
+            do {
+                try await schedule(task: task)
+            } catch {
+                Self.log.error("rescheduleAll task schedule failed: \(String(describing: error), privacy: .public)")
+            }
         }
     }
 }

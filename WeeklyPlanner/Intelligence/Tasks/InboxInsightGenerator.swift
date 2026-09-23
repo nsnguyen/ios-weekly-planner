@@ -26,15 +26,13 @@ final class InboxInsightGenerator: InsightGenerator {
         let body = count == 1
             ? "1 inbox suggestion for today"
             : "\(count) inbox suggestions for today"
-        return AIInsight(
-            dayKey: day.dayKey,
-            dateGenerated: day.now,
-            text: body,
-            colorHex: InsightKind.inbox.colorHex,
-            tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
-            kind: .inbox,
-            actionURL: "weeklyplanner://inbox/\(day.dayKey)",
-            priority: InsightKind.inbox.defaultPriority
-        )
+        return AIInsight(dayKey: day.dayKey,
+                         dateGenerated: day.now,
+                         text: body,
+                         colorHex: InsightKind.inbox.colorHex,
+                         tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                         kind: .inbox,
+                         actionURL: "weeklyplanner://inbox/\(day.dayKey)",
+                         priority: InsightKind.inbox.defaultPriority)
     }
 }

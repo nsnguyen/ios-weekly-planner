@@ -1,4 +1,4 @@
-import EventKit
+@preconcurrency import EventKit
 import Foundation
 
 /// Thin facade over `EKEventStore`. All EventKit access in the app flows
@@ -60,8 +60,13 @@ extension EventKitGateway {
     /// Span-less convenience: existing single-event call sites default to
     /// `.thisEvent` so they compile unchanged after Phase 35 made spans
     /// explicit for recurrence support.
-    func save(_ event: EKEvent) throws { try save(event, span: .thisEvent) }
-    func remove(_ event: EKEvent) throws { try remove(event, span: .thisEvent) }
+    func save(_ event: EKEvent) throws {
+        try save(event, span: .thisEvent)
+    }
+
+    func remove(_ event: EKEvent) throws {
+        try remove(event, span: .thisEvent)
+    }
 }
 
 /// Production gateway backed by the system `EKEventStore`.

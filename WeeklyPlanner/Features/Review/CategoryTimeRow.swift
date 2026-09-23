@@ -29,7 +29,7 @@ struct CategoryTimeRow: View {
                     RoundedRectangle(cornerRadius: 1)
                         .fill(category.reviewBarColor.opacity(0.55))
                         .frame(width: max(0, min(proxy.size.width,
-                                                  proxy.size.width * CGFloat(hours / max(maxHours, 0.0001)))))
+                                                 proxy.size.width * CGFloat(hours / max(maxHours, 0.0001)))))
                         .padding(.top, 1)
                         .padding(.bottom, 1)
                 }
@@ -53,12 +53,12 @@ private extension Category {
     /// Display label for the row's leading text.
     var reviewDisplayName: String {
         switch self {
-        case .work: return "Work"
-        case .personal: return "Personal"
-        case .health: return "Health"
-        case .family: return "Family"
-        case .focus: return "Focus"
-        case .travel: return "Travel"
+        case .work: "Work"
+        case .personal: "Personal"
+        case .health: "Health"
+        case .family: "Family"
+        case .focus: "Focus"
+        case .travel: "Travel"
         }
     }
 
@@ -67,12 +67,12 @@ private extension Category {
     /// Review feature free of cross-feature reaches.
     var reviewBarColor: Color {
         switch self {
-        case .work: return Color(red: 0.36, green: 0.51, blue: 0.84)
-        case .personal: return Color(red: 0.80, green: 0.45, blue: 0.20)
-        case .health: return Color(red: 0.28, green: 0.59, blue: 0.36)
-        case .family: return Color(red: 0.75, green: 0.40, blue: 0.55)
-        case .focus: return Color(red: 0.55, green: 0.40, blue: 0.80)
-        case .travel: return Color(red: 0.30, green: 0.65, blue: 0.65)
+        case .work: Color(red: 0.36, green: 0.51, blue: 0.84)
+        case .personal: Color(red: 0.80, green: 0.45, blue: 0.20)
+        case .health: Color(red: 0.28, green: 0.59, blue: 0.36)
+        case .family: Color(red: 0.75, green: 0.40, blue: 0.55)
+        case .focus: Color(red: 0.55, green: 0.40, blue: 0.80)
+        case .travel: Color(red: 0.30, green: 0.65, blue: 0.65)
         }
     }
 }

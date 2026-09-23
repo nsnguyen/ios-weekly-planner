@@ -108,7 +108,7 @@ struct WeekEventEntry: View {
 // MARK: - Previews
 
 #Preview("WeekEventEntry · Two rows") {
-    let calendar = WeekMath.mondayCalendar()
+    let calendar = WeekMath.preferredCalendar
     var components = DateComponents()
     components.year = 2026
     components.month = 5

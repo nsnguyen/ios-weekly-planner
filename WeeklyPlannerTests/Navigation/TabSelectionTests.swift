@@ -9,17 +9,16 @@ final class TabSelectionTests: XCTestCase {
     private var settingsStore: SwiftDataSettingsStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         settingsStore = SwiftDataSettingsStore(context: container.mainContext)
     }
 
     override func tearDown() async throws {
-        settingsStore = nil; container = nil
-        try await super.tearDown()
+        settingsStore = nil
+        container = nil
     }
 
-    func testDefaultTabIsCalendar() throws {
+    func testDefaultTabIsCalendar() {
         let selection = TabSelection(settings: settingsStore)
         XCTAssertEqual(selection.current, .calendar)
     }

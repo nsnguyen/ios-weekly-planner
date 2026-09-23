@@ -3,7 +3,6 @@ import XCTest
 
 @MainActor
 final class DeepLinkRouterTests: XCTestCase {
-
     func testRequestEventStoresUUID() {
         let router = DeepLinkRouter()
         let id = UUID()

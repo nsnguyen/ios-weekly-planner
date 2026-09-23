@@ -6,7 +6,8 @@ final class GCalMapperTests: XCTestCase {
                       startDT: String? = nil, endDT: String? = nil,
                       startDate: String? = nil, endDate: String? = nil,
                       summary: String? = "Title", location: String? = nil,
-                      etag: String? = nil, updated: String? = nil) -> GCalEvent {
+                      etag: String? = nil, updated: String? = nil) -> GCalEvent
+    {
         GCalEvent(id: id, status: status, summary: summary, location: location, description: nil,
                   start: .init(date: startDate, dateTime: startDT),
                   end: .init(date: endDate, dateTime: endDT),
@@ -30,7 +31,7 @@ final class GCalMapperTests: XCTestCase {
         XCTAssertTrue(e.end > e.start)
     }
 
-    func testDeterministicIdIsStableAndDistinct() throws {
+    func testDeterministicIdIsStableAndDistinct() {
         let a1 = GCalMapper.deterministicID(for: "e1")
         let a2 = GCalMapper.deterministicID(for: "e1")
         let b = GCalMapper.deterministicID(for: "e2")
@@ -70,8 +71,8 @@ final class GCalMapperTests: XCTestCase {
         XCTAssertEqual(e.updatedAt, expected)
     }
 
-    func testWriteBodyTimedEvent() {
-        let start = ISO8601DateFormatter().date(from: "2026-07-09T18:00:00Z")!
+    func testWriteBodyTimedEvent() throws {
+        let start = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-07-09T18:00:00Z"))
         let end = start.addingTimeInterval(3600)
         let e = Event(title: "Sync me", start: start, end: end, location: "Cafe",
                       notes: "hi", category: .personal)
@@ -84,11 +85,11 @@ final class GCalMapperTests: XCTestCase {
         XCTAssertNotNil(body.end.dateTime)
     }
 
-    func testWriteBodyAllDayUsesDateFields() {
+    func testWriteBodyAllDayUsesDateFields() throws {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = .current
         let day = cal.startOfDay(for: Date(timeIntervalSinceReferenceDate: 800_000_000))
-        let next = cal.date(byAdding: .day, value: 1, to: day)!
+        let next = try XCTUnwrap(cal.date(byAdding: .day, value: 1, to: day))
         let e = Event(title: "Holiday", start: day, end: next, category: .personal)
         let body = GCalMapper.writeBody(from: e)
         XCTAssertNotNil(body.start.date)

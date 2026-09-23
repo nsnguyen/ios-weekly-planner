@@ -11,7 +11,9 @@ struct FontCard: View {
 
     @Environment(\.paperTheme) private var theme
 
-    private var sampleFont: PaperFont { fontKey }
+    private var sampleFont: PaperFont {
+        fontKey
+    }
 
     var body: some View {
         Button(action: onPick) {
@@ -39,14 +41,10 @@ struct FontCard: View {
                 }
             }
             .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12))
-            .background(
-                RoundedRectangle(cornerRadius: 12).fill(theme.creamHi)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(isActive ? theme.blueInk : theme.rule,
-                                  lineWidth: isActive ? 1.5 : 0.5)
-            )
+            .background(RoundedRectangle(cornerRadius: 12).fill(theme.creamHi))
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(isActive ? theme.blueInk : theme.rule,
+                              lineWidth: isActive ? 1.5 : 0.5))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: isActive ? theme.blueInk.opacity(0.22) : .clear,
                     radius: 3, x: 0, y: 0)

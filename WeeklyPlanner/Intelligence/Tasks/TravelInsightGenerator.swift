@@ -1,6 +1,6 @@
-import Foundation
 import CoreLocation
-import MapKit
+import Foundation
+@preconcurrency import MapKit
 
 /// Seam over MapKit / CoreLocation so unit tests don't need the real
 /// frameworks. Production impl below wraps `CLLocationManager` +
@@ -73,8 +73,7 @@ final class TravelInsightGenerator: InsightGenerator {
         for event in candidates {
             guard let address = event.location,
                   let coord = await provider.geocode(address: address),
-                  let travelTime = await provider.travelTime(
-                      from: here.coordinate, to: coord)
+                  let travelTime = await provider.travelTime(from: here.coordinate, to: coord)
             else { continue }
 
             let departureBy = event.start.addingTimeInterval(-travelTime - bufferSeconds)
@@ -88,16 +87,14 @@ final class TravelInsightGenerator: InsightGenerator {
             formatter.locale = Locale(identifier: "en_US_POSIX")
             let timeString = formatter.string(from: departureBy)
 
-            return AIInsight(
-                dayKey: day.dayKey,
-                dateGenerated: now,
-                text: "Leave by \(timeString) for \(event.title)",
-                colorHex: InsightKind.travel.colorHex,
-                tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
-                kind: .travel,
-                actionURL: "http://maps.apple.com/?daddr=\(coord.latitude),\(coord.longitude)&dirflg=d",
-                priority: InsightKind.travel.defaultPriority
-            )
+            return AIInsight(dayKey: day.dayKey,
+                             dateGenerated: now,
+                             text: "Leave by \(timeString) for \(event.title)",
+                             colorHex: InsightKind.travel.colorHex,
+                             tiltDegrees: Self.tilt(weekOffset: day.weekOffset, dayIdx: day.dayIdx),
+                             kind: .travel,
+                             actionURL: "http://maps.apple.com/?daddr=\(coord.latitude),\(coord.longitude)&dirflg=d",
+                             priority: InsightKind.travel.defaultPriority)
         }
 
         return nil
@@ -114,7 +111,7 @@ final class LiveTravelProvider: NSObject, TravelProviding {
     private let manager: CLLocationManager
 
     override init() {
-        self.manager = CLLocationManager()
+        manager = CLLocationManager()
         super.init()
     }
 

@@ -18,7 +18,7 @@ final class LastInteractionTool: PlannerTool {
         }
         var best: Event?
         for weekOffset in -8 ... 0 {
-            let events = (try? await store.events(forWeekOffset: weekOffset, today: today)) ?? []
+            let events = await (try? store.events(forWeekOffset: weekOffset, today: today)) ?? []
             for event in events where event.start <= today {
                 let title = event.title.lowercased()
                 let location = (event.location ?? "").lowercased()

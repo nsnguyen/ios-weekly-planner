@@ -43,7 +43,7 @@ struct SuggestionList: View {
                             .foregroundStyle(theme.blueInk)
                     }
                     .padding(.vertical, 5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)

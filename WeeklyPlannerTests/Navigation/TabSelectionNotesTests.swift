@@ -8,7 +8,6 @@ final class TabSelectionNotesTests: XCTestCase {
     private var settings: SwiftDataSettingsStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         settings = SwiftDataSettingsStore(context: container.mainContext)
     }
@@ -16,7 +15,6 @@ final class TabSelectionNotesTests: XCTestCase {
     override func tearDown() async throws {
         settings = nil
         container = nil
-        try await super.tearDown()
     }
 
     func testTabOrderIsCalendarReviewNotesSettings() {

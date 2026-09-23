@@ -11,7 +11,6 @@ final class EventKitMirroringRecurrenceTests: XCTestCase {
     private var store: EventKitMirroringEventStore!
 
     override func setUp() async throws {
-        try await super.setUp()
         container = try SwiftDataStack.inMemoryContainer()
         base = SwiftDataEventStore(context: container.mainContext)
         gateway = FakeEventKitGateway()
@@ -25,7 +24,6 @@ final class EventKitMirroringRecurrenceTests: XCTestCase {
         gateway = nil
         base = nil
         container = nil
-        try await super.tearDown()
     }
 
     private func makeWeekly(title: String = "Gym") -> Event {
@@ -60,7 +58,7 @@ final class EventKitMirroringRecurrenceTests: XCTestCase {
     func testDeleteOccurrenceExcludesLocallyEvenWithoutEKMatch() async throws {
         let weekly = makeWeekly()
         try await store.upsert(weekly)
-        let occurrence = weekly.start.addingTimeInterval(7 * 86_400)
+        let occurrence = weekly.start.addingTimeInterval(7 * 86400)
 
         try await store.deleteOccurrence(eventID: weekly.id, occurrenceStart: occurrence)
 
