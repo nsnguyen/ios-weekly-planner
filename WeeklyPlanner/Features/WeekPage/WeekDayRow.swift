@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// One row of the Hobonichi week page: the weekday tag and oversized date
-/// numeral on the left, the day's compact events (or an italic `"none"`
-/// placeholder) on the right.
+/// numeral on the left, the day's compact events on the right. A day with
+/// no events is blank (Phase 45 #75).
 ///
 /// The week spread is events-only (Phase 30, #26 — permanent default; tasks
 /// still render on the Day page). Event-heavy days split into two columns
@@ -44,7 +44,7 @@ struct WeekDayRow: View {
                 rightColumn
             }
             .padding(.vertical, 6)
-            .frame(minHeight: 56, alignment: .top)
+            .frame(minHeight: Self.emptyRowMinHeight, alignment: .top)
             .background(todayBackground)
 
             if showSeparator {
@@ -75,23 +75,20 @@ struct WeekDayRow: View {
         .frame(width: 52, alignment: .leading)
     }
 
-    /// Copy shown when a day has no events — Phase 30 (#28) softened this
-    /// from a bare em-dash to `"none"`. Static + internal so
-    /// `WeekDayRowTests` can pin the wording.
-    static let emptyPlaceholder = "none"
+    /// Height floor for a day with no events. Feedback #75 blanks the old
+    /// `"none"` copy; the 56pt floor keeps the week-grid rhythm.
+    static let emptyRowMinHeight: CGFloat = 56
 
     /// Flex right column. Either the day's events laid out per
     /// `WeekDayRowLayout` (single column up to 3, two columns for 4–6,
-    /// capped at 5 + `"+K more"` beyond — Phase 30 #25) or the italic
-    /// `"none"` placeholder (#28). Tasks never render here (#26).
+    /// capped at 5 + `"+K more"` beyond — Phase 30 #25) or a blank slot
+    /// (Phase 45 #75). Tasks never render here (#26).
     @ViewBuilder
     private var rightColumn: some View {
         let layout = WeekDayRowLayout.compute(for: events)
         if layout.isEmpty {
-            Text(Self.emptyPlaceholder)
-                .font(font.font(at: 16, weight: .regular).italic())
-                .foregroundStyle(theme.ink3)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Color.clear
+                .frame(maxWidth: .infinity, minHeight: Self.emptyRowMinHeight, alignment: .leading)
         } else if !layout.isTwoColumn {
             eventColumn(layout.leftColumn, overflowCount: 0)
         } else {
@@ -169,7 +166,7 @@ struct WeekDayRowLayout {
     /// slot goes to the overflow affordance.
     static let overflowVisibleEventCap = 5
 
-    /// The day has no events → the row renders the `"none"` placeholder.
+    /// The day has no events → the row's right column stays blank.
     var isEmpty: Bool {
         leftColumn.isEmpty
     }
