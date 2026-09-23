@@ -75,7 +75,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 42 | Event Sheet Overhaul                                 | P — Feedback R2     | 📋     |
 | 43 | Sticky Notes v3 — Grounded & Movable                 | P                   | 📋     |
 | 44 | Typography & Paper Expansion                         | P                   | 📋     |
-| 45 | Chrome & Navigation Simplification                   | P                   | 📋     |
+| 45 | Chrome & Navigation Simplification                   | P                   | ⏳     |
 | 46 | Ask the Planner — Search Overhaul                    | P                   | 📋     |
 
 **Legend:** ✅ done · ⏳ in progress · 📋 scope doc written, not started · 💤 outline only · 🗄️ archived.
@@ -123,7 +123,9 @@ execution order from here: **45 → 42 → 44 → 43 → 46**, all before Phases
 40/41 (which remain the final two). Feedback #75 deliberately reverses
 round-1 #28 (empty week days go back to blank).
 
-**Next up:** Phase 45 — Chrome & Navigation Simplification.
+**Next up:** Phase 45 — Chrome & Navigation Simplification (code is on
+the phase branch; the simulator suite runs in CI). After it merges,
+Phase 42.
 
 ## Reading a Phase Doc
 
@@ -163,7 +165,6 @@ ios-weekly-planner/
 │   │   ├── WeekPicker/
 │   │   ├── EventDetail/
 │   │   ├── AISearch/
-│   │   ├── Review/
 │   │   ├── Settings/
 │   │   └── ModernMode/       # optional alt theme
 │   ├── Navigation/           # TabBar, page-flip controller
