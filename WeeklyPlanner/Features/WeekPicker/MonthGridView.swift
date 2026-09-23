@@ -1,19 +1,16 @@
 import SwiftUI
 
 /// One month section inside `WeekPickerSheet`'s scroll body. Renders a
-/// centered handwritten "May 2026"-style title, a weekday header row that
-/// follows the configured week start, and a stack of `WeekRowView`s
-/// (Phase 31 #33 #34, Phase 36b).
+/// weekday header row that follows the configured week start, and a stack
+/// of `WeekRowView`s (Phase 31 #33, Phase 36b).
+///
+/// The month/year title lives once, in the sheet's sticky nav bar
+/// (`weekpickerNavTitle`). This grid does not repeat it (Phase 45 #76).
 ///
 /// Kept as its own struct (rather than inlined into the sheet) so the sheet
 /// stays readable and so the month section can be previewed in isolation
 /// once Phase 09 has its full preview suite.
 struct MonthGridView: View {
-    /// Phase 31 (34) presentation contract — the month title is centered.
-    /// Unit-tested in `MonthGridViewTests.testTitleCentered`; the body
-    /// consumes it via `frameAlignment`.
-    static let titleAlignment: TextAlignment = .center
-
     /// Phase 31 (33) presentation contract — weekday header, weekends
     /// included. Two letters (vs. the single-letter form) because T and S
     /// would otherwise repeat and read as a typo, and because `ForEach`
@@ -32,8 +29,7 @@ struct MonthGridView: View {
         return (0 ..< 7).map { ordered[(start + $0) % 7] }
     }
 
-    /// The month to render. The view reads `title` for the header row and
-    /// hands each `PickerWeek` off to a `WeekRowView`.
+    /// The month to render. Each `PickerWeek` is handed to a `WeekRowView`.
     let month: PickerMonth
 
     /// The picker's currently-selected week offset. Forwarded to each row
@@ -45,13 +41,9 @@ struct MonthGridView: View {
     var onPick: (Int) -> Void
 
     @Environment(\.paperTheme) private var theme
-    @Environment(\.paperFont) private var font
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
-                .padding(.vertical, 4)
-
             weekdayHeader
 
             ForEach(month.weeks) { week in
@@ -62,27 +54,6 @@ struct MonthGridView: View {
             }
         }
         .padding(.bottom, 8)
-    }
-
-    /// "May 2026" handwritten title, centered across the full row width
-    /// (Phase 31 #34 — was left-aligned with a trailing rule).
-    private var header: some View {
-        Text(month.title)
-            .font(font.font(at: 18, weight: .bold))
-            .foregroundStyle(theme.ink)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: frameAlignment)
-            .padding(.horizontal, 2)
-    }
-
-    /// Maps the testable `TextAlignment` contract onto the frame alignment
-    /// the header actually uses.
-    private var frameAlignment: Alignment {
-        switch Self.titleAlignment {
-        case .leading: .leading
-        case .center: .center
-        case .trailing: .trailing
-        }
     }
 
     /// Seven weekday labels above the month's rows (Phase 31 #33, rotated
