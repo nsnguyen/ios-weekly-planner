@@ -186,4 +186,10 @@ final class DayPageLayoutTests: XCTestCase {
         XCTAssertTrue(DayPageLayout.compactedStack(notes: [(id: UUID(), unitY: 0.5, height: 20)],
                                                    contentBottom: 100, layerSize: .zero).isEmpty)
     }
+
+    @MainActor
+    func testAnnotationPressDurationIsFast() {
+        XCTAssertLessThanOrEqual(DayPageView.annotationPressDuration, 0.2,
+                                 "Feedback #57: creating free text must not require a long hold")
+    }
 }
