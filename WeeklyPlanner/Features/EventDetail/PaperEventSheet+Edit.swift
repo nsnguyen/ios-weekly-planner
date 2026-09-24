@@ -68,15 +68,17 @@ struct EditableEventContent: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 16) {
             Button("Cancel", action: onCancel)
-                .font(font.font(at: 15 * size.scale, weight: .regular))
+                .font(font.font(at: 17 * size.scale, weight: .regular))
                 .foregroundStyle(theme.ink2)
                 .buttonStyle(.plain)
 
             Spacer()
 
-            Text(isCreate ? "New event" : "Edit event")
-                .font(font.font(at: 15 * size.scale, weight: .regular))
-                .foregroundStyle(theme.ink2)
+            Text(isCreate ? "Add New Event" : "Edit Event")
+                .font(font.font(at: 19 * size.scale, weight: .semibold))
+                .foregroundStyle(theme.ink)
+                .lineLimit(1)
+                .accessibilityIdentifier("paperEventSheet.title")
 
             Spacer()
 
@@ -84,7 +86,7 @@ struct EditableEventContent: View {
                 Task { await onSave() }
             } label: {
                 Text("Save")
-                    .font(font.font(at: 15 * size.scale, weight: .bold))
+                    .font(font.font(at: 17 * size.scale, weight: .bold))
                     .foregroundStyle(canSave ? theme.blueInk : theme.ink3)
             }
             .buttonStyle(.plain)
