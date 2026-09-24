@@ -47,9 +47,6 @@ struct RecurrenceRow: View {
                 endLine(current)
             }
         }
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(theme.ink3).frame(height: 0.5)
-        }
     }
 
     private func setFrequency(_ frequency: RecurrenceFrequency) {

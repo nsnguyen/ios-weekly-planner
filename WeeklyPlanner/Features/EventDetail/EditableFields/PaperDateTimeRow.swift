@@ -30,10 +30,5 @@ struct PaperDateTimeRow: View {
                 .tint(theme.blueInk)
         }
         .padding(.vertical, 8)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(theme.ink3)
-                .frame(height: 0.5)
-        }
     }
 }
