@@ -14,6 +14,7 @@ enum SwiftDataStack {
         InboxSuggestion.self,
         AIInsight.self,
         UserSettings.self,
+        EventTemplateRecord.self,
         Note.self,
         Annotation.self,
     ]
