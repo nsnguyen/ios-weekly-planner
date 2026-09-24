@@ -136,6 +136,7 @@ struct AnnotationView: View {
                 .accessibilityLabel("Annotation text")
                 .accessibilityIdentifier(AccessibilityIDs.annotationActiveEditor)
         }
+        .onAppear { focused = true }
         .task { focused = true }
         .onChange(of: focused) { _, isFocused in
             // Losing focus relinquishes editorship; the body-level

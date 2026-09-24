@@ -23,6 +23,11 @@ import UIKit
 /// - `SideTabs` is laid out beside the flip surface so the rounded tabs poke
 ///   past the leading edge of the page.
 struct DayPageView: View {
+    /// How long a press on empty paper must last before a note is created.
+    /// 0.45s read as "nothing is happening" (feedback #57); 0.2s still
+    /// filters accidental brushes while feeling immediate.
+    static let annotationPressDuration: TimeInterval = 0.2
+
     /// Shared controller injected by `RootView`. Drives both this view's
     /// side-tab selection / swipe gesture and the top bar's week chevrons.
     let controller: PageFlipController
@@ -399,7 +404,7 @@ struct DayPageContent: View {
     /// The long-press half still gates firing: moving early fails it, so
     /// scrolling never creates annotations.
     private var annotationCreationGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.45)
+        LongPressGesture(minimumDuration: DayPageView.annotationPressDuration)
             .simultaneously(with: DragGesture(minimumDistance: 0, coordinateSpace: .local))
             .onEnded { value in
                 guard value.first == true, value.second != nil,

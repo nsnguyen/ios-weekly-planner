@@ -51,22 +51,31 @@ hold).
 ## Visual & Interaction Checklist
 
 - [ ] Tab bar shows exactly **Calendar · Notes · Settings** (#74).
+  Code: `Tab.allCases` is calendar, notes, settings. Simulator confirmation
+  is still open.
 - [ ] A week-page day with no entries shows blank space — no "none", row
-  height unchanged (#75).
+  height unchanged (#75). Code pins `emptyRowMinHeight == 56` and drops
+  the placeholder. Simulator confirmation is still open.
 - [ ] Week picker shows the month/year **once** (nav bar); scrolling months
-  still updates it; no per-month title above each grid (#76).
+  still updates it; no per-month title above each grid (#76). The per-month
+  header is gone; `weekpickerNavTitle` stays. Simulator confirmation is
+  still open.
 - [ ] Pressing on empty day-page paper creates a free-text note noticeably
   faster (0.2 s), keyboard up immediately; existing notes still tap-to-edit
-  and drag-to-move exactly as before (#57).
+  and drag-to-move exactly as before (#57). Press constant is 0.2s and the
+  editor sets focus in `.onAppear` (`.task` kept). Keyboard timing on a
+  device is still open.
 
 ## Logic & Data Checklist
 
-- [ ] `UserSettings.lastTabRaw == "review"` (persisted from an old build)
-  falls back to `.calendar` without crashing.
+- [x] `UserSettings.lastTabRaw == "review"` (persisted from an old build)
+  falls back to `.calendar` without crashing. Pinned by
+  `TabSelectionTests.testLegacyReviewRawFallsBackToCalendar`.
 - [ ] `Streak` removed from the SwiftData schema (was always empty — no
   data-loss migration needed; verify a store with an existing Streak table
-  still opens).
-- [ ] No dangling references: `PaperReviewView`, `ReviewViewModel`,
+  still opens). The model is unregistered and the type is deleted. Opening
+  a pre-phase store was not verified on this machine.
+- [x] No dangling references: `PaperReviewView`, `ReviewViewModel`,
   `Streak`, `reviewTitle`, `reviewPercent`, `tabbar.tab.review` all grep to
   zero in `WeeklyPlanner/`.
 
@@ -85,6 +94,12 @@ New: none beyond the fallback test — this phase deletes more than it adds.
   `AnnotationsUITests`, `AccessibilityAuditUITests` (minus deleted case),
   week-picker UI suites green.
 - Grep proof of zero review references.
+
+Build & Test on `a236b11` (run `35825740700`) succeeded: 600 unit tests,
+26 UI tests, 0 failures. Two UI tests skipped for missing seed event rows
+(`testEventSheetPassesAudit`, `testTapEventRow_opensSheetWithDeleteButton`).
+The Review audit test is gone. A screenshot pass vs the mock, on-device
+keyboard timing, and a pre-phase `Streak` store open are still open.
 
 ## Out of Scope
 

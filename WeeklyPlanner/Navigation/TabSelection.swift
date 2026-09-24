@@ -1,11 +1,10 @@
 import Foundation
 import Observation
 
-/// The four destinations on the bottom paper tab bar. Raw values double as
+/// The three destinations on the bottom paper tab bar. Raw values double as
 /// the persisted-form string in `UserSettings.lastTabRaw`.
 enum Tab: String, CaseIterable, Hashable, Sendable {
     case calendar
-    case review
     case notes
     case settings
 }
@@ -31,6 +30,8 @@ final class TabSelection {
     init(settings: any SettingsStoring) {
         self.settings = settings
         let raw = (try? settings.current().lastTabRaw) ?? Tab.calendar.rawValue
+        // Unknown raws (e.g. "review" persisted by a pre-Phase-45 build)
+        // fall back to the calendar tab.
         current = Tab(rawValue: raw) ?? .calendar
     }
 }

@@ -1,8 +1,9 @@
 import XCTest
 @testable import WeeklyPlanner
 
-/// Phase 30 tweaks (25), (26), (28): the week row is events-only, empties
-/// read "none", and event-heavy days split into two columns capped with a
+/// Phase 30 tweaks (25), (26) and Phase 45 (#75): the week row is
+/// events-only, empty days are blank, and event-heavy days split into two
+/// columns capped with a
 /// "+K more" affordance instead of clipping. The layout decision is a pure
 /// value type (`WeekDayRowLayout`) so the rule is pinned without view
 /// introspection (codebase convention — see `DayPageHeaderTests`).
@@ -36,9 +37,11 @@ final class WeekDayRowTests: XCTestCase {
 
     // MARK: - (28) empty day
 
-    func testEmptyDayPlaceholderReadsNone() {
-        XCTAssertEqual(WeekDayRow.emptyPlaceholder, "none",
-                       "Phase 30 (28): empty days read 'none', not '—'")
+    func testEmptyDayRendersNoPlaceholderText() {
+        // Feedback #75 (reverses round-1 #28): empty days are blank.
+        // The placeholder constant is gone; empty layout keeps the row's
+        // 56pt minHeight so the week grid rhythm is unchanged.
+        XCTAssertEqual(WeekDayRow.emptyRowMinHeight, 56)
         XCTAssertTrue(WeekDayRowLayout.compute(for: []).isEmpty)
     }
 
@@ -51,7 +54,7 @@ final class WeekDayRowTests: XCTestCase {
         // permanent week-page default).
         _ = WeekDayRow(day: saturday(), events: makeEvents(1), isToday: false)
 
-        // And a day whose only content is tasks lays out as empty → "none";
+        // And a day whose only content is tasks lays out as empty (blank);
         // tasks have no influence on the week-row layout at all.
         XCTAssertTrue(WeekDayRowLayout.compute(for: []).isEmpty,
                       "tasks must not influence the week row layout")
