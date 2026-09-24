@@ -115,10 +115,10 @@ struct PaperEventSheet: View {
         }
         .alert("Delete this event?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive) {
-                Task {
-                    await viewModel?.delete()
-                    isOpen = false
-                }
+                let deleteAction = viewModel?.delete
+                viewModel?.event = nil
+                isOpen = false
+                Task { await deleteAction?() }
             }
             Button("Cancel", role: .cancel) {}
         }
@@ -141,22 +141,22 @@ struct PaperEventSheet: View {
             Button("Delete this occurrence", role: .destructive) {
                 if let id = viewModel?.eventID {
                     let start = occurrenceStart ?? viewModel?.event?.start
+                    viewModel?.event = nil
+                    isOpen = false
                     Task {
                         if let start {
                             try? await eventStore.deleteOccurrence(eventID: id, occurrenceStart: start)
                         } else {
                             try? await eventStore.delete(id: id)
                         }
-                        isOpen = false
                     }
                 }
             }
             Button("Delete all occurrences", role: .destructive) {
                 if let id = viewModel?.eventID {
-                    Task {
-                        try? await eventStore.delete(id: id)
-                        isOpen = false
-                    }
+                    viewModel?.event = nil
+                    isOpen = false
+                    Task { try? await eventStore.delete(id: id) }
                 }
             }
             Button("Cancel", role: .cancel) {}
@@ -235,10 +235,11 @@ struct PaperEventSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             switch currentMode {
             case .view, .none:
-                EventHeader(event: viewModel?.event ?? Self.placeholderEvent,
+                let liveEvent = Self.live(viewModel?.event)
+                EventHeader(event: liveEvent ?? Self.placeholderEvent,
                             onClose: { isOpen = false },
-                            onEdit: viewModel?.event == nil ? nil : { promoteToEdit() })
-                if let event = viewModel?.event, let viewModel {
+                            onEdit: liveEvent == nil ? nil : { promoteToEdit() })
+                if let event = liveEvent, let viewModel {
                     bodyRows(event: event, viewModel: viewModel)
                         .padding(.horizontal, 18)
                 } else {
@@ -431,6 +432,13 @@ struct PaperEventSheet: View {
     }
 
     // MARK: - Placeholder
+
+    /// A SwiftData event that has been deleted faults on property access.
+    /// Treat that as "not loaded" so the sheet can dismiss without crashing.
+    private static func live(_ event: Event?) -> Event? {
+        guard let event, !event.isDeleted else { return nil }
+        return event
+    }
 
     /// Empty placeholder event used while the view-model is still loading.
     /// The view shows the header skeleton for one frame before `load()`
