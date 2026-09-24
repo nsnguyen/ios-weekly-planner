@@ -83,7 +83,7 @@ extension EnvironmentValues {
 
     /// Phase 42 — editable quick-add template chips. Nil in previews/tests
     /// falls back to `EventTemplate.curated`.
-    @Entry var eventTemplateStore: (any EventTemplateStoring)? = nil
+    @Entry var eventTemplateStore: (any EventTemplateStoring)?
 }
 
 // MARK: - Stubs

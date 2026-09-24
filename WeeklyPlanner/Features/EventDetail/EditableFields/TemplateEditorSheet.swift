@@ -3,8 +3,6 @@ import SwiftUI
 /// Add/delete quick-add event templates (Phase 42 #68).
 struct TemplateEditorSheet: View {
     @Environment(\.eventTemplateStore) private var store
-    @Environment(\.paperTheme) private var theme
-    @Environment(\.paperFont) private var font
     @Environment(\.dismiss) private var dismiss
 
     @State private var records: [EventTemplateRecord] = []
@@ -39,7 +37,7 @@ struct TemplateEditorSheet: View {
                             Text(CategoryPalette.displayName(category))
                         }
                     }
-                    Stepper("Duration: \(newDuration) min", value: $newDuration, in: 15...240, step: 15)
+                    Stepper("Duration: \(newDuration) min", value: $newDuration, in: 15 ... 240, step: 15)
                     Button("Add") {
                         let title = newTitle.trimmingCharacters(in: .whitespaces)
                         guard !title.isEmpty else { return }

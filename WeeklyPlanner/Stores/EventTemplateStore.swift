@@ -22,9 +22,7 @@ final class SwiftDataEventTemplateStore: EventTemplateStoring {
     }
 
     func templates() throws -> [EventTemplateRecord] {
-        let descriptor = FetchDescriptor<EventTemplateRecord>(
-            sortBy: [SortDescriptor(\.sortOrder)]
-        )
+        let descriptor = FetchDescriptor<EventTemplateRecord>(sortBy: [SortDescriptor(\.sortOrder)])
         return try context.fetch(descriptor)
     }
 

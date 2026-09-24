@@ -10,10 +10,8 @@ final class EventTemplateStoreTests: XCTestCase {
 
     override func setUp() async throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        container = try ModelContainer(
-            for: EventTemplateRecord.self, UserSettings.self,
-            configurations: config
-        )
+        container = try ModelContainer(for: EventTemplateRecord.self, UserSettings.self,
+                                       configurations: config)
         store = SwiftDataEventTemplateStore(context: container.mainContext)
         settings = SwiftDataSettingsStore(context: container.mainContext)
     }
@@ -24,7 +22,9 @@ final class EventTemplateStoreTests: XCTestCase {
         XCTAssertTrue(try settings.current().eventTemplatesSeeded)
 
         // Second call is a no-op even after the user empties the list.
-        for record in try store.templates() { try store.delete(id: record.id) }
+        for record in try store.templates() {
+            try store.delete(id: record.id)
+        }
         try store.seedIfNeeded(from: EventTemplate.curated, settings: settings)
         XCTAssertEqual(try store.templates().count, 0, "Deleting all chips must be durable")
     }
