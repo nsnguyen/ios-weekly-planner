@@ -124,7 +124,7 @@ all before Phases 40/41 (which remain the final two). Feedback #75
 deliberately reverses round-1 #28 (empty week days go back to blank).
 
 **Next up:** Phase 44 — Typography & Paper Expansion. Phase 42 (event
-sheet overhaul) is implemented on `phase-42-event-sheet`: 604 unit tests
+sheet overhaul) is implemented on `cursor/phase-42-event-sheet`: 604 unit tests
 and the create, repeat, template-editor, and smoke UI tests passed on
 iOS 27. A screenshot pass vs the mock is still open.
 
