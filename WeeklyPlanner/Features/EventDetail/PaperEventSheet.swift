@@ -19,7 +19,6 @@ import SwiftUI
 /// - `EventAlertRow`
 /// - `EventLocationAlertRow`
 /// - `EventInviteesRow` (if `event.attendeesCount > 1`)
-/// - `EventAISticky` (if the suggestion is non-empty)
 /// - `EventDeleteButton`
 ///
 /// The view-model is constructed lazily in `.task(id:)` so the env
@@ -64,7 +63,6 @@ struct PaperEventSheet: View {
     @Binding var isOpen: Bool
 
     @Environment(\.eventStore) private var eventStore
-    @Environment(\.intelligenceService) private var intelligenceService
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
     @Environment(\.paperSize) private var size
@@ -77,11 +75,6 @@ struct PaperEventSheet: View {
     @State private var showRecurringDeleteDialog = false
     @State private var showCancelConfirm = false
     @State private var dragOffset: CGFloat = 0
-
-    /// Phase 29 (16): the AI "SUGGESTED" sticky is no longer always-on. It
-    /// stays hidden until the user taps "Ask AI", then reveals inline. Reset
-    /// to `false` whenever a new event is seeded (see `.task(id:)`).
-    @State private var showAISuggestion = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -101,20 +94,13 @@ struct PaperEventSheet: View {
             // whenever initialMode changes (e.g., a different event id
             // arrives while the sheet is already on screen).
             currentMode = initialMode
-            // A freshly-seeded event starts with the AI suggestion collapsed.
-            showAISuggestion = false
             switch initialMode {
             case let .view(id), let .edit(id):
                 if viewModel == nil || viewModel?.eventID != id {
-                    let generator = intelligenceService.map {
-                        EventSuggestionGenerator(intelligence: $0)
-                    }
                     viewModel = EventDetailViewModel(eventID: id,
-                                                     eventStore: eventStore,
-                                                     suggestionGenerator: generator)
+                                                     eventStore: eventStore)
                 }
                 await viewModel?.load()
-                await viewModel?.refreshAISuggestion()
                 if case .edit = initialMode {
                     viewModel?.beginEditing()
                 }
@@ -307,7 +293,7 @@ struct PaperEventSheet: View {
         }
     }
 
-    /// All visible body rows + the AI sticky + the delete button. Pulled
+    /// All visible body rows + the delete button. Pulled
     /// out so `cardContent` stays scannable.
     private func bodyRows(event: Event, viewModel: EventDetailViewModel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -353,44 +339,9 @@ struct PaperEventSheet: View {
                 EventNotesRow(notes: notes)
             }
 
-            aiSuggestionSection(viewModel: viewModel)
-                .padding(.top, 14)
-
             EventDeleteButton(action: { requestDelete() })
                 .padding(.top, 14)
                 .padding(.bottom, 18)
-        }
-    }
-
-    /// Phase 29 (16): the AI suggestion is opt-in per-view. Until the user taps
-    /// "Ask AI", nothing AI shows; tapping reveals the `EventAISticky` inline
-    /// (and is a no-op affordance when there's no suggestion text to give).
-    @ViewBuilder
-    private func aiSuggestionSection(viewModel: EventDetailViewModel) -> some View {
-        if showAISuggestion {
-            EventAISticky(suggestion: viewModel.aiSuggestion)
-        } else {
-            Button {
-                withAnimation(AnimationTokens.sheetSlide(reduced: reduceMotion)) {
-                    showAISuggestion = true
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 13))
-                    Text("Ask AI")
-                        .font(font.font(at: 16, weight: .semibold))
-                }
-                .foregroundStyle(theme.blueInk)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .dashedBorder(color: theme.blueInk.opacity(0.6), dash: [4, 3],
-                          lineWidth: 0.5, cornerRadius: 4)
-            .accessibilityLabel("Ask AI for a suggestion")
-            .accessibilityIdentifier("paperEventSheet.askAI")
         }
     }
 

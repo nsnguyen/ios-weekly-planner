@@ -18,15 +18,22 @@ struct RecurrenceRow: View {
                     .frame(width: 72, alignment: .leading)
 
                 Menu {
-                    Button("None") { recurrence = nil }
-                    ForEach(RecurrenceFrequency.allCases, id: \.self) { frequency in
-                        Button(frequency.displayName) { setFrequency(frequency) }
+                    ForEach(RecurrencePreset.allCases, id: \.self) { preset in
+                        Button {
+                            recurrence = preset.recurrence
+                        } label: {
+                            if RecurrencePreset.matching(recurrence) == preset {
+                                Label(preset.displayName, systemImage: "checkmark")
+                            } else {
+                                Text(preset.displayName)
+                            }
+                        }
                     }
                 } label: {
                     // The 44pt target has to be the label. A frame on the
                     // Menu grows the accessibility bounds around a smaller
                     // control, and XCUITest then taps the padding.
-                    Text(recurrence?.frequency.displayName ?? "None")
+                    Text(RecurrencePreset.matching(recurrence).displayName)
                         .font(font.font(at: 15 * size.scale, weight: .regular))
                         .foregroundStyle(theme.ink)
                         .frame(minWidth: 44, minHeight: 44, alignment: .leading)
@@ -35,29 +42,17 @@ struct RecurrenceRow: View {
                 .buttonStyle(.plain)
                 .tint(theme.blueInk)
                 .accessibilityLabel("Repeat")
-                .accessibilityValue(recurrence?.frequency.displayName ?? "None")
+                .accessibilityValue(RecurrencePreset.matching(recurrence).displayName)
                 .accessibilityIdentifier(AccessibilityIDs.eventRepeatMenu)
 
                 Spacer(minLength: 0)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
 
             if let current = recurrence {
                 intervalLine(current)
                 endLine(current)
             }
-        }
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(theme.ink3).frame(height: 0.5)
-        }
-    }
-
-    private func setFrequency(_ frequency: RecurrenceFrequency) {
-        if var current = recurrence {
-            current.frequency = frequency
-            recurrence = current
-        } else {
-            recurrence = Recurrence(frequency: frequency)
         }
     }
 

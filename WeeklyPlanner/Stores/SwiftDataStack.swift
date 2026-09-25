@@ -16,6 +16,7 @@ enum SwiftDataStack {
         UserSettings.self,
         Note.self,
         Annotation.self,
+        EventTemplateRecord.self,
     ]
 
     /// Lazily-initialised production container, on-disk. Crashes on

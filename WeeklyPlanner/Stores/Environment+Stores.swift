@@ -80,6 +80,10 @@ extension EnvironmentValues {
     /// Phase 37a — the live `GCalSyncEngine`. Nil in previews/tests means
     /// connect/disconnect still works but purge is a no-op.
     @Entry var gcalSyncEngine: GCalSyncEngine? = nil
+
+    /// Phase 42 — user-editable quick-add chips. Nil in previews falls
+    /// back to `EventTemplate.curated`.
+    @Entry var eventTemplateStore: (any EventTemplateStoring)? = nil
 }
 
 // MARK: - Stubs

@@ -72,7 +72,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 39 | Voice Memos                                          | N — Future          | 💤     |
 | 40 | Final Polish, App Icon, Launch Screen, Privacy       | O — Ship (final)    | ⏳     |
 | 41 | App Store Submission & TestFlight                    | O — Ship (final)    | ⏳     |
-| 42 | Event Sheet Overhaul                                 | P — Feedback R2     | 📋     |
+| 42 | Event Sheet Overhaul                                 | P — Feedback R2     | ⏳     |
 | 43 | Sticky Notes v3 — Grounded & Movable                 | P                   | 📋     |
 | 44 | Typography & Paper Expansion                         | P                   | 📋     |
 | 45 | Chrome & Navigation Simplification                   | P                   | ✅     |
@@ -124,7 +124,9 @@ green on its branch), all before Phases
 40/41 (which remain the final two). Feedback #75 deliberately reverses
 round-1 #28 (empty week days go back to blank).
 
-**Next up:** Phase 42 — Event Sheet Overhaul. Phase 45 (chrome
+**Next up:** Phase 42 — Event Sheet Overhaul is implemented on its
+branch (header, hairlines, editable chips, repeat presets, Ask AI
+removed). Phase 45 (chrome
 simplification) is implemented on its branch: Build & Test run
 `35825740700` passed (600 unit tests, 26 UI tests with 2 pre-existing
 seed-data skips). A screenshot pass vs the mock, keyboard timing, and

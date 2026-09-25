@@ -36,6 +36,10 @@ final class UserSettings {
     /// and generation (DayPageViewModel orchestrator run).
     var aiStickyNotesEnabled: Bool = false
 
+    /// One-time seed guard for quick-add event templates (Phase 42 #68).
+    /// Once true, an emptied template list is never re-seeded.
+    var eventTemplatesSeeded: Bool = false
+
     // Integrations
     var gmailConnected: Bool
     var gmailAccountEmail: String?
@@ -72,6 +76,7 @@ final class UserSettings {
          defaultReminderMinutes: Int? = 15,
          appleIntelligenceEnabled: Bool = true,
          aiStickyNotesEnabled: Bool = false,
+         eventTemplatesSeeded: Bool = false,
          gmailConnected: Bool = false,
          gmailAccountEmail: String? = nil,
          googleCalendarConnected: Bool = false,
@@ -95,6 +100,7 @@ final class UserSettings {
         self.defaultReminderMinutes = defaultReminderMinutes
         self.appleIntelligenceEnabled = appleIntelligenceEnabled
         self.aiStickyNotesEnabled = aiStickyNotesEnabled
+        self.eventTemplatesSeeded = eventTemplatesSeeded
         self.gmailConnected = gmailConnected
         self.gmailAccountEmail = gmailAccountEmail
         self.googleCalendarConnected = googleCalendarConnected

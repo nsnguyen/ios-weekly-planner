@@ -83,6 +83,13 @@ enum AccessibilityIDs {
         "paperEventSheet.template.\(id)"
     }
 
+    static let eventTemplatesEdit = "paperEventSheet.templates.edit"
+    static let templateEditorAdd = "templateEditor.add"
+    static let templateEditorTitleField = "templateEditor.title"
+    static func templateEditorDelete(_ id: UUID) -> String {
+        "templateEditor.delete.\(id.uuidString)"
+    }
+
     /// Tab bar
     static func tabBarTab(_ tab: String) -> String {
         "tabbar.tab.\(tab)"

@@ -24,11 +24,6 @@ struct LocationField: View {
 
             InkTextField("Add a place…", text: $text, variant: .body)
         }
-        .padding(.vertical, 8)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(theme.ink3)
-                .frame(height: 0.5)
-        }
+        .padding(.vertical, 12)
     }
 }

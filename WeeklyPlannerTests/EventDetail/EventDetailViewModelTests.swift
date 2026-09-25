@@ -125,18 +125,6 @@ final class EventDetailViewModelTests: XCTestCase {
         XCTAssertNil(after)
     }
 
-    func testAISuggestionForBirthdayEvent() async throws {
-        let event = Event(title: "Sara's birthday breakfast",
-                          start: .init(),
-                          end: .init(),
-                          category: .personal)
-        try await eventStore.upsert(event)
-
-        let vm = EventDetailViewModel(eventID: event.id, eventStore: eventStore, geocoder: fakeGeocoder)
-        await vm.load()
-        XCTAssertTrue(vm.aiSuggestion.contains("Uber") || vm.aiSuggestion.contains("Trick Dog"))
-    }
-
     func testSaveCommitsComposerDraft() async throws {
         let event = Event(title: "Old title",
                           start: Date(timeIntervalSince1970: 1_780_000_000),

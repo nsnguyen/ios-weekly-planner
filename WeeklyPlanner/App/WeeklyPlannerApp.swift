@@ -25,6 +25,7 @@ struct WeeklyPlannerApp: App {
     @State private var noteStore: any NoteStoring
     @State private var annotationStore: any AnnotationStoring
     @State private var settingsStore: any SettingsStoring
+    @State private var eventTemplateStore: any EventTemplateStoring
     @State private var googleAuthService: any GoogleAuthService
     @State private var gmailClient: GmailClient
     @State private var inboxSyncEngine: InboxSyncEngine
@@ -49,6 +50,8 @@ struct WeeklyPlannerApp: App {
         let noteStore = SwiftDataNoteStore(context: container.mainContext)
         let annotationStore = SwiftDataAnnotationStore(context: container.mainContext)
         let settingsStore = SwiftDataSettingsStore(context: container.mainContext)
+        let eventTemplateStore = SwiftDataEventTemplateStore(context: container.mainContext)
+        try? eventTemplateStore.seedIfNeeded(from: EventTemplate.curated, settings: settingsStore)
         // Phase 36b: week-start preference must be live before AppShell's
         // first WeekMath call.
         Self.applyStoredWeekStart(from: settingsStore)
@@ -127,6 +130,7 @@ struct WeeklyPlannerApp: App {
         _noteStore = State(initialValue: noteStore)
         _annotationStore = State(initialValue: annotationStore)
         _settingsStore = State(initialValue: settingsStore)
+        _eventTemplateStore = State(initialValue: eventTemplateStore)
         _googleAuthService = State(initialValue: googleAuthService)
         _gmailClient = State(initialValue: gmailClient)
         _inboxSyncEngine = State(initialValue: syncEngine)
@@ -172,6 +176,7 @@ struct WeeklyPlannerApp: App {
                 .environment(\.noteStore, noteStore)
                 .environment(\.annotationStore, annotationStore)
                 .environment(\.settingsStore, settingsStore)
+                .environment(\.eventTemplateStore, eventTemplateStore)
                 .environment(\.googleAuthService, googleAuthService)
                 .environment(\.gmailClient, gmailClient)
                 .environment(\.inboxSyncEngine, inboxSyncEngine)

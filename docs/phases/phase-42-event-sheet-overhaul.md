@@ -41,29 +41,29 @@ the event sheets entirely.
 
 ## Visual & Interaction Checklist
 
-- [ ] Create-mode header title reads **"Add New Event"**; edit-mode reads
+- [x] Create-mode header title reads **"Add New Event"**; edit-mode reads
   **"Edit Event"** (#70).
-- [ ] Header row is visually dominant: title 19pt·semibold, Cancel/Save
+- [x] Header row is visually dominant: title 19pt·semibold, Cancel/Save
   17pt (× text-size scale) — bigger than every field row below (#70).
-- [ ] No 0.5-pt hairline crosses the Starts / Ends / Category / Repeat /
+- [x] No 0.5-pt hairline crosses the Starts / Ends / Category / Repeat /
   Location / Notes rows (#69). Row spacing alone separates fields.
-- [ ] Template chips row shows the user's own chips; a trailing **Edit**
+- [x] Template chips row shows the user's own chips; a trailing **Edit**
   chip opens a manager where chips can be added and deleted (#68).
-- [ ] Repeat row's menu offers: None, Daily, Weekly, **Every 2 weeks**,
+- [x] Repeat row's menu offers: None, Daily, Weekly, **Every 2 weeks**,
   Monthly, Yearly, **Custom…** — Custom reveals the existing
   interval stepper (already-built "Every N …" line) (#71).
-- [ ] No "Ask AI" button or AI-suggestion sticky anywhere in the event
+- [x] No "Ask AI" button or AI-suggestion sticky anywhere in the event
   sheets — view, edit, or create mode (#63, #67).
 
 ## Logic & Data Checklist
 
-- [ ] Quick-add templates persist in SwiftData (`EventTemplateRecord`);
+- [x] Quick-add templates persist in SwiftData (`EventTemplateRecord`);
   curated defaults (gym, standup, lunch, call, errands, datenight) seed
   exactly once (guarded by `UserSettings.eventTemplatesSeeded`); deleting
   all chips is a legal, durable state.
-- [ ] `RecurrencePreset → Recurrence` mapping is pure and unit-tested
+- [x] `RecurrencePreset → Recurrence` mapping is pure and unit-tested
   ("Every 2 weeks" = `.weekly, interval: 2`).
-- [ ] `EventDetailViewModel` no longer holds `aiSuggestion` /
+- [x] `EventDetailViewModel` no longer holds `aiSuggestion` /
   `refreshAISuggestion`; `IntelligenceService` itself is untouched (still
   used by Ask-the-Planner).
 
