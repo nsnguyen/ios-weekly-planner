@@ -72,7 +72,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 39 | Voice Memos                                          | N — Future          | 💤     |
 | 40 | Final Polish, App Icon, Launch Screen, Privacy       | O — Ship (final)    | ⏳     |
 | 41 | App Store Submission & TestFlight                    | O — Ship (final)    | ⏳     |
-| 42 | Event Sheet Overhaul                                 | P — Feedback R2     | 📋     |
+| 42 | Event Sheet Overhaul                                 | P — Feedback R2     | ✅     |
 | 43 | Sticky Notes v3 — Grounded & Movable                 | P                   | 📋     |
 | 44 | Typography & Paper Expansion                         | P                   | 📋     |
 | 45 | Chrome & Navigation Simplification                   | P                   | ✅     |
@@ -119,17 +119,14 @@ phases rather than creating new ones: week-start options + tabs-don't-change
 (#60/#64/#65/#80) = **Phase 36b** (shipped — all seven days, and the Day,
 Week, side-tab, and picker layouts follow the choice); logo (#56) = Phase 40;
 language (#84) = Phase 38; voice memos (#85) = Phase 39. Recommended
-execution order from here: **42 → 44 → 43 → 46** (Phase 45's suite is
-green on its branch), all before Phases
-40/41 (which remain the final two). Feedback #75 deliberately reverses
-round-1 #28 (empty week days go back to blank).
+execution order from here: **44 → 43 → 46** (Phases 45 and 42 shipped),
+all before Phases 40/41 (which remain the final two). Feedback #75
+deliberately reverses round-1 #28 (empty week days go back to blank).
 
-**Next up:** Phase 42 — Event Sheet Overhaul. Phase 45 (chrome
-simplification) is implemented on its branch: Build & Test run
-`35825740700` passed (600 unit tests, 26 UI tests with 2 pre-existing
-seed-data skips). A screenshot pass vs the mock, keyboard timing, and
-opening a pre-phase store that still has a `Streak` table are still
-open.
+**Next up:** Phase 44 — Typography & Paper Expansion. Phase 42 (event
+sheet overhaul) is implemented on `cursor/phase-42-event-sheet`: 604 unit tests
+and the create, repeat, template-editor, and smoke UI tests passed on
+iOS 27. A screenshot pass vs the mock is still open.
 
 ## Reading a Phase Doc
 

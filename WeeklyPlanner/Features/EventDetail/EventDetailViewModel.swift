@@ -39,12 +39,6 @@ final class EventDetailViewModel {
     /// the next successful toggle.
     var locationGeocodeError: String?
 
-    /// Live AI suggestion produced by `EventSuggestionGenerator`. `nil`
-    /// while the model is still warming up or the device can't run AI;
-    /// the `aiSuggestion` accessor falls back to the canned table in
-    /// that case so the sticky never renders empty.
-    var liveSuggestion: String?
-
     /// Active composer draft, or `nil` when the sheet is in `.view` mode.
     /// Mutating `composer` mid-edit (e.g., user types in the title field)
     /// triggers the surrounding `@Observable` propagation.
@@ -56,7 +50,6 @@ final class EventDetailViewModel {
 
     private let eventStore: any EventStoring
     private let geocoder: any AddressGeocoding
-    private let suggestionGenerator: EventSuggestionGenerator?
 
     /// Designated initializer.
     ///
@@ -64,18 +57,13 @@ final class EventDetailViewModel {
     ///   - eventID: Event to load and mutate.
     ///   - eventStore: Store backing reads and writes.
     ///   - geocoder: Injected geocoder so tests can substitute a fake.
-    ///   - suggestionGenerator: Optional generator. Pass `nil` (default)
-    ///     in tests / previews; the host injects a real one wired to
-    ///     `PlannerLanguageModel` for production.
     init(eventID: UUID,
          eventStore: any EventStoring,
-         geocoder: any AddressGeocoding = SystemGeocoder(),
-         suggestionGenerator: EventSuggestionGenerator? = nil)
+         geocoder: any AddressGeocoding = SystemGeocoder())
     {
         self.eventID = eventID
         self.eventStore = eventStore
         self.geocoder = geocoder
-        self.suggestionGenerator = suggestionGenerator
     }
 
     /// Fetch the event and seed the toggle state from its reminders. Errors
@@ -225,34 +213,11 @@ final class EventDetailViewModel {
         composerBaseline = nil
     }
 
-    /// Suggestion text rendered in the yellow sticky inside the sheet.
-    /// Prefers the live AI-generated string when one has arrived; falls
-    /// back to the canned table from Phase 11 otherwise so the sticky is
-    /// never empty.
-    var aiSuggestion: String {
-        guard let event else { return "" }
-        if let live = liveSuggestion, !live.isEmpty {
-            return live
-        }
-        return EventAISuggestion.text(for: event)
-    }
-
     /// Read-mode recurrence line, or nil for single events.
+    /// A deleted SwiftData row faults on property access, so treat it as gone.
     var recurrenceSummary: String? {
-        guard let event, let recurrence = event.recurrence else { return nil }
+        guard let event, !event.isDeleted, let recurrence = event.recurrence else { return nil }
         return RecurrenceSummary.text(for: recurrence, seriesStart: event.start)
-    }
-
-    /// Async hook the sheet calls on appear. Runs the
-    /// `EventSuggestionGenerator` against the loaded event; the resulting
-    /// string lands in `liveSuggestion` and the view re-renders. No-op
-    /// when no generator was injected (preview / unit-test path).
-    func refreshAISuggestion() async {
-        guard let event, let generator = suggestionGenerator else { return }
-        let produced = await generator.generate(for: event)
-        if let produced, !produced.isEmpty {
-            liveSuggestion = produced
-        }
     }
 }
 

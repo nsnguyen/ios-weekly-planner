@@ -30,6 +30,9 @@ final class EventCreateFlowUITests: XCTestCase {
         XCTAssertTrue(addLink.waitForExistence(timeout: 5))
         addLink.tap()
 
+        XCTAssertTrue(app.staticTexts["Add New Event"].waitForExistence(timeout: 3),
+                      "Create-mode sheet must be titled 'Add New Event'")
+
         let title = "UITest Lunch \(UUID().uuidString.prefix(6))"
         let titleField = app.textFields.firstMatch
         XCTAssertTrue(titleField.waitForExistence(timeout: 3))

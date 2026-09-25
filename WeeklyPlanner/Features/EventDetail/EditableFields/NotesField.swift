@@ -11,8 +11,6 @@ import SwiftUI
 ///   - `TextEditor` content uses handwriting at 17pt × size.scale.
 ///   - Faint italic placeholder ("Add notes…") rendered as a ZStack
 ///     under the editor so it disappears as soon as the user types.
-///   - Hairline `theme.ink3` rule along the bottom edge to match
-///     neighboring composer rows.
 struct NotesField: View {
     @Binding var text: String
 
@@ -50,11 +48,6 @@ struct NotesField: View {
             }
         }
         .padding(.vertical, 4)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(theme.ink3)
-                .frame(height: 0.5)
-        }
         .accessibilityIdentifier("paperEventSheet.notes")
     }
 }

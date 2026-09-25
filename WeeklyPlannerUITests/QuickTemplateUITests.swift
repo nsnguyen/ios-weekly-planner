@@ -21,7 +21,7 @@ final class QuickTemplateUITests: XCTestCase {
         XCTAssertTrue(addLink.waitForExistence(timeout: 5))
         addLink.tap()
 
-        let gymChip = app.buttons["paperEventSheet.template.gym"]
+        let gymChip = app.buttons.matching(NSPredicate(format: "label == %@", "Gym template")).firstMatch
         XCTAssertTrue(gymChip.waitForExistence(timeout: 3), "Template chips missing from create sheet")
         gymChip.tap()
 
