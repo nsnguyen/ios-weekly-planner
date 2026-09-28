@@ -16,6 +16,7 @@ final class RecurrencePresetTests: XCTestCase {
         XCTAssertEqual(RecurrencePreset.everyTwoWeeks.recurrence?.interval, 2)
         XCTAssertEqual(RecurrencePreset.monthly.recurrence?.frequency, .monthly)
         XCTAssertEqual(RecurrencePreset.yearly.recurrence?.frequency, .yearly)
+        // Custom seeds a starting rule the steppers then refine.
         XCTAssertEqual(RecurrencePreset.custom.recurrence?.frequency, .weekly)
     }
 
@@ -23,6 +24,7 @@ final class RecurrencePresetTests: XCTestCase {
         XCTAssertEqual(RecurrencePreset.matching(nil), RecurrencePreset.none)
         XCTAssertEqual(RecurrencePreset.matching(Recurrence(frequency: .weekly, interval: 2)), .everyTwoWeeks)
         XCTAssertEqual(RecurrencePreset.matching(Recurrence(frequency: .daily)), .daily)
+        // Off-preset combos surface as Custom.
         XCTAssertEqual(RecurrencePreset.matching(Recurrence(frequency: .weekly, interval: 3)), .custom)
         XCTAssertEqual(RecurrencePreset.matching(Recurrence(frequency: .monthly, interval: 2)), .custom)
     }

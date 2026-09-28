@@ -3,7 +3,7 @@ import Foundation
 /// Discoverable repeat presets for the event sheet (Phase 42 #71).
 /// Wraps the existing `Recurrence` model — `interval` support already
 /// exists; presets only make it reachable without the steppers.
-enum RecurrencePreset: CaseIterable, Hashable {
+enum RecurrencePreset: CaseIterable, Equatable {
     case none
     case daily
     case weekly
@@ -42,12 +42,12 @@ enum RecurrencePreset: CaseIterable, Hashable {
     static func matching(_ recurrence: Recurrence?) -> RecurrencePreset {
         guard let recurrence else { return .none }
         switch (recurrence.frequency, recurrence.interval) {
-        case (.daily, 1): .daily
-        case (.weekly, 1): .weekly
-        case (.weekly, 2): .everyTwoWeeks
-        case (.monthly, 1): .monthly
-        case (.yearly, 1): .yearly
-        default: .custom
+        case (.daily, 1): return .daily
+        case (.weekly, 1): return .weekly
+        case (.weekly, 2): return .everyTwoWeeks
+        case (.monthly, 1): return .monthly
+        case (.yearly, 1): return .yearly
+        default: return .custom
         }
     }
 }

@@ -81,9 +81,9 @@ extension EnvironmentValues {
     /// connect/disconnect still works but purge is a no-op.
     @Entry var gcalSyncEngine: GCalSyncEngine? = nil
 
-    /// Phase 42 — user-editable quick-add chips. Nil in previews falls
-    /// back to `EventTemplate.curated`.
-    @Entry var eventTemplateStore: (any EventTemplateStoring)? = nil
+    /// Phase 42 — editable quick-add template chips. Nil in previews/tests
+    /// falls back to `EventTemplate.curated`.
+    @Entry var eventTemplateStore: (any EventTemplateStoring)?
 }
 
 // MARK: - Stubs

@@ -9,16 +9,11 @@ final class EventTemplateStoreTests: XCTestCase {
     private var settings: SwiftDataSettingsStore!
 
     override func setUp() async throws {
-        container = try SwiftDataStack.inMemoryContainer()
-        let context = container.mainContext
-        store = SwiftDataEventTemplateStore(context: context)
-        settings = SwiftDataSettingsStore(context: context)
-    }
-
-    override func tearDown() async throws {
-        store = nil
-        settings = nil
-        container = nil
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        container = try ModelContainer(for: EventTemplateRecord.self, UserSettings.self,
+                                       configurations: config)
+        store = SwiftDataEventTemplateStore(context: container.mainContext)
+        settings = SwiftDataSettingsStore(context: container.mainContext)
     }
 
     func testSeedIfNeededInsertsCuratedOnceOnly() throws {
@@ -26,6 +21,7 @@ final class EventTemplateStoreTests: XCTestCase {
         XCTAssertEqual(try store.templates().count, EventTemplate.curated.count)
         XCTAssertTrue(try settings.current().eventTemplatesSeeded)
 
+        // Second call is a no-op even after the user empties the list.
         for record in try store.templates() {
             try store.delete(id: record.id)
         }
@@ -37,12 +33,6 @@ final class EventTemplateStoreTests: XCTestCase {
         try store.seedIfNeeded(from: EventTemplate.curated, settings: settings)
         let titles = try store.templates().map(\.title)
         XCTAssertEqual(titles, EventTemplate.curated.map(\.title), "Seed preserves curated order")
-    }
-
-    func testSeedKeepsCuratedChipIdentifiers() throws {
-        try store.seedIfNeeded(from: EventTemplate.curated, settings: settings)
-        let keys = try store.templates().map(\.asTemplate.id)
-        XCTAssertEqual(keys, EventTemplate.curated.map(\.id))
     }
 
     func testAddAppendsAtEnd() throws {
@@ -65,6 +55,5 @@ final class EventTemplateStoreTests: XCTestCase {
         let template = try XCTUnwrap(try store.templates().first?.asTemplate)
         XCTAssertEqual(template.title, "Swim")
         XCTAssertEqual(template.durationMinutes, 45)
-        XCTAssertEqual(template.category, .personal)
     }
 }

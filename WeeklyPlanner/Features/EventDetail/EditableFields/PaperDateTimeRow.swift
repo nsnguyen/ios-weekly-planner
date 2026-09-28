@@ -29,6 +29,6 @@ struct PaperDateTimeRow: View {
                 .datePickerStyle(.compact)
                 .tint(theme.blueInk)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 8)
     }
 }

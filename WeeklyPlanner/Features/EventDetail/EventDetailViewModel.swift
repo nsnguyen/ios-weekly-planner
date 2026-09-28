@@ -214,8 +214,9 @@ final class EventDetailViewModel {
     }
 
     /// Read-mode recurrence line, or nil for single events.
+    /// A deleted SwiftData row faults on property access, so treat it as gone.
     var recurrenceSummary: String? {
-        guard let event, let recurrence = event.recurrence else { return nil }
+        guard let event, !event.isDeleted, let recurrence = event.recurrence else { return nil }
         return RecurrenceSummary.text(for: recurrence, seriesStart: event.start)
     }
 }

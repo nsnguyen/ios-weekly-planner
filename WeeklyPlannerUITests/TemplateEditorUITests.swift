@@ -32,10 +32,8 @@ final class TemplateEditorUITests: XCTestCase {
         app.buttons["templateEditor.add"].tap()
         app.buttons["Done"].tap()
 
-        let swim = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Swim"))
-            .firstMatch
-        XCTAssertTrue(swim.waitForExistence(timeout: 3),
+        let swimChip = app.buttons["Swim template"]
+        XCTAssertTrue(swimChip.waitForExistence(timeout: 3),
                       "Custom chip must appear in the quick-add row")
 
         editChip.tap()

@@ -44,7 +44,7 @@ struct TemplateChipsRow: View {
                 } label: {
                     Image(systemName: "pencil")
                         .font(font.font(at: 14 * size.scale, weight: .regular))
-                        .foregroundStyle(theme.ink2)
+                        .foregroundStyle(theme.ink)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
                         .background(Capsule().fill(theme.creamHi))
@@ -61,14 +61,12 @@ struct TemplateChipsRow: View {
         .onReceive(NotificationCenter.default.publisher(for: .eventTemplateStoreDidChange)) { _ in
             reload()
         }
-        .sheet(isPresented: $showEditor) {
-            TemplateEditorSheet()
-        }
+        .sheet(isPresented: $showEditor) { TemplateEditorSheet() }
     }
 
     private func reload() {
         if let templateStore {
-            templates = ((try? templateStore.templates()) ?? []).map(\.asTemplate)
+            templates = (try? templateStore.templates())?.map(\.asTemplate) ?? []
         } else {
             templates = EventTemplate.curated
         }

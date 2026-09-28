@@ -31,7 +31,7 @@ struct CategorySwatchRow: View {
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 8)
     }
 
     private func swatch(for category: Category) -> some View {

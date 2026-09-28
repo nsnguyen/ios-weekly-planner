@@ -1,5 +1,10 @@
 # Phase 42 — Event Sheet Overhaul
 
+> **Status (2026-09-23):** implemented on `cursor/phase-42-event-sheet`. Unit suite
+> 604 tests, 0 failures. UI: `EventCreateFlowUITests`, `RepeatingEventUITests`,
+> `TemplateEditorUITests`, `SmokeUITests` — 4 tests, 0 failures, on iPhone 17
+> / iOS 27. A separate signed visual pass against the mock was not done.
+
 > **Milestone P — Feedback Round 2** · items #63, #67, #68, #69, #70, #71
 > Triage: `docs/superpowers/specs/2026-07-07-feedback-round-2-roadmap-design.md`
 > Implementation plan: `docs/superpowers/plans/2026-07-07-phase-42-event-sheet-overhaul.md`

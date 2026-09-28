@@ -14,9 +14,9 @@ enum SwiftDataStack {
         InboxSuggestion.self,
         AIInsight.self,
         UserSettings.self,
+        EventTemplateRecord.self,
         Note.self,
         Annotation.self,
-        EventTemplateRecord.self,
     ]
 
     /// Lazily-initialised production container, on-disk. Crashes on

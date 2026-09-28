@@ -24,6 +24,6 @@ struct LocationField: View {
 
             InkTextField("Add a place…", text: $text, variant: .body)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 8)
     }
 }

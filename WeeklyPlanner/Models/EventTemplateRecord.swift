@@ -12,17 +12,13 @@ final class EventTemplateRecord {
     var durationMinutes: Int
     var alertMinutes: Int?
     var sortOrder: Int
-    /// Stable chip identifier. Curated seeds keep `"gym"` and friends so
-    /// existing accessibility ids stay valid; user-added chips use the UUID.
-    var templateKey: String = ""
 
     init(id: UUID = UUID(),
          title: String,
          categoryRaw: String,
          durationMinutes: Int,
          alertMinutes: Int? = nil,
-         sortOrder: Int,
-         templateKey: String = "")
+         sortOrder: Int)
     {
         self.id = id
         self.title = title
@@ -30,7 +26,6 @@ final class EventTemplateRecord {
         self.durationMinutes = durationMinutes
         self.alertMinutes = alertMinutes
         self.sortOrder = sortOrder
-        self.templateKey = templateKey
     }
 }
 
@@ -40,7 +35,7 @@ extension EventTemplateRecord {
     }
 
     var asTemplate: EventTemplate {
-        EventTemplate(id: templateKey.isEmpty ? id.uuidString : templateKey,
+        EventTemplate(id: id.uuidString,
                       title: title,
                       category: category,
                       durationMinutes: durationMinutes,

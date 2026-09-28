@@ -47,7 +47,7 @@ struct RecurrenceRow: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 8)
 
             if let current = recurrence {
                 intervalLine(current)

@@ -16,7 +16,6 @@ protocol EventTemplateStoring: AnyObject {
 @MainActor
 final class SwiftDataEventTemplateStore: EventTemplateStoring {
     private let context: ModelContext
-    private let changeSubject = NotificationCenter.default
 
     init(context: ModelContext) {
         self.context = context
@@ -29,22 +28,19 @@ final class SwiftDataEventTemplateStore: EventTemplateStoring {
 
     func add(title: String, category: Category, durationMinutes: Int) throws {
         let nextOrder = ((try? templates().last?.sortOrder) ?? -1) + 1
-        let id = UUID()
-        context.insert(EventTemplateRecord(id: id,
-                                           title: title,
+        context.insert(EventTemplateRecord(title: title,
                                            categoryRaw: category.rawValue,
                                            durationMinutes: durationMinutes,
-                                           sortOrder: nextOrder,
-                                           templateKey: id.uuidString))
+                                           sortOrder: nextOrder))
         try context.save()
-        changeSubject.post(name: .eventTemplateStoreDidChange, object: nil)
+        NotificationCenter.default.post(name: .eventTemplateStoreDidChange, object: nil)
     }
 
     func delete(id: UUID) throws {
         guard let record = try templates().first(where: { $0.id == id }) else { return }
         context.delete(record)
         try context.save()
-        changeSubject.post(name: .eventTemplateStoreDidChange, object: nil)
+        NotificationCenter.default.post(name: .eventTemplateStoreDidChange, object: nil)
     }
 
     /// Seed curated defaults exactly once per install; an emptied list stays empty.
@@ -55,11 +51,10 @@ final class SwiftDataEventTemplateStore: EventTemplateStoring {
                                                categoryRaw: template.category.rawValue,
                                                durationMinutes: template.durationMinutes,
                                                alertMinutes: template.alertMinutes,
-                                               sortOrder: index,
-                                               templateKey: template.id))
+                                               sortOrder: index))
         }
         try context.save()
         try settings.update { $0.eventTemplatesSeeded = true }
-        changeSubject.post(name: .eventTemplateStoreDidChange, object: nil)
+        NotificationCenter.default.post(name: .eventTemplateStoreDidChange, object: nil)
     }
 }

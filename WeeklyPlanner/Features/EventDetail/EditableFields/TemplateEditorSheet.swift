@@ -3,8 +3,6 @@ import SwiftUI
 /// Add/delete quick-add event templates (Phase 42 #68).
 struct TemplateEditorSheet: View {
     @Environment(\.eventTemplateStore) private var store
-    @Environment(\.paperTheme) private var theme
-    @Environment(\.paperFont) private var font
     @Environment(\.dismiss) private var dismiss
 
     @State private var records: [EventTemplateRecord] = []
@@ -20,8 +18,7 @@ struct TemplateEditorSheet: View {
                         HStack {
                             Text(record.title)
                             Spacer()
-                            Text("\(record.durationMinutes) min")
-                                .foregroundStyle(.secondary)
+                            Text("\(record.durationMinutes) min").foregroundStyle(.secondary)
                             Button(role: .destructive) {
                                 try? store?.delete(id: record.id)
                                 reload()

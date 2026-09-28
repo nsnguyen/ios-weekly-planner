@@ -182,7 +182,7 @@ final class EventDetailViewModelTests: XCTestCase {
 
         let all = try await eventStore.events(forWeekOffset: 0,
                                               today: Date(timeIntervalSince1970: 1_780_000_000))
-        XCTAssertEqual(all.filter { $0.title == "Lunch with Jamie" }.count, 1)
+        XCTAssertEqual(all.count { $0.title == "Lunch with Jamie" }, 1)
     }
 }
 

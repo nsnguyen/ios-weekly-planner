@@ -11,7 +11,6 @@ import SwiftUI
 ///   - `TextEditor` content uses handwriting at 17pt × size.scale.
 ///   - Faint italic placeholder ("Add notes…") rendered as a ZStack
 ///     under the editor so it disappears as soon as the user types.
-///   - Vertical padding separates the row from its neighbors. No hairline.
 struct NotesField: View {
     @Binding var text: String
 
@@ -48,7 +47,7 @@ struct NotesField: View {
                     .focused($focused)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
         .accessibilityIdentifier("paperEventSheet.notes")
     }
 }
