@@ -1,8 +1,7 @@
 import Foundation
 
-/// A curated quick-fill preset for the create-event sheet (Phase 36a #41
-/// "more template"). Value-type set — user-defined templates are a later
-/// phase if requested.
+/// A quick-fill preset for the create-event sheet. `curated` is the
+/// one-time seed; the live list lives in `EventTemplateRecord`.
 struct EventTemplate: Identifiable, Equatable, Sendable {
     let id: String
     let title: String
