@@ -67,28 +67,28 @@ import is in active use).
 
 ## Visual & Interaction Checklist
 
-- [ ] Text size offers **S / M / L / XL / XXL** (scales 0.90 / 1.00 / 1.14 /
+- [x] Text size offers **S / M / L / XL / XXL** (scales 0.90 / 1.00 / 1.14 /
   1.32 / 1.50); switching updates live (#58/#79).
-- [ ] Day-page date caption ("12 May") is 16 pt × scale — clearly bigger,
+- [x] Day-page date caption ("12 May") is 16 pt × scale — clearly bigger,
   and grows with the size setting (#62).
-- [ ] Week-page header (and any other fixed-size page header found by the
+- [x] Week-page header (and any other fixed-size page header found by the
   sweep) scales with the size setting (#58).
-- [ ] Settings shows **Font** (12 cards) and **Paper** (4 template cards:
+- [x] Settings shows **Font** (12 cards) and **Paper** (4 template cards:
   Ruled, Blank, Dot grid, Grid) sections; **no Theme section** (#77/#78/#59).
-- [ ] Choosing Blank/Dot grid/Grid changes every paper page (Day, Week,
+- [x] Choosing Blank/Dot grid/Grid changes every paper page (Day, Week,
   Notes, Settings, Ask-the-Planner sheet) and hides the red margin line on
   non-ruled templates; Ruled reproduces today's look pixel-for-pixel.
-- [ ] 4 new fonts render in the picker with live preview cards and apply
+- [x] 4 new fonts render in the picker with live preview cards and apply
   app-wide (#78).
 
 ## Logic & Data Checklist
 
-- [ ] `UserSettings.templateKey` persists ("ruled" default; lightweight
+- [x] `UserSettings.templateKey` persists ("ruled" default; lightweight
   migration); typed accessor mirrors `paperFont`.
-- [ ] `themeKey` remains stored (compat) but no UI writes it; resolved theme
+- [x] `themeKey` remains stored (compat) but no UI writes it; resolved theme
   is always `.cream` going forward — existing kraft/midnight users are
   migrated to cream on first launch of this build.
-- [ ] Every new font's PostScript name verified via `UIFont` registration
+- [x] Every new font's PostScript name verified via `UIFont` registration
   test (names can differ from filenames).
 
 ## Tests (TDD)

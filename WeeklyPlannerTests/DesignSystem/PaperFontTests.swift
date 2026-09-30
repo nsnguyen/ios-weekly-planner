@@ -55,6 +55,13 @@ final class PaperSizeTests: XCTestCase {
         XCTAssertEqual(PaperSize.s.scale, 0.90, accuracy: 0.001)
         XCTAssertEqual(PaperSize.m.scale, 1.00, accuracy: 0.001)
         XCTAssertEqual(PaperSize.l.scale, 1.14, accuracy: 0.001)
+        XCTAssertEqual(PaperSize.xl.scale, 1.32, accuracy: 0.001)
+        XCTAssertEqual(PaperSize.xxl.scale, 1.50, accuracy: 0.001)
+    }
+
+    func testDisplayNames() {
+        XCTAssertEqual(PaperSize.allCases.map(\.displayName),
+                       ["Small", "Medium", "Large", "XL", "XXL"])
     }
 
     func testAllSizesHaveDistinctScale() {

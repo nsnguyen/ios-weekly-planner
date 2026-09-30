@@ -8,11 +8,15 @@ final class PaperFontRegistrationTests: XCTestCase {
     }
 
     func testAllCasesIncludeTheFourNewFamilies() {
-        XCTAssertEqual(PaperFont.allCases.count, 8)
+        XCTAssertEqual(PaperFont.allCases.count, 12)
         XCTAssertTrue(PaperFont.allCases.contains(.patrick))
         XCTAssertTrue(PaperFont.allCases.contains(.shadows))
         XCTAssertTrue(PaperFont.allCases.contains(.gochi))
         XCTAssertTrue(PaperFont.allCases.contains(.nanum))
+        XCTAssertTrue(PaperFont.allCases.contains(.handlee))
+        XCTAssertTrue(PaperFont.allCases.contains(.comicNeue))
+        XCTAssertTrue(PaperFont.allCases.contains(.mali))
+        XCTAssertTrue(PaperFont.allCases.contains(.annie))
     }
 
     func testEveryFamilyResolvesItsRegularFace() {
@@ -34,7 +38,7 @@ final class PaperFontRegistrationTests: XCTestCase {
     }
 
     func testNewFamiliesKeepRegularLegibilityWeight() {
-        for family in [PaperFont.patrick, .shadows, .gochi, .nanum] {
+        for family in [PaperFont.patrick, .shadows, .gochi, .nanum, .handlee, .annie] {
             XCTAssertEqual(family.weightFor(legibility: .bold), .regular,
                            "Single-weight family must not pretend to have a bolder face")
         }

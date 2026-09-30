@@ -17,11 +17,14 @@ struct WeekPageHeader: View {
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(Self.title(weekMeta: weekMeta, year: year))
-                .font(font.font(at: 30, weight: .bold))
+                .font(font.font(at: 30 * size.scale, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(theme.ink)
                 .padding(EdgeInsets(top: 14, leading: 44, bottom: 4, trailing: 18))
 

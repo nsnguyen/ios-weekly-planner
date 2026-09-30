@@ -35,6 +35,7 @@ struct EventHeader: View {
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
 
     var body: some View {
         // Phase 29 (15): the header sits on a faint tinted band with a hairline
@@ -73,12 +74,14 @@ struct EventHeader: View {
                 .padding(.bottom, 6)
 
             Text(event.title)
-                .font(font.font(at: 32, weight: .bold))
+                .font(font.font(at: 32 * size.scale, weight: .bold))
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
                 .lineSpacing(1.05)
                 .foregroundStyle(CategoryPalette.inkColor(event.category, in: theme))
 
             Text(Self.timeLine(for: event))
-                .font(font.font(at: 17, weight: .regular))
+                .font(font.font(at: 17 * size.scale, weight: .regular))
                 .foregroundStyle(theme.ink2)
                 .padding(.top, 3)
         }

@@ -20,8 +20,8 @@ final class SettingsViewModelTests: XCTestCase {
 
     func testDefaultsAfterFreshInstall() {
         let vm = SettingsViewModel(store: store)
-        XCTAssertEqual(vm.themeKey, .cream)
         XCTAssertEqual(vm.fontKey, .caveat)
+        XCTAssertEqual(vm.template, .ruled)
         XCTAssertEqual(vm.sizeKey, .m)
         XCTAssertEqual(vm.weekStart, .monday)
         XCTAssertEqual(vm.defaultReminderMinutes, 15)
@@ -30,12 +30,17 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertFalse(vm.aiStickyNotesEnabled)
     }
 
-    func testSelectingThemePersists() throws {
+    func testSelectingTemplatePersists() throws {
         let vm = SettingsViewModel(store: store)
-        vm.setTheme(.midnight)
-        XCTAssertEqual(vm.themeKey, .midnight)
-        let row = try store.current()
-        XCTAssertEqual(row.paperTheme, .midnight)
+        vm.setTemplate(.dotGrid)
+        XCTAssertEqual(vm.template, .dotGrid)
+        XCTAssertEqual(try store.current().paperTemplate, .dotGrid)
+    }
+
+    func testLegacyNonCreamThemeMigratesToCream() throws {
+        try store.update { $0.themeKey = "midnight" }
+        AppShell.migrateThemeIfNeeded(store: store)
+        XCTAssertEqual(try store.current().paperTheme, .cream)
     }
 
     func testSelectingFontPersists() throws {

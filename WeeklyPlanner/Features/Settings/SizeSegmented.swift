@@ -1,22 +1,21 @@
 import SwiftUI
 
-/// Three-segment S / M / L control. Each segment renders its label in the
-/// current handwriting font at the segment's display size, so the user
-/// previews the choice before committing. The active segment lifts via a
-/// `creamHi` background + a 0.5pt rule outline + a 1pt soft shadow.
+/// S / M / L / XL / XXL control. Each segment renders its label in the
+/// current handwriting font at a preview size, so the user sees the
+/// choice before committing. The active segment lifts via a `creamHi`
+/// background + a 0.5pt rule outline + a 1pt soft shadow.
 ///
-/// Per-segment display sizes (from `docs/mock/paper-settings.jsx`):
-/// `S = 14pt`, `M = 17pt`, `L = 20pt`. These are unscaled — the segmented
-/// control itself is what teaches the user what each setting *does*, so
-/// it ignores `\.paperSize` to keep the comparison honest.
+/// Preview sizes grow with the segment index and ignore `\.paperSize`
+/// so the comparison stays honest.
 struct SizeSegmented: View {
     @Binding var selection: PaperSize
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
 
-    private static let displaySize: [PaperSize: CGFloat] = [
-        .s: 14, .m: 17, .l: 20,
-    ]
+    private static func displaySize(for size: PaperSize) -> CGFloat {
+        let index = CGFloat(PaperSize.allCases.firstIndex(of: size) ?? 0)
+        return 13 + 3 * index
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -25,10 +24,12 @@ struct SizeSegmented: View {
                     selection = size
                 } label: {
                     Text(size.displayName)
-                        .font(font.font(at: Self.displaySize[size] ?? 17, weight: .semibold))
+                        .font(font.font(at: Self.displaySize(for: size), weight: .semibold))
                         .foregroundStyle(theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 7)
+                        .padding(.vertical, 6)
                         .background(segmentBackground(active: size == selection))
                 }
                 .buttonStyle(.plain)
