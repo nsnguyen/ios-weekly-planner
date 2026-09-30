@@ -64,19 +64,23 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     func postScriptName(for weight: Font.Weight) -> String {
         switch self {
         case .caveat: caveatName(for: weight)
-        case .architects: "ArchitectsDaughter-Regular"
         case .kalam: kalamName(for: weight)
-        case .indie: "IndieFlower-Regular"
-        case .patrick: "PatrickHand-Regular"
-        case .shadows: "ShadowsIntoLight"
-        case .gochi: "GochiHand-Regular"
-        case .nanum: "NanumPen-Regular"
-        case .handlee: "Handlee-Regular"
         case .comicNeue: comicNeueName(for: weight)
         case .mali: maliName(for: weight)
-        case .annie: "AnnieUseYourTelescope-Regular"
+        default: Self.singleWeightNames[self] ?? "Caveat-Regular"
         }
     }
+
+    private static let singleWeightNames: [PaperFont: String] = [
+        .architects: "ArchitectsDaughter-Regular",
+        .indie: "IndieFlower-Regular",
+        .patrick: "PatrickHand-Regular",
+        .shadows: "ShadowsIntoLight",
+        .gochi: "GochiHand-Regular",
+        .nanum: "NanumPen-Regular",
+        .handlee: "Handlee-Regular",
+        .annie: "AnnieUseYourTelescope-Regular",
+    ]
 
     // MARK: - Per-family weight mapping
 
