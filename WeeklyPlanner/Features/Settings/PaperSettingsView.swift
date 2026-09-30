@@ -22,10 +22,7 @@ struct PaperSettingsView: View {
         BookPage {
             PaperSurface {
                 ZStack(alignment: .topLeading) {
-                    PaperGrain()
-                    RuledLines()
-                    RedMarginLine()
-                    HolePunches()
+                    PaperBackground()
 
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
@@ -52,15 +49,13 @@ struct PaperSettingsView: View {
 
     private func sections(for viewModel: SettingsViewModel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // 1. THEME
-            SectionTitle("Theme", eyebrow: "Look & feel")
-            ThemeCardsGrid(selection: viewModel.themeKey) { viewModel.setTheme($0) }
-
-            // 2. HANDWRITING
-            SectionTitle("Handwriting")
+            SectionTitle("Font", eyebrow: "Look & feel")
             FontCardsGrid(selection: viewModel.fontKey) { viewModel.setFont($0) }
 
-            // 3. TEXT SIZE
+            SectionTitle("Paper")
+            PaperCardsGrid(selection: viewModel.template) { viewModel.setTemplate($0) }
+
+            // TEXT SIZE
             SectionTitle("Text size")
             SizeSegmented(selection: Binding(get: { viewModel.sizeKey },
                                              set: { viewModel.setSize($0) }))

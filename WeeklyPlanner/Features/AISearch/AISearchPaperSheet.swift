@@ -33,10 +33,7 @@ struct AISearchPaperSheet: View {
         BookPage {
             PaperSurface {
                 ZStack(alignment: .topLeading) {
-                    PaperGrain()
-                    RuledLines()
-                    RedMarginLine()
-                    HolePunches()
+                    PaperBackground()
 
                     VStack(alignment: .leading, spacing: 0) {
                         AskInputField(text: Binding(get: { viewModel.query },

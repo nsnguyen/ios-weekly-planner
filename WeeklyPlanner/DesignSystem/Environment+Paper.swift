@@ -11,6 +11,7 @@ extension EnvironmentValues {
     @Entry var paperTheme: PaperTheme = .cream
     @Entry var paperFont: PaperFont = .caveat
     @Entry var paperSize: PaperSize = .m
+    @Entry var paperTemplate: PaperTemplate = .ruled
 }
 
 extension View {
@@ -29,6 +30,11 @@ extension View {
     /// this up and scale; system-font chrome ignores it.
     func paperSize(_ size: PaperSize) -> some View {
         environment(\.paperSize, size)
+    }
+
+    /// Injects the selected paper template (ruled, blank, dot grid, grid).
+    func paperTemplate(_ template: PaperTemplate) -> some View {
+        environment(\.paperTemplate, template)
     }
 
     /// Alias for `paperSize(_:)` that matches the design-spec naming.

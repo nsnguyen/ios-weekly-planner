@@ -83,6 +83,12 @@
         <string>ShadowsIntoLight.ttf</string>
         <string>GochiHand-Regular.ttf</string>
         <string>NanumPenScript-Regular.ttf</string>
+        <string>Handlee-Regular.ttf</string>
+        <string>ComicNeue-Regular.ttf</string>
+        <string>ComicNeue-Bold.ttf</string>
+        <string>Mali-Regular.ttf</string>
+        <string>Mali-Bold.ttf</string>
+        <string>AnnieUseYourTelescope-Regular.ttf</string>
     </array>
 
     <!-- Google OAuth configuration. Secrets filled in from Secrets.xcconfig during Phase 17. -->

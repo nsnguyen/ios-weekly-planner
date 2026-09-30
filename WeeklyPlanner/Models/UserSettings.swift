@@ -16,6 +16,9 @@ final class UserSettings {
     var fontKey: String
     var sizeKey: String
 
+    /// Paper background template (Phase 44). `"ruled"` is the historical look.
+    var templateKey: String = "ruled"
+
     /// Week math. Legacy — superseded by `weekStartRaw` (Phase 36b); kept
     /// for migration of installs that only persisted this Bool.
     var weekStartsOnMonday: Bool
@@ -71,6 +74,7 @@ final class UserSettings {
          themeKey: String = PaperThemeKey.cream.rawValue,
          fontKey: String = PaperFont.caveat.rawValue,
          sizeKey: String = PaperSize.m.rawValue,
+         templateKey: String = "ruled",
          weekStartsOnMonday: Bool = true,
          weekStartRaw: Int = 0,
          defaultReminderMinutes: Int? = 15,
@@ -95,6 +99,7 @@ final class UserSettings {
         self.themeKey = themeKey
         self.fontKey = fontKey
         self.sizeKey = sizeKey
+        self.templateKey = templateKey
         self.weekStartsOnMonday = weekStartsOnMonday
         self.weekStartRaw = weekStartRaw
         self.defaultReminderMinutes = defaultReminderMinutes
@@ -131,6 +136,11 @@ extension UserSettings {
     var paperSize: PaperSize {
         get { PaperSize(rawValue: sizeKey) ?? .m }
         set { sizeKey = newValue.rawValue }
+    }
+
+    var paperTemplate: PaperTemplate {
+        get { PaperTemplate(rawValue: templateKey) ?? .ruled }
+        set { templateKey = newValue.rawValue }
     }
 
     var style: AppStyle {

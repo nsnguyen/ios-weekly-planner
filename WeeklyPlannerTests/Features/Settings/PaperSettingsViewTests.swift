@@ -22,21 +22,19 @@ final class PaperSettingsViewTests: XCTestCase {
                        ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
     }
 
-    func testPaperThemeKeyCountMatchesGridColumnCount() {
-        // ThemeCardsGrid is a 3-col grid; we want exactly 3 themes so each
-        // row is full. If a fourth theme lands, this test will fail and
-        // remind us to revisit the grid columns.
-        XCTAssertEqual(PaperThemeKey.allCases.count, 3)
+    func testPaperFontCountIsTwelveSoFontCardsGridIsSixFullRows() {
+        // FontCardsGrid is a 2-col grid; 12 fonts == 6 full rows.
+        XCTAssertEqual(PaperFont.allCases.count, 12)
     }
 
-    func testPaperFontCountIsEightSoFontCardsGridIsFourFullRows() {
-        // FontCardsGrid is a 2-col grid; 8 fonts == 4 full rows.
-        XCTAssertEqual(PaperFont.allCases.count, 8)
+    func testPaperTemplateCountIsFour() {
+        XCTAssertEqual(PaperTemplate.allCases.count, 4)
     }
 
-    func testPaperSizeCountIsThreeSoSizeSegmentedFits() {
-        XCTAssertEqual(PaperSize.allCases.count, 3)
-        XCTAssertEqual(PaperSize.allCases.map(\.displayName), ["Small", "Medium", "Large"])
+    func testPaperSizeCountIsFiveSoSizeSegmentedFits() {
+        XCTAssertEqual(PaperSize.allCases.count, 5)
+        XCTAssertEqual(PaperSize.allCases.map(\.displayName),
+                       ["Small", "Medium", "Large", "XL", "XXL"])
     }
 
     /// Phase 32 (#49): the on-device AI toggle is named "Ask the planner"
