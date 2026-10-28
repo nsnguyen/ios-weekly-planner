@@ -6,9 +6,10 @@ import SwiftUI
 ///
 /// Caveat ships four weights as separate static instances (sliced from the
 /// upstream variable font). Kalam ships Light / Regular / Bold. Architects
-/// Daughter, Indie Flower, Patrick Hand, Shadows Into Light, Gochi Hand and
-/// Nanum Pen Script are single-weight families — the requested `weight` is
-/// silently ignored (a heavier `LegibilityWeight` maps back to regular).
+/// Daughter, Indie Flower, Patrick Hand, Shadows Into Light, Gochi Hand,
+/// Nanum Pen Script, Handlee, and Annie Use Your Telescope are
+/// single-weight families — the requested `weight` is silently ignored.
+/// Comic Neue and Mali ship a real Bold.
 enum PaperFont: String, CaseIterable, Hashable, Codable {
     case caveat
     case architects
@@ -18,6 +19,10 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     case shadows
     case gochi
     case nanum
+    case handlee
+    case comicNeue
+    case mali
+    case annie
 
     /// Human-readable label shown in Settings.
     var displayName: String {
@@ -30,6 +35,10 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
         case .shadows: "Shadows"
         case .gochi: "Gochi Hand"
         case .nanum: "Nanum Pen"
+        case .handlee: "Handlee"
+        case .comicNeue: "Comic Neue"
+        case .mali: "Mali"
+        case .annie: "Annie"
         }
     }
 
@@ -39,7 +48,8 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
         switch self {
         case .caveat: "Cochin"
         case .architects, .kalam, .indie,
-             .patrick, .shadows, .gochi, .nanum: "Caveat-Regular"
+             .patrick, .shadows, .gochi, .nanum,
+             .handlee, .comicNeue, .mali, .annie: "Caveat-Regular"
         }
     }
 
@@ -54,15 +64,23 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
     func postScriptName(for weight: Font.Weight) -> String {
         switch self {
         case .caveat: caveatName(for: weight)
-        case .architects: "ArchitectsDaughter-Regular"
         case .kalam: kalamName(for: weight)
-        case .indie: "IndieFlower-Regular"
-        case .patrick: "PatrickHand-Regular"
-        case .shadows: "ShadowsIntoLight"
-        case .gochi: "GochiHand-Regular"
-        case .nanum: "NanumPen-Regular"
+        case .comicNeue: comicNeueName(for: weight)
+        case .mali: maliName(for: weight)
+        default: Self.singleWeightNames[self] ?? "Caveat-Regular"
         }
     }
+
+    private static let singleWeightNames: [PaperFont: String] = [
+        .architects: "ArchitectsDaughter-Regular",
+        .indie: "IndieFlower-Regular",
+        .patrick: "PatrickHand-Regular",
+        .shadows: "ShadowsIntoLight",
+        .gochi: "GochiHand-Regular",
+        .nanum: "NanumPen-Regular",
+        .handlee: "Handlee-Regular",
+        .annie: "AnnieUseYourTelescope-Regular",
+    ]
 
     // MARK: - Per-family weight mapping
 
@@ -80,9 +98,10 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
         guard legibility == .bold else { return .regular }
         switch self {
         case .caveat: return .semibold
-        case .kalam: return .bold
+        case .kalam, .comicNeue, .mali: return .bold
         case .architects, .indie,
-             .patrick, .shadows, .gochi, .nanum:
+             .patrick, .shadows, .gochi, .nanum,
+             .handlee, .annie:
             return .regular
         }
     }
@@ -101,6 +120,20 @@ enum PaperFont: String, CaseIterable, Hashable, Codable {
         case .ultraLight, .thin, .light: "Kalam-Light"
         case .bold, .heavy, .black: "Kalam-Bold"
         default: "Kalam-Regular"
+        }
+    }
+
+    private func comicNeueName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .bold, .heavy, .black: "ComicNeue-Bold"
+        default: "ComicNeue-Regular"
+        }
+    }
+
+    private func maliName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .bold, .heavy, .black: "Mali-Bold"
+        default: "Mali-Regular"
         }
     }
 }

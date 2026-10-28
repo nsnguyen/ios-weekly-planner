@@ -59,6 +59,10 @@ enum AccessibilityIDs {
         "settings.font.card.\(key)"
     }
 
+    static func settingsPaperCard(_ key: String) -> String {
+        "settings.paper.card.\(key)"
+    }
+
     static func settingsSizeSegment(_ key: String) -> String {
         "settings.size.segment.\(key)"
     }

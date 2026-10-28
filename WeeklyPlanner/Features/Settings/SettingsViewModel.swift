@@ -10,9 +10,9 @@ import Foundation
 final class SettingsViewModel {
     private let store: any SettingsStoring
 
-    var themeKey: PaperThemeKey
     var fontKey: PaperFont
     var sizeKey: PaperSize
+    var template: PaperTemplate
     var weekStart: WeekStartDay
     var defaultReminderMinutes: Int?
     var appleIntelligenceEnabled: Bool
@@ -21,18 +21,13 @@ final class SettingsViewModel {
     init(store: any SettingsStoring) {
         self.store = store
         let settings = (try? store.current()) ?? UserSettings()
-        themeKey = settings.paperTheme
         fontKey = settings.paperFont
         sizeKey = settings.paperSize
+        template = settings.paperTemplate
         weekStart = settings.weekStart
         defaultReminderMinutes = settings.defaultReminderMinutes
         appleIntelligenceEnabled = settings.appleIntelligenceEnabled
         aiStickyNotesEnabled = settings.aiStickyNotesEnabled
-    }
-
-    func setTheme(_ theme: PaperThemeKey) {
-        themeKey = theme
-        try? store.update { $0.paperTheme = theme }
     }
 
     func setFont(_ font: PaperFont) {
@@ -43,6 +38,11 @@ final class SettingsViewModel {
     func setSize(_ size: PaperSize) {
         sizeKey = size
         try? store.update { $0.paperSize = size }
+    }
+
+    func setTemplate(_ template: PaperTemplate) {
+        self.template = template
+        try? store.update { $0.paperTemplate = template }
     }
 
     func setWeekStart(_ day: WeekStartDay) {

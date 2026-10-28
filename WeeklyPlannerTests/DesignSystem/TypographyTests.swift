@@ -60,6 +60,10 @@ final class TypographyTests: XCTestCase {
         XCTAssertEqual(weekEyebrow.opacity, 0.65, accuracy: 0.001)
     }
 
+    func testDayDateCaptionIsSixteenPoints() {
+        XCTAssertEqual(DayPageHeader.captionPointSize, 16, "Feedback #62: date under weekday must be ≥16pt")
+    }
+
     func testFontResolvesForEveryHandwritingFamily() {
         let entry = Typography.eventTitle
         for family in PaperFont.allCases {

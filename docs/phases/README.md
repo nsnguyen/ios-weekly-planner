@@ -74,7 +74,7 @@ A weekly planner iOS app with a **paper-planner aesthetic** (leather book cover,
 | 41 | App Store Submission & TestFlight                    | O — Ship (final)    | ⏳     |
 | 42 | Event Sheet Overhaul                                 | P — Feedback R2     | ✅     |
 | 43 | Sticky Notes v3 — Grounded & Movable                 | P                   | 📋     |
-| 44 | Typography & Paper Expansion                         | P                   | 📋     |
+| 44 | Typography & Paper Expansion                         | P                   | ⏳     |
 | 45 | Chrome & Navigation Simplification                   | P                   | ✅     |
 | 46 | Ask the Planner — Search Overhaul                    | P                   | 📋     |
 
@@ -123,10 +123,10 @@ execution order from here: **44 → 43 → 46** (Phases 45 and 42 shipped),
 all before Phases 40/41 (which remain the final two). Feedback #75
 deliberately reverses round-1 #28 (empty week days go back to blank).
 
-**Next up:** Phase 44 — Typography & Paper Expansion. Phase 42 (event
-sheet overhaul) is implemented on `cursor/phase-42-event-sheet`: 604 unit tests
-and the create, repeat, template-editor, and smoke UI tests passed on
-iOS 27. A screenshot pass vs the mock is still open.
+**Next up:** Phase 44 — Typography & Paper Expansion (XL/XXL sizes, scaled
+headers, paper templates, four new fonts, Theme picker removed). Phase 42
+shipped on `main`. After 44, the remaining Milestone P order is **43 → 46**,
+then Phases 40/41.
 
 ## Reading a Phase Doc
 

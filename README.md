@@ -183,8 +183,8 @@ ios-weekly-planner/
 
 ## Fonts
 
-The four handwriting font families ship as nine static TTF files in
-`WeeklyPlanner/Resources/Fonts/`:
+Twelve handwriting font families ship as static TTF files in
+`WeeklyPlanner/Resources/Fonts/`. The original four:
 
 | File                            | PostScript name             | License |
 |---------------------------------|-----------------------------|---------|
@@ -197,6 +197,11 @@ The four handwriting font families ship as nine static TTF files in
 | Kalam-Regular.ttf               | `Kalam-Regular`             | OFL 1.1 |
 | Kalam-Bold.ttf                  | `Kalam-Bold`                | OFL 1.1 |
 | IndieFlower-Regular.ttf         | `IndieFlower-Regular`       | OFL 1.1 |
+
+Phase 36a and Phase 44 added Patrick Hand, Shadows Into Light, Gochi Hand,
+Nanum Pen Script, Handlee, Comic Neue (Regular + Bold), Mali (Regular + Bold),
+and Annie Use Your Telescope. License texts live in
+`WeeklyPlanner/Resources/Fonts/LICENSES/` and `docs/licenses/fonts/`.
 
 The Caveat weights are sliced from the upstream variable font (`Caveat[wght].ttf`)
 using `fonttools varLib.mutator`, with PostScript / family / subfamily / weight

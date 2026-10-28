@@ -20,6 +20,7 @@ import SwiftUI
 /// so the active tab can use the full inner area and modal overlays float
 /// above both layers.
 struct AppShell: View {
+    @Environment(\.settingsStore) private var settingsStore
     @Environment(\.eventStore) private var eventStore
     @Environment(\.taskStore) private var taskStore
     @Environment(\.inboxStore) private var inboxStore
@@ -70,7 +71,11 @@ struct AppShell: View {
     }
 
     private var resolvedTheme: PaperTheme {
-        settings.paperTheme.theme
+        PaperThemeKey.cream.theme
+    }
+
+    private var resolvedTemplate: PaperTemplate {
+        settings.paperTemplate
     }
 
     private var resolvedFont: PaperFont {
@@ -162,6 +167,17 @@ struct AppShell: View {
         .paperTheme(resolvedTheme)
         .paperFont(resolvedFont)
         .paperSize(resolvedSize)
+        .paperTemplate(resolvedTemplate)
+        .task {
+            Self.migrateThemeIfNeeded(store: settingsStore)
+        }
+    }
+
+    /// Phase 44: the theme picker is gone; the app ships Cream. Migrate
+    /// legacy kraft/midnight rows so stored state matches the UI.
+    static func migrateThemeIfNeeded(store: any SettingsStoring) {
+        guard let current = try? store.current(), current.paperTheme != .cream else { return }
+        try? store.update { $0.paperTheme = .cream }
     }
 
     @ViewBuilder

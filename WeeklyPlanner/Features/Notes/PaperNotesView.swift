@@ -13,10 +13,7 @@ struct PaperNotesView: View {
         BookPage {
             PaperSurface {
                 ZStack(alignment: .topLeading) {
-                    PaperGrain()
-                    RuledLines()
-                    RedMarginLine()
-                    HolePunches()
+                    PaperBackground()
 
                     if let viewModel {
                         if let editing {

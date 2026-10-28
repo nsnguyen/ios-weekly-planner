@@ -36,7 +36,7 @@ struct DayPageHeader: View {
                         .tracking(-0.5)
 
                     Text(Self.caption(for: weekDay))
-                        .font(.custom("Cochin-Italic", size: 12))
+                        .font(.custom("Cochin-Italic", size: Self.captionPointSize * size.scale))
                         .foregroundStyle(theme.ink2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -58,6 +58,9 @@ struct DayPageHeader: View {
     /// "· Week NN" suffix that used to trail the date — TestFlight feedback
     /// found it redundant with the top-bar week label. Static so it's
     /// unit-testable without view introspection.
+    /// Unscaled point size of the date caption under the weekday (Phase 44 #62).
+    static let captionPointSize: CGFloat = 16
+
     static func caption(for weekDay: WeekDay) -> String {
         "\(weekDay.dayNumber) \(weekDay.monthShort)"
     }

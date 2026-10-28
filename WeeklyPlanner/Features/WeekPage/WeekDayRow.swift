@@ -36,6 +36,7 @@ struct WeekDayRow: View {
 
     @Environment(\.paperTheme) private var theme
     @Environment(\.paperFont) private var font
+    @Environment(\.paperSize) private var size
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -68,7 +69,9 @@ struct WeekDayRow: View {
                 .foregroundStyle(isToday ? theme.redInk : theme.ink2)
 
             Text("\(day.dayNumber)")
-                .font(font.font(at: 32, weight: .bold))
+                .font(font.font(at: 32 * size.scale, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .foregroundStyle(isToday ? theme.redInk : theme.ink)
                 .padding(.top, 1)
         }

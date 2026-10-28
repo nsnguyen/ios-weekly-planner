@@ -148,10 +148,7 @@ struct DayPageContent: View {
             BookPage {
                 PaperSurface {
                     ZStack(alignment: .topLeading) {
-                        PaperGrain()
-                        RuledLines()
-                        RedMarginLine()
-                        HolePunches()
+                        PaperBackground()
 
                         ScrollView {
                             content(weekDay: weekDay, weekMeta: weekMeta)
